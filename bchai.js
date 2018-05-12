@@ -1,7 +1,5 @@
-import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import chaiDom from 'chai-dom'
+// import chaiAssertType from 'chai-asserttype'
 
-chai.use(chaiAsPromised)
-chai.use(chaiDom)
-window.chai = chai
+window.chaiAsPromised = chaiAsPromised
+// window.chaiAssertType = chaiAssertType

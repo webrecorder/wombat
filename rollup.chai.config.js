@@ -7,7 +7,7 @@ export default {
   output: {
     name: 'chai',
     file: 'test/bchai.js',
-    format: 'iife'
+    format: 'es'
   },
   plugins: [
     resolve({
@@ -20,7 +20,6 @@ export default {
       extensions: ['.js'],  // Default: [ '.js' ]
       ignoreGlobal: false,  // Default: false
       sourceMap: false  // Default: true
-    }),
-    uglify({mangle: false})
+    })
   ]
 }

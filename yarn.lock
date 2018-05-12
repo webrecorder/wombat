@@ -204,9 +204,19 @@ chai-as-promised@^7.1.1:
   dependencies:
     check-error "^1.0.2"
 
+chai-asserttype@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/chai-asserttype/-/chai-asserttype-1.0.5.tgz#b0097db2ea66eb219894d1463c39818a319190dc"
+  dependencies:
+    check-types "^7.0.1"
+
 chai-dom@^1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/chai-dom/-/chai-dom-1.8.0.tgz#eac3f1ee2e13692c4e66e8401a32362ebffd44d1"
+
+chai-url@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/chai-url/-/chai-url-1.0.4.tgz#827e0fd7835c848b8ab8e2ce1d65d40521e62026"
 
 chai@^4.1.2:
   version "4.1.2"
@@ -244,6 +254,10 @@ chardet@^0.4.0:
 check-error@^1.0.1, check-error@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/check-error/-/check-error-1.0.2.tgz#574d312edd88bb5dd8912e9286dd6c0aed4aac82"
+
+check-types@^7.0.1:
+  version "7.3.0"
+  resolved "https://registry.yarnpkg.com/check-types/-/check-types-7.3.0.tgz#468f571a4435c24248f5fd0cb0e8d87c3c341e7d"
 
 circular-json@^0.3.1:
   version "0.3.3"
