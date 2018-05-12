@@ -10,40 +10,17 @@
 <script src="../node_modules/mocha/mocha.js" type="text/javascript"></script>
 <script src="../node_modules/chai/chai.js" type="text/javascript"></script>
 <script src="../node_modules/chai-dom/chai-dom.js" type="text/javascript"></script>
+<script type="module">
+  import { chaiURL } from './chaiUtils.js'
+  chai.use(chaiURL)
+</script>
 <!--<script src="bchai.js" type="text/javascript"></script>-->
 <script>mocha.setup('bdd')</script>
-<script>
-  wbinfo = {}
-  wbinfo.url = 'http://localhost:3030/test'
-  wbinfo.timestamp = '20180510171123'
-  wbinfo.request_ts = '20180510171123'
-  wbinfo.prefix = decodeURI('https://wbrc.io/jberlin/sw/')
-  wbinfo.mod = 'mp_'
-  wbinfo.top_url = 'http://localhost:3030/jberlin/sw/20180510171123/https://n0tan3rd.github.io/replay_test/'
-  wbinfo.is_framed = false
-  wbinfo.is_live = false
-  wbinfo.coll = ''
-  wbinfo.proxy_magic = ''
-  wbinfo.static_prefix = 'https://wbrc.io/static/bundle/'
-
-  wbinfo.wombat_ts = '20180510171123'
-  wbinfo.wombat_sec = '1525972283'
-  wbinfo.wombat_scheme = 'https'
-  wbinfo.wombat_host = 'n0tan3rd.github.io'
-
-  wbinfo.wombat_opts = {}
-
-  window.__WB_replay_top = {
-    location: {
-      origin: 'http://localhost:3030'
-    }
-  }
-</script>
-<script src="wombat.js" type="text/javascript"></script>
+<!--<script src="wombat.js" type="text/javascript"></script>-->
 <script src="test.env.js" type="text/javascript"></script>
 <script>
   // mocha.checkLeaks();
-  mocha.run();
+  mocha.run()
   // window._wb_wombat = _WBWombat(window, wbinfo)
   // console.log(_wb_wombat.rewrite_url('http://www.chaijs.com/guide/styles/'))
   // console.log(chai)

@@ -1,4 +1,4 @@
-function chaiURL (chai, utils) {
+export function chaiURL (chai, utils) {
   const Assertion = chai.Assertion
   const props = [
     'hash',

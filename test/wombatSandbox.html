@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wombat sandbox</title>
+    <script>
+      window.addEventListener('load', function (event) {
+        window.top.postMessage({type: 'wombat-sandbox-ready'}, '*')
+      })
+    </script>
+</head>
+<body>
+<script>
+  wbinfo = {}
+  wbinfo.url = 'http://localhost:3030/test/wombatSandbox'
+  wbinfo.timestamp = '20180510171123'
+  wbinfo.request_ts = '20180510171123'
+  wbinfo.prefix = decodeURI('https://wbrc.io/jberlin/sw/')
+  wbinfo.mod = 'mp_'
+  wbinfo.top_url = 'http://localhost:3030/jberlin/sw/20180510171123/https://n0tan3rd.github.io/replay_test/'
+  wbinfo.is_framed = false
+  wbinfo.is_live = false
+  wbinfo.coll = ''
+  wbinfo.proxy_magic = ''
+  wbinfo.static_prefix = 'https://wbrc.io/static/bundle/'
+
+  wbinfo.wombat_ts = '20180510171123'
+  wbinfo.wombat_sec = '1525972283'
+  wbinfo.wombat_scheme = 'http'
+  wbinfo.wombat_host = 'localhost:3030'
+
+  wbinfo.wombat_opts = {}
+
+  window.__WB_replay_top = {
+    location: {
+      origin: 'http://localhost:3030'
+    }
+  }
+</script>
+<script src="wombat.js"></script>
+</body>
+</html>
