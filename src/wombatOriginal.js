@@ -3137,184 +3137,184 @@ var _WBWombat = function($wbwindow, wbinfo) {
 
 
     //============================================
-    function wombat_init(wbinfo) {
-        init_paths(wbinfo);
+  function wombat_init(wbinfo) {
+    init_paths(wbinfo);
 
-        init_top_frame($wbwindow);
+    init_top_frame($wbwindow);
 
-        init_wombat_loc($wbwindow);
+    init_wombat_loc($wbwindow);
 
-        // archival mode: init url-rewriting intercepts
-        if (!wb_is_proxy) {
-            init_wombat_top($wbwindow);
+    // archival mode: init url-rewriting intercepts
+    if (!wb_is_proxy) {
+      init_wombat_top($wbwindow);
 
-            var wb_origin = $wbwindow.__WB_replay_top.location.origin;
+      var wb_origin = $wbwindow.__WB_replay_top.location.origin;
 
-            if (wb_replay_prefix && wb_replay_prefix.indexOf(wb_origin) == 0) {
-                wb_rel_prefix = wb_replay_prefix.substring(wb_origin.length);
-            } else {
-                wb_rel_prefix = wb_replay_prefix;
-            }
+      if (wb_replay_prefix && wb_replay_prefix.indexOf(wb_origin) == 0) {
+        wb_rel_prefix = wb_replay_prefix.substring(wb_origin.length);
+      } else {
+        wb_rel_prefix = wb_replay_prefix;
+      }
 
-            var rx = "(" + wb_origin + ")?" + wb_rel_prefix + "[^/]+/";
-            wb_unrewrite_rx = new RegExp(rx, "g");
+      var rx = "(" + wb_origin + ")?" + wb_rel_prefix + "[^/]+/";
+      wb_unrewrite_rx = new RegExp(rx, "g");
 
-            // History
-            init_history_overrides();
+      // History
+      init_history_overrides();
 
-            // Doc Title
-            init_doc_title_override();
+      // Doc Title
+      init_doc_title_override();
 
-            // postMessage
-            // OPT skip
-            if (!wb_opts.skip_postmessage) {
-                init_postmessage_override($wbwindow);
-                init_messageevent_override($wbwindow);
-            }
+      // postMessage
+      // OPT skip
+      if (!wb_opts.skip_postmessage) {
+        init_postmessage_override($wbwindow);
+        init_messageevent_override($wbwindow);
+      }
 
-            init_hash_change();
+      init_hash_change();
 
-            // write
-            init_write_override();
+      // write
+      init_write_override();
 
-            // eval
-            //init_eval_override();
+      // eval
+      //init_eval_override();
 
-            // Ajax
-            init_ajax_rewrite();
+      // Ajax
+      init_ajax_rewrite();
 
-            // Fetch
-            init_fetch_rewrite();
-            init_request_override();
+      // Fetch
+      init_fetch_rewrite();
+      init_request_override();
 
-            // Audio
-            init_audio_override();
+      // Audio
+      init_audio_override();
 
-            // Worker override (experimental)
-            init_web_worker_override();
-            init_service_worker_override();
+      // Worker override (experimental)
+      init_web_worker_override();
+      init_service_worker_override();
 
-            // innerHTML can be overriden on prototype!
-            override_html_assign($wbwindow.HTMLElement, "innerHTML", true);
-            override_html_assign($wbwindow.HTMLElement, "outerHTML", true);
-            override_html_assign($wbwindow.HTMLIFrameElement, "srcdoc", true);
-            override_html_assign($wbwindow.HTMLStyleElement, "textContent");
+      // innerHTML can be overriden on prototype!
+      override_html_assign($wbwindow.HTMLElement, "innerHTML", true);
+      override_html_assign($wbwindow.HTMLElement, "outerHTML", true);
+      override_html_assign($wbwindow.HTMLIFrameElement, "srcdoc", true);
+      override_html_assign($wbwindow.HTMLStyleElement, "textContent");
 
-            // Document.URL override
-            override_prop_extract($wbwindow.Document.prototype, "URL");
-            override_prop_extract($wbwindow.Document.prototype, "documentURI");
+      // Document.URL override
+      override_prop_extract($wbwindow.Document.prototype, "URL");
+      override_prop_extract($wbwindow.Document.prototype, "documentURI");
 
-            // Node.baseURI override
-            override_prop_extract($wbwindow.Node.prototype, "baseURI");
+      // Node.baseURI override
+      override_prop_extract($wbwindow.Node.prototype, "baseURI");
 
-            // Attr nodeValue and value
-            override_attr_props();
+      // Attr nodeValue and value
+      override_attr_props();
 
-            // init insertAdjacentHTML() override
-            init_insertAdjacentHTML_override();
+      // init insertAdjacentHTML() override
+      init_insertAdjacentHTML_override();
 
-            // iframe.contentWindow and iframe.contentDocument overrides to 
-            // ensure wombat is inited on the iframe $wbwindow!
-            override_iframe_content_access("contentWindow");
-            override_iframe_content_access("contentDocument");
+      // iframe.contentWindow and iframe.contentDocument overrides to
+      // ensure wombat is inited on the iframe $wbwindow!
+      override_iframe_content_access("contentWindow");
+      override_iframe_content_access("contentDocument");
 
-            // override funcs to convert first arg proxy->obj
-            override_func_first_arg_proxy_to_obj($wbwindow.MutationObserver, "observe");
-            override_func_first_arg_proxy_to_obj($wbwindow.Node, "compareDocumentPosition");
-            override_func_first_arg_proxy_to_obj($wbwindow.Node, "contains");
-            override_func_first_arg_proxy_to_obj($wbwindow.Document, "createTreeWalker");
+      // override funcs to convert first arg proxy->obj
+      override_func_first_arg_proxy_to_obj($wbwindow.MutationObserver, "observe");
+      override_func_first_arg_proxy_to_obj($wbwindow.Node, "compareDocumentPosition");
+      override_func_first_arg_proxy_to_obj($wbwindow.Node, "contains");
+      override_func_first_arg_proxy_to_obj($wbwindow.Document, "createTreeWalker");
 
-            override_func_this_proxy_to_obj($wbwindow, "setTimeout");
-            override_func_this_proxy_to_obj($wbwindow, "setInterval");
-            override_func_this_proxy_to_obj($wbwindow, "getComputedStyle", $wbwindow);
-            //override_func_this_proxy_to_obj($wbwindow.EventTarget, "addEventListener");
-            //override_func_this_proxy_to_obj($wbwindow.EventTarget, "removeEventListener");
+      override_func_this_proxy_to_obj($wbwindow, "setTimeout");
+      override_func_this_proxy_to_obj($wbwindow, "setInterval");
+      override_func_this_proxy_to_obj($wbwindow, "getComputedStyle", $wbwindow);
+      //override_func_this_proxy_to_obj($wbwindow.EventTarget, "addEventListener");
+      //override_func_this_proxy_to_obj($wbwindow.EventTarget, "removeEventListener");
 
-            override_apply_func($wbwindow);
+      override_apply_func($wbwindow);
 
-            override_frames_access($wbwindow);
+      override_frames_access($wbwindow);
 
-            // setAttribute
-            if (!wb_opts.skip_setAttribute) {
-                init_setAttribute_override();
-                init_getAttribute_override();
-            }
-            init_svg_image_overrides();
+      // setAttribute
+      if (!wb_opts.skip_setAttribute) {
+        init_setAttribute_override();
+        init_getAttribute_override();
+      }
+      init_svg_image_overrides();
 
-            // override href and src attrs
-            init_attr_overrides();
+      // override href and src attrs
+      init_attr_overrides();
 
-            // Cookies
-            init_cookies_override();
+      // Cookies
+      init_cookies_override();
 
-            // ensure namespace urls are NOT rewritten
-            init_createElementNS_fix();
+      // ensure namespace urls are NOT rewritten
+      init_createElementNS_fix();
 
-            // Image
-            //init_image_override();
+      // Image
+      //init_image_override();
 
-            // DOM
-            // OPT skip
-            if (!wb_opts.skip_dom) {
-                init_dom_override();
-            }
+      // DOM
+      // OPT skip
+      if (!wb_opts.skip_dom) {
+        init_dom_override();
+      }
 
-            // registerProtocolHandler override
-            init_registerPH_override();
+      // registerProtocolHandler override
+      init_registerPH_override();
 
-            //sendBeacon override
-            init_beacon_override();
-        }
-
-        // other overrides
-        // proxy mode: only using these overrides
-
-        // Random
-        init_seeded_random(wbinfo.wombat_sec);
-
-        // Crypto Random
-        init_crypto_random();
-
-        // set fixed pixel ratio
-        init_fixed_ratio();
-
-        // Date
-        init_date_override(wbinfo.wombat_sec);
-
-        // open
-        init_open_override();
-
-        // disable notifications
-        init_disable_notifications();
-
-        // custom storage
-        init_storage_override();
-
-        // add window and document obj proxies, if available
-        init_window_obj_proxy($wbwindow);
-        init_document_obj_proxy($wbwindow.document);
-
-        // expose functions
-        var obj = {}
-        obj.extract_orig = extract_orig;
-        obj.rewrite_url = rewrite_url;
-        obj.watch_elem = watch_elem;
-        obj.init_new_window_wombat = init_new_window_wombat;
-        obj.init_paths = init_paths;
-        obj.local_init = function(name) {
-            var res = $wbwindow._WB_wombat_obj_proxy[name];
-            if (name === "document" && res && !res._WB_wombat_obj_proxy) {
-                return init_document_obj_proxy(res) || res;
-            }
-            return res;
-        }
-
-        if (wbinfo.is_framed && wbinfo.mod != "bn_") {
-            init_top_frame_notify(wbinfo);
-        }
-
-        return obj;
+      //sendBeacon override
+      init_beacon_override();
     }
+
+    // other overrides
+    // proxy mode: only using these overrides
+
+    // Random
+    init_seeded_random(wbinfo.wombat_sec);
+
+    // Crypto Random
+    init_crypto_random();
+
+    // set fixed pixel ratio
+    init_fixed_ratio();
+
+    // Date
+    init_date_override(wbinfo.wombat_sec);
+
+    // open
+    init_open_override();
+
+    // disable notifications
+    init_disable_notifications();
+
+    // custom storage
+    init_storage_override();
+
+    // add window and document obj proxies, if available
+    init_window_obj_proxy($wbwindow);
+    init_document_obj_proxy($wbwindow.document);
+
+    // expose functions
+    var obj = {}
+    obj.extract_orig = extract_orig;
+    obj.rewrite_url = rewrite_url;
+    obj.watch_elem = watch_elem;
+    obj.init_new_window_wombat = init_new_window_wombat;
+    obj.init_paths = init_paths;
+    obj.local_init = function(name) {
+      var res = $wbwindow._WB_wombat_obj_proxy[name];
+      if (name === "document" && res && !res._WB_wombat_obj_proxy) {
+        return init_document_obj_proxy(res) || res;
+      }
+      return res;
+    }
+
+    if (wbinfo.is_framed && wbinfo.mod != "bn_") {
+      init_top_frame_notify(wbinfo);
+    }
+
+    return obj;
+  }
 
     function init_top_frame_notify(wbinfo) {
         function notify_top(event) {

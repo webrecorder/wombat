@@ -1,5 +1,4 @@
 export default function WombatLocation (orig_loc, wombat) {
-  if (!(this instanceof WombatLocation)) return new WombatLocation(orig_loc, wombat)
   this._orig_loc = orig_loc
 
   this.replace = function replace (url) {

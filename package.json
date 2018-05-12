@@ -2,5 +2,14 @@
   "name": "wombatImprovements",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "rollup": "^0.58.2",
+    "rollup-plugin-cleanup": "^3.0.0-beta.1",
+    "rollup-plugin-uglify": "^3.0.0"
+  },
+  "scripts": {
+    "build-dev": "rollup -c --no-strict",
+    "build": "NODE_ENV=production rollup -c --no-strict"
+  }
 }
