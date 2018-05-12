@@ -1490,8 +1490,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
     }
 
     //============================================
-    function rewrite_elem(elem)
-    {
+    function rewrite_elem(elem) {
         if (!elem) {
             return;
         }
