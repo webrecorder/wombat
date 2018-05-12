@@ -34,11 +34,11 @@ export default function WombatLocation (orig_loc, wombat) {
   this.toString = function toString () {
     return this.href
   }
-  
-  wombat.init_loc_override(this, this.orig_setter, this.orig_getter);
 
-  wombat.set_loc(this, orig_loc.href);
-  
+  wombat.init_loc_override(this, this.orig_setter, this.orig_getter)
+
+  wombat.set_loc(this, orig_loc.href)
+
   for (var prop in orig_loc) {
     if (!this.hasOwnProperty(prop) &&
       (typeof orig_loc[prop]) !== 'function') {

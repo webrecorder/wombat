@@ -14,9 +14,9 @@ CustomStorage.prototype.getItem = function getItem (name) {
 
 CustomStorage.prototype.setItem = function setItem (name, value) {
   name = String(name)
-  //if (name.length > 1000) {
+  // if (name.length > 1000) {
   //    name = name.substr(0, 1000);
-  //}
+  // }
   value = String(value)
   var old_val = this.getItem(name)
   this.data[name] = value
@@ -31,14 +31,14 @@ CustomStorage.prototype.removeItem = function removeItem (name) {
   return res
 }
 
-CustomStorage.prototype.clear = function clear() {
+CustomStorage.prototype.clear = function clear () {
   this.data = {}
   this.fire_event(null, null, null)
 }
 
 CustomStorage.prototype.key = function key (n) {
   var keys = Object.keys(this.data)
-  if (typeof(n) === 'number' && n >= 0 && n < keys.length) {
+  if (typeof (n) === 'number' && n >= 0 && n < keys.length) {
     return keys[n]
   } else {
     return null
