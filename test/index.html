@@ -23,12 +23,16 @@
 <script>mocha.setup('bdd')</script>
 <script src="test.env.js" type="text/javascript"></script>
 <script type="module">
-  import { chaiURL } from './chaiUtils.js'
+  import { chaiURL, chaiAsPromised } from './chaiUtils.js'
 
   chai.use(chaiURL)
+  chai.use(chaiAsPromised)
   window.wombatTestUtil = {
     addedSandbox: false,
     isSandboxReady: false,
+    /**
+     * @return {Promise<HTMLIFrameElement>}
+     */
     addWombatSandbox () {
       console.log('adding wombat sandbox')
       if (!this.addedSandbox) {
@@ -53,8 +57,10 @@
     },
     sandboxReady () {
       if (this.sandbox == null) {
+        console.log('sandbox ready')
         const sandboxIf = document.getElementById('wombatSandbox')
-        this.sandbox = sandboxIf.contentWindow
+        this.sandbox = sandboxIf
+        console.log(this.sandbox)
       }
       if (this.done) {
         this.done(this.sandbox)

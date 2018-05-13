@@ -7,7 +7,7 @@ const app = express()
 
 app.enable('trust proxy')
 app.set('etag', false)
-app.use(serveStatic(__dirname))
+app.use(serveStatic(__dirname, {etag: false}))
 const server = http.createServer(app)
 
 server.listen(3030)
