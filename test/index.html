@@ -20,12 +20,40 @@
 <script src="../node_modules/mocha/mocha.js" type="text/javascript"></script>
 <script src="../node_modules/chai/chai.js" type="text/javascript"></script>
 <script src="../node_modules/chai-dom/chai-dom.js" type="text/javascript"></script>
-<script>mocha.setup('bdd')</script>
+<script src="../node_modules/chai-string/chai-string.js" type="text/javascript"></script>
+<script>
+  mocha.setup({
+    ui: 'bdd',
+    ignoreLeaks: true
+  })
+</script>
+<script>
+  wbinfo = {}
+  wbinfo.app_prefix = decodeURI("https://webrecorder.io/jberlin/archival-acid-test-v2/");
+  wbinfo.content_prefix = decodeURI("https://wbrc.io/jberlin/archival-acid-test-v2/");
+  wbinfo.prefix = decodeURI("https://wbrc.io/jberlin/archival-acid-test-v2/");
+  wbinfo.coll = "archival-acid-test-v2";
+  wbinfo.url = "http://wsdl-docker.cs.odu.edu:8080/cors" + window.location.hash;
+  wbinfo.capture_url = wbinfo.url;
+  wbinfo.request_ts = "20171006223947";
+  wbinfo.timestamp = "20171006223947";
+  wbinfo.is_frame = true;
+  wbinfo.frame_mod = "";
+  wbinfo.replay_mod = "mp_";
+  wbinfo.state = "replay-coll";
+  wbinfo.sources = "";
+  wbinfo.inv_sources = "";
+  wbinfo.info = {"user": "jberlin", "size_remaining": 8765070063, "size": 8890297, "coll_id": "archival-acid-test-v2", "coll_title": "Archival Acid Test V2", "coll_desc": ""};
+  wbinfo.iframe = "#replay_iframe";
+</script>
+<script src="testingConstants.js" type="text/javascript"></script>
 <script src="test.wombat-setup.js" type="text/javascript"></script>
 <script src="chaiUtils.js" type="text/javascript"></script>
 <script>
   chai.use(chaiURL)
   chai.use(chaiAsPromised)
+  chai.use(chaiInterface)
+  chai.use(chaiInterface)
   window.wombatTestUtil = {
     addedSandbox: false,
     isSandboxReady: false,
@@ -40,6 +68,7 @@
         wbif.src = 'wombatSandbox.html'
         wbif.id = 'wombatSandbox'
         container.appendChild(wbif)
+        this.sandbox = wbif
         this.addedSandbox = true
         return new Promise((resolve) => {
           this.done = resolve
@@ -55,19 +84,16 @@
       }
     },
     sandboxReady () {
-      if (this.sandbox == null) {
-        console.log('sandbox ready')
-        const sandboxIf = document.getElementById('wombatSandbox')
-        this.sandbox = sandboxIf
-        console.log(this.sandbox)
-      }
       if (this.done) {
         this.done(this.sandbox)
         this.done = null
       }
     },
+    /**
+     * @return {Promise<HTMLIFrameElement>}
+     */
     refreshSandbox () {
-      this.sandbox.location.refresh()
+      this.sandbox.contentWindow.location.reload()
       return new Promise((resolve) => {
         this.done = resolve
       })

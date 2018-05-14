@@ -488,4 +488,313 @@
       })
     })
   }
+  var every = Array.prototype.every
+  var some = Array.prototype.some
+
+  function or () {
+    var terms = arguments
+    return function () {
+      var ctx = this
+      var args = arguments
+      return some.call(terms, function (term) {
+        return !!term.apply(ctx, args)
+      })
+    }
+  }
+
+  function and () {
+    var terms = arguments
+    return function () {
+      var ctx = this
+      var args = arguments
+      return every.call(terms, function (term) {
+        return !!term.apply(ctx, args)
+      })
+    }
+  }
+
+  function not (term) {
+    return function () {
+      return !term.apply(this, arguments)
+    }
+  }
+
+  var or_1 = or
+  var and_1 = and
+  var not_1 = not
+
+  var connective = {
+    or: or_1,
+    and: and_1,
+    not: not_1
+  }
+
+  var commonjsGlobal = typeof window !== 'undefined'
+    ? window
+    : typeof global !== 'undefined' ? global : typeof self !== 'undefined'
+      ? self
+      : {}
+
+  var k = function K (x) {
+    return function () {
+      return x
+    }
+  }
+
+  function all (predicate) {
+    return function (arr) {
+      return arr.every(predicate)
+    }
+  }
+
+  is.TypeOf = function (type) {
+    type = type.toLowerCase()
+    return function (subject) {
+      return typeof subject === type
+    }
+  }
+
+  is.ObjectOf = function (constructorName) {
+    var signature = '[object ' + constructorName + ']'
+    return function (subject) {
+      return Object.prototype.toString.call(subject) === signature
+    }
+  }
+
+  is.RegExMatch = function (regex) {
+    return function (str) {
+      return is.String(str) && regex.test(str)
+    }
+  }
+
+  is.Null = function (x) { return x === null }
+  is.Number = connective.and(is.TypeOf('number'), connective.not(Number.isNaN))
+
+  var types = [
+    'Function',
+    'Boolean',
+    'Object',
+    'Undefined',
+    'String'
+  ]
+  types.forEach(function (type) {
+    is[type] = is.TypeOf(type)
+  })
+
+  var builtins = [
+    'Date',
+    'RegExp',
+    'DataView',
+    'ArrayBuffer',
+    'Float32Array',
+    'Float64Array',
+    'Int8Array',
+    'Int16Array',
+    'Int32Array',
+    'Uint8Array',
+    'Uint16Array',
+    'Uint32Array'
+  ]
+  builtins.forEach(function (cons) {
+    is[cons] = is.ObjectOf(cons)
+  })
+
+  function is (predicate) {
+    if (predicate === Function) return is.Function
+    if (predicate === Boolean) return is.Boolean
+    if (predicate === Object) return is.Object
+    if (predicate === Number) return is.Number
+    if (predicate === String) return is.String
+    if (predicate === Array) return Array.isArray
+
+    if (predicate && predicate.name && predicate.name in
+      commonjsGlobal) return is[predicate.name]
+
+    if (predicate instanceof RegExp) return is.RegExMatch(predicate)
+    if (is.Function(predicate)) return predicate
+    if (is.Null(predicate)) return is.Null
+    if (Array.isArray(predicate)) return all(is(predicate[0]))
+
+    // object literal, fallback to tracery
+    if (is.Object(predicate)) return false
+
+    return k(false)
+  }
+
+  var is_1 = is
+
+  function Collection (predicate) {
+    return function (obj) {
+      for (var key in obj) {
+        if (!predicate(obj[key])) {
+          return false
+        }
+      }
+      return true
+    }
+  }
+
+  var collection = Collection
+
+  function tracery (structure) {
+    if (Array.isArray(structure)) {
+      return is_1(structure)
+    }
+
+    return function (obj) {
+      if (obj === undefined || obj === null) {
+        return false
+      }
+      for (var key in structure) {
+        var type = structure[key]
+        var test = is_1(type) || tracery(type)
+        var prop = obj[key]
+        if (!test(prop)) {
+          return false
+        }
+      }
+      return true
+    }
+  }
+
+  function Optional (type) {
+    return connective.or(is_1(type), is_1.Undefined)
+  }
+
+  function Nullable (type) {
+    return connective.or(is_1(type), is_1.Null)
+  }
+
+  function Vector (structure) {
+    var predicates = structure.map(is_1)
+    var len = structure.length
+    return function (arr) {
+      if (!Array.isArray(arr)) return false
+      if (arr.length !== len) return false
+      for (var i = 0; i < len; i++) {
+        var ele = arr[i]
+        if (!predicates[i](ele)) return false
+      }
+      return true
+    }
+  }
+
+  function InstanceOf (constructor) {
+    return function (x) {
+      return x instanceof constructor
+    }
+  }
+
+  var tracery_1 = tracery
+  var Collection$1 = collection
+  var Optional_1 = Optional
+  var Nullable_1 = Nullable
+  var Vector_1 = Vector
+  var InstanceOf_1 = InstanceOf
+  tracery_1.Collection = Collection$1
+  tracery_1.Optional = Optional_1
+  tracery_1.Nullable = Nullable_1
+  tracery_1.Vector = Vector_1
+  tracery_1.InstanceOf = InstanceOf_1
+
+  function diff (Interface, doc) {
+
+    var d = {}
+    var same = true
+
+    for (var prop in Interface) {
+      var actual = doc[prop]
+      var expected = Interface[prop]
+      var test = is_1(expected)
+      if (!test) {
+        // expecting an object
+
+        if (!actual) {
+          // and it's mising
+          same = false
+          d[prop] = {
+            actual: toString(actual),
+            expected: toString(expected),
+            actualValue: actual
+          }
+        } else {
+          // it's an object, recurse
+          var dd = diff(expected, actual)
+          if (dd) {
+            same = false
+            d[prop] = dd
+          }
+        }
+
+      } else if (!is_1(expected)(actual)) {
+        same = false
+        d[prop] = {
+          actual: toString(actual),
+          expected: toString(expected),
+          actualValue: actual
+        }
+      }
+    }
+
+    return same ? false : d
+
+  }
+
+  function toString (type) {
+
+    // null
+    if (is_1.Null(type)) { return 'Null' }
+
+    var t = typeof type
+    // builtin functions and custom pattern predicates
+    if (t === 'function') {
+      return type.name || 'Custom Function'
+    }
+
+    // value types
+    if (t !== 'object') return t[0].toUpperCase() + t.substring(1)
+
+    // typed arrays
+    if (Array.isArray(type)) {
+      var t0 = toString(type[0])
+      if (type.every(function (ele) { return toString(ele) === t0 })) {
+        return 'Array<' + t0 + '>'
+      } else {
+        return 'Array'
+      }
+
+    }
+
+    // otherwise
+    return Object.prototype.toString(type).replace(/[\[\]]/g, '')
+  }
+
+  var diff_1 = diff
+
+  function chaiInterface (chai, utils) {
+    var Assertion = chai.Assertion
+    var assert = chai.assert
+
+    utils.addMethod(Assertion.prototype, 'interface', function (interfaceMap) {
+      // map is an object map with property names as keys and strings for
+      // typeof checks or a nested interfaceMap
+      assert(typeof this._obj === 'object' || typeof this._obj === 'function',
+        'object or function expected')
+
+      var hasInterface = tracery_1(interfaceMap)
+      assert(
+        hasInterface(this._obj),
+        format(diff_1(interfaceMap, this._obj)))
+    })
+
+  }
+
+  function format (diff) {
+    var str = 'Interface not as expected:\n'
+    // pretty print json
+    str += JSON.stringify(diff, null, 2)
+    return str
+  }
+
+  window.chaiInterface = chaiInterface
 })()

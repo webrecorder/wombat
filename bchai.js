@@ -1,5 +1,3 @@
-import chaiAsPromised from 'chai-as-promised'
-// import chaiAssertType from 'chai-asserttype'
-
-window.chaiAsPromised = chaiAsPromised
-// window.chaiAssertType = chaiAssertType
+import './node_modules/mocha/mocha.js'
+import './node_modules/chai/chai.js'
+import './node_modules/chai-dom/chai-dom.js'
