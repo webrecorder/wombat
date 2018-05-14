@@ -105,6 +105,11 @@ describe('Wombat setup', function () {
       const {window} = this.wombatSandbox
       expect(() => new window.Wombat(window, window.wbinfo)).to.throw(TypeError, 'window.Wombat is not a constructor')
     })
+    it('should be possible using _WBWombat function', function () {
+      const {window} = this.wombatSandbox
+      const wombat = window._WBWombat(window, window.wbinfo)
+      expect(wombat).to.be.a('object').that.has.keys({extract_orig: 'ingnored', rewrite_url:'', watch_elem:'', init_new_window_wombat: '', init_paths: '', local_init: ''})
+    })
   })
 
   describe('after initialization', function () {
