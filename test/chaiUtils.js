@@ -467,27 +467,52 @@
       return contains ? actual.includes(expected) : actual === expected
     }
 
-    const urlParser = new URL('about:blank')
+    function assertIsUrl () {
+      const obj = this._obj
+      new Assertion(() => new URL(obj)).to.not.throw()
+    }
+
+    function chainIsUrl (){
+      const obj = this._obj
+      let parsed
+      new Assertion(() => {
+        parsed = new URL(obj)
+      }).to.not.throw()
+      utils.flag(this, 'URL', parsed)
+    }
+
+    Assertion.addChainableMethod('url', assertIsUrl, chainIsUrl)
     props.forEach(prop => {
       Assertion.addMethod(prop, function (value) {
-        const str = this._obj
-
-        // if url isn't a string we cannot continue
-        new Assertion(str).to.be.a('string')
-
-        urlParser.href = str
-        const contains = utils.flag(this, 'contains')
-        const match = matcher(value, urlParser[prop], contains)
-        this.assert(
-          match,
-          `expected #{this} to have ${prop} #{exp} but got #{act}`,
-          `expected #{this} to not to have ${prop} #{act}`,
-          value,
-          url[prop]
-        )
+        const maybeURL = utils.flag(this, 'URL')
+        if (maybeURL) {
+          const contains = utils.flag(this, 'contains')
+          const match = matcher(value, maybeURL[prop], contains)
+          this.assert(
+            match,
+            `expected #{this} to have ${prop} #{exp} but got #{act}`,
+            `expected #{this} to not to have ${prop} #{act}`,
+            value,
+            maybeURL[prop]
+          )
+        } else {
+          const str = this._obj
+          const urlParser = new URL('about:blank')
+          new Assertion(() => urlParser.href = str).to.not.throw()
+          const contains = utils.flag(this, 'contains')
+          const match = matcher(value, urlParser[prop], contains)
+          this.assert(
+            match,
+            `expected #{this} to have ${prop} #{exp} but got #{act}`,
+            `expected #{this} to not to have ${prop} #{act}`,
+            value,
+            url[prop]
+          )
+        }
       })
     })
   }
+
   var every = Array.prototype.every
   var some = Array.prototype.some
 

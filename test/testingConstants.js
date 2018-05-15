@@ -35,5 +35,10 @@ window.setupAfter = {
   },
 
   anchorElement: ['href', 'hash', 'pathname', 'host', 'hostname', 'protocol',
-    'origin', 'search', 'port']
+    'origin', 'search', 'port'],
+
+  styleProto: {
+    on: window.CSS2Properties != null ? 'CSS2Properties' : 'CSSStyleDeclaration',
+    props: ['cssText', 'background', 'backgroundImage', 'cursor', 'border', 'borderImage', 'borderImageSource']
+  }
 }
