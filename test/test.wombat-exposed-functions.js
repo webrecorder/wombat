@@ -73,11 +73,17 @@ describe('Wombat exposed functions', function () {
     before(function () {
       this._$internalHelper.init()
     })
-    it('should return an original url', function () {
+
+    it('should extract the original url', function () {
       const {window: {_wb_wombat}} = this.wombatSandbox
-      const maybeURL =
-        _wb_wombat.extract_orig('http://localhost:3030/jberlin/sw/20180510171123/https://n0tan3rd.github.io/replay_test/')
-      expect(maybeURL).to.be.a.url.with.href('https://n0tan3rd.github.io/replay_test/')
+      const maybeURL = _wb_wombat.extract_orig('http://localhost:3030/jberlin/sw/20180510171123/https://n0tan3rd.github.io/replay_test/')
+      expect(maybeURL).to.be.a.url.equal('https://n0tan3rd.github.io/replay_test/')
+    })
+
+    it('should not modify an un-rewritten url', function () {
+      const {window: {_wb_wombat}} = this.wombatSandbox
+      const maybeURL = _wb_wombat.extract_orig('https://n0tan3rd.github.io/replay_test/')
+      expect(maybeURL).to.be.a.url.equal('https://n0tan3rd.github.io/replay_test/')
     })
   })
 })
