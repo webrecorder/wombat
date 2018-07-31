@@ -1,0 +1,16 @@
+{
+   "extends": ["semistandard"],
+   "env": {
+      "browser": true,
+      "node": true
+   },
+   "rules": {
+      "camelcase": "off"
+   },
+   "globals": {
+      "chai": true,
+      "mocha": true,
+      "WB_wombat_location": true,
+      "expect": true
+   }
+}

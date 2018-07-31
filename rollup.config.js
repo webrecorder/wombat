@@ -1,18 +1,28 @@
-import uglify from 'rollup-plugin-uglify'
+import uglify from 'rollup-plugin-uglify';
 
-const config = {
+const full = {
   input: 'src/newWombat/wbWombat.js',
   output: {
     name: 'wombat',
-    file: 'wombat.js',
+    file: 'docs/wombat-full.js',
     format: 'iife'
   }
-}
+};
 
 if (process.env.NODE_ENV === 'production') {
-  config.plugins = [
+  full.plugins = [
     uglify()
-  ]
+  ];
 }
 
-export default config
+export default [
+  full,
+  {
+    input: 'src/newWombat/wombat.js',
+    output: {
+      name: 'wombat',
+      file: 'docs/wombat-only.js',
+      format: 'es'
+    }
+  }
+];

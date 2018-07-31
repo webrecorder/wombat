@@ -1,44 +1,29 @@
 /* eslint-env mocha */
-
 describe('Wombat overrides', function () {
-  before(async function () {
-    let wombatIf = await window.wombatTestUtil.addWombatSandbox()
-    /**
-     * @type {{window: Window | null, document: Document | null}}
-     */
-    this.wombatSandbox = {
-      window: wombatIf.contentWindow,
-      document: wombatIf.contentDocument
-    }
+  const expect = window.chai.expect;
+  before(window.initTestContext({init: true}));
 
-    const testSelf = this
-    this._$internalHelper = {
-      validTestTitles: {
-        '"before all" hook': true,
-        '"before" hook': true
-      },
-      checkValidCall () {
-        if (!this.validTestTitles[testSelf.test.title]) {
-          throw new Error(`Invalid usage of internal helpers at ${testSelf.test.title}`)
-        }
-      },
-      async refresh () {
-        this.checkValidCall()
-        wombatIf = await window.wombatTestUtil.refreshSandbox()
-        testSelf.wombatSandbox.window = wombatIf.contentWindow
-        testSelf.wombatSandbox.document = wombatIf.contentDocument
-      },
-      async refreshInit () {
-        await this.refresh()
-        this.init()
-      },
-      init () {
-        testSelf.wombatSandbox.window._WBWombat(testSelf.wombatSandbox.window, testSelf.wombatSandbox.window.wbinfo)
-      }
-    }
-  })
+  describe('init_top_frame', function () {
+    it('should set __WB_replay_top correctly', function () {
+      const {window} = this.wombatSandbox;
+      expect(window.__WB_replay_top).to.equal(window, 'The replay top should equal to frames window object');
+    });
 
-  after(function () {
-    window.wombatTestUtil.removeWombatSandbox()
-  })
-})
+    it('should set __WB_orig_parent correctly', function () {
+      const {window: wbWindow} = this.wombatSandbox;
+      expect(wbWindow.__WB_orig_parent).to.equal(window, '__WB_orig_parent should equal the actual top');
+    });
+
+    it('should set parent to itself (__WB_replay_top)', function () {
+      const {window} = this.wombatSandbox;
+      expect(window.parent).to.equal(window.__WB_replay_top, 'parent should equal to itself (__WB_replay_top)');
+    });
+  });
+
+  describe('WombatLocation', function () {
+    it('s', function () {
+      const {window} = this.wombatSandbox;
+      console.log(window.WB_wombat_location);
+    });
+  });
+});

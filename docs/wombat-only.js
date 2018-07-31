@@ -1,9 +1,221 @@
-/* eslint-disable camelcase */
+function FuncMap () {
+  this._arr = [];
+}
 
-import FuncMap from './funcMap'
-import CustomStorage from './customStorage'
-import WombatLocation from './wombatLocation'
-import { SameOriginListener, WrappedListener } from './listeners'
+FuncMap.prototype.find = function (func) {
+  for (var i = 0; i < this._arr.length; i++) {
+    if (this._arr[i][0] === func) {
+      return i;
+    }
+  }
+  return -1;
+};
+
+FuncMap.prototype.add_or_get = function (func, initter) {
+  var res = this.find(func);
+  if (res >= 0) {
+    return this._arr[res][1];
+  }
+  var value = initter();
+  this._arr.push([func, value]);
+  return value;
+};
+
+FuncMap.prototype.remove = function (func) {
+  var res = this.find(func);
+  if (res >= 0) {
+    return this._arr.splice(res, 1)[0][1];
+  }
+  return null;
+};
+
+FuncMap.prototype.map = function (param) {
+  for (var i = 0; i < this._arr.length; i++) {
+    this._arr[i][1](param);
+  }
+};
+
+function CustomStorage (wombat) {
+  this.data = {};
+  this.wombat = wombat;
+  Object.defineProperty(this, 'length', {
+    get: function () {
+      return Object.keys(this.data).length;
+    }
+  });
+}
+
+CustomStorage.prototype.getItem = function getItem (name) {
+  return this.data.hasOwnProperty(name) ? this.data[name] : null;
+};
+
+CustomStorage.prototype.setItem = function setItem (name, value) {
+  var sname = String(name);
+  var svalue = String(value);
+  var old = this.getItem(sname);
+  this.data[sname] = value;
+  this.fireEvent(sname, old, svalue);
+};
+
+CustomStorage.prototype.removeItem = function removeItem (name) {
+  var old = this.getItem(name);
+  var res = delete this.data[name];
+  this.fireEvent(name, old, null);
+  return res;
+};
+
+CustomStorage.prototype.clear = function clear () {
+  this.data = {};
+  this.fireEvent(null, null, null);
+};
+
+CustomStorage.prototype.key = function key (n) {
+  var keys = Object.keys(this.data);
+  if (typeof n === 'number' && n >= 0 && n < keys.length) {
+    return keys[n];
+  } else {
+    return null;
+  }
+};
+
+CustomStorage.prototype.fireEvent = function fireEvent (key, oldValue, newValue) {
+  var sevent = new StorageEvent('storage', {
+    key: key,
+    newValue: newValue,
+    oldValue: oldValue,
+    url: this.wombat.$wbwindow.WB_wombat_location.href
+  });
+
+  sevent._storageArea = this;
+
+  this.wombat.storage_listeners.map(sevent);
+};
+
+function WombatLocation (orig_loc, wombat) {
+  this._orig_loc = orig_loc;
+  this.wombat = wombat;
+
+  wombat.init_loc_override(this, this.orig_setter, this.orig_getter);
+
+  wombat.set_loc(this, orig_loc.href);
+
+  for (var prop in orig_loc) {
+    if (!this.hasOwnProperty(prop) && typeof orig_loc[prop] !== 'function') {
+      this[prop] = orig_loc[prop];
+    }
+  }
+  if (typeof self.Symbol !== 'undefined' && typeof self.Symbol.toStringTag !== 'undefined') {
+    Object.defineProperty(this, self.Symbol.toStringTag, {
+      get: function () {
+        return 'Location';
+      }
+    });
+  }
+}
+
+WombatLocation.prototype.replace = function replace (url) {
+  var new_url = this.wombat.rewrite_url(url);
+  var orig = this.wombat.extract_orig(new_url);
+  if (orig === this.href) {
+    return orig;
+  }
+  return this._orig_loc.replace(new_url);
+};
+
+WombatLocation.prototype.assign = function assign (url) {
+  var new_url = this.wombat.rewrite_url(url);
+  var orig = this.wombat.extract_orig(new_url);
+  if (orig === this.href) {
+    return orig;
+  }
+  return this._orig_loc.assign(new_url);
+};
+
+WombatLocation.prototype.reload = function reload () {
+  return this._orig_loc.reload();
+};
+
+WombatLocation.prototype.orig_getter = function orig_getter (prop) {
+  return this._orig_loc[prop];
+};
+
+WombatLocation.prototype.orig_setter = function orig_setter (prop, value) {
+  this._orig_loc[prop] = value;
+};
+
+WombatLocation.prototype.toString = function toString () {
+  return this.href;
+};
+
+function SameOriginListener (orig_listener, win) {
+  function listen (event) {
+    if (window !== win) {
+      return;
+    }
+
+    return orig_listener(event);
+  }
+
+  return { listen: listen };
+}
+
+function WrappedListener (orig_listener, win, wombat) {
+  function listen (event) {
+    var ne = event;
+
+    if (event.data.from && event.data.message) {
+      if (
+        event.data.to_origin !== '*' &&
+        win.WB_wombat_location &&
+        !wombat.starts_with(event.data.to_origin, win.WB_wombat_location.origin)
+      ) {
+        console.warn(
+          'Skipping message event to ' +
+          event.data.to_origin +
+          " doesn't start with origin " +
+          win.WB_wombat_location.origin
+        );
+        return;
+      }
+
+      var source = event.source;
+
+      if (event.data.from_top) {
+        source = win.__WB_top_frame;
+      } else if (
+        event.data.src_id &&
+        win.__WB_win_id &&
+        win.__WB_win_id[event.data.src_id]
+      ) {
+        source = win.__WB_win_id[event.data.src_id];
+      }
+
+      source = wombat.proxy_to_obj(source);
+
+      ne = new MessageEvent('message', {
+        bubbles: event.bubbles,
+        cancelable: event.cancelable,
+        data: event.data.message,
+        origin: event.data.from,
+        lastEventId: event.lastEventId,
+        source: source,
+        ports: event.ports
+      });
+
+      ne._target = event.target;
+      ne._srcElement = event.srcElement;
+      ne._currentTarget = event.currentTarget;
+      ne._eventPhase = event.eventPhase;
+      ne._path = event.path;
+    }
+
+    return orig_listener(ne);
+  }
+
+  return { listen: listen };
+}
+
+/* eslint-disable camelcase */
 function Wombat ($wbwindow, wbinfo) {
   this.debug_rw = false;
   this.$wbwindow = $wbwindow;
