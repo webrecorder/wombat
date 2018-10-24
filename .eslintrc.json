@@ -5,7 +5,8 @@
       "node": true
    },
    "rules": {
-      "camelcase": "off"
+      "camelcase": "off",
+      "no-fallthrough": "off"
    },
    "globals": {
       "chai": true,

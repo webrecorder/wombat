@@ -1,8 +1,11 @@
+'use strict';
 import 'mocha/mocha';
 import 'chai/chai';
 import 'chai-dom';
 import 'chai-string';
-import {chaiAsPromised, chaiInterface, chaiURL} from './browserfied';
+import chaiAsPromised from './chai-as-promised';
+import chaiInterface from './chai-interface';
+import chaiURL from './chai-url';
 import WombatTestUtil from './wombatTestUtil';
 
 /**
@@ -61,13 +64,22 @@ window.setupAfter = {
     props: ['cssText', 'background', 'backgroundImage', 'cursor', 'border', 'borderImage', 'borderImageSource']
   }
 };
+
 window.wombatTestUtil = new WombatTestUtil();
 
 window.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'wombat-sandbox-ready') {
-    window.wombatTestUtil.sandboxReady();
-  } else {
-    console.log(event);
+  const { data } = event;
+  if (data && data.type) {
+    switch (event.data.type) {
+      case 'wombat-sandbox-ready':
+        window.wombatTestUtil.sandboxReady();
+        break;
+      default:
+        console.log('WombatTestUtil got unhandled msg', event.data);
+        break;
+    }
+  } else if (data && data.wb_type) {
+    window.wombatTestUtil.wombatMSG(data);
   }
 }, false);
 

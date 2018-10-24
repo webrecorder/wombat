@@ -13,9 +13,24 @@ export function chaiURL (chai, utils) {
     'search',
     'username'];
 
-  function matcher (expected, actual, contains) {
-    return contains ? actual.includes(expected) : actual === expected;
-  }
+  const matchers = {
+    protocol (expected, actual, contains) {
+      if (contains) return actual.includes(expected);
+      return expected === actual || expected + ':' === actual;
+    },
+    hash (expected, actual, contains) {
+      return matchers.default(expected, actual, contains) || matchers.default('#' + expected, actual, contains);
+    },
+    port (expected, actual, contains) {
+      if (contains) {
+        console.warn('chai-url: `contains` flag should not be used with port matching and will be ignored');
+      }
+      return expected === actual || expected === parseInt(actual, 10);
+    },
+    default (expected, actual, contains) {
+      return contains ? actual.includes(expected) : actual === expected;
+    }
+  };
 
   function assertIsUrl () {
     const obj = this._obj;
@@ -24,19 +39,24 @@ export function chaiURL (chai, utils) {
 
   function chainIsUrl () {
     const obj = this._obj;
-    let parsed;
-    new Assertion(() => {
-      parsed = new URL(obj);
-    }).to.not.throw();
-    utils.flag(this, 'URL', parsed);
+    try {
+      utils.flag(this, 'URL', new URL(obj));
+    } catch (e) {
+      // hack :'(
+      new Assertion(() => { throw e; }).to.not.throw();
+    }
   }
 
   Assertion.addChainableMethod('url', assertIsUrl, chainIsUrl);
-  props.forEach(prop => {
+
+  let i = props.length;
+  while (i--) {
+    let prop = props[i];
     Assertion.addMethod(prop, function (value) {
       const maybeURL = utils.flag(this, 'URL');
       if (maybeURL) {
         const contains = utils.flag(this, 'contains');
+        const matcher = matchers[prop] || matchers.default;
         const match = matcher(value, maybeURL[prop], contains);
         this.assert(
           match,
@@ -48,10 +68,9 @@ export function chaiURL (chai, utils) {
       } else {
         const str = this._obj;
         const url = new URL('about:blank');
-        new Assertion(() => {
-          url.href = str;
-        }).to.not.throw();
+        new Assertion(() => { url.href = str; }).to.not.throw();
         const contains = utils.flag(this, 'contains');
+        const matcher = matchers[prop] || matchers.default;
         const match = matcher(value, url[prop], contains);
         this.assert(
           match,
@@ -62,8 +81,9 @@ export function chaiURL (chai, utils) {
         );
       }
     });
-  });
+  }
 }
+
 export function chaiAsPromised (chai, utils) {
   const Assertion = chai.Assertion;
   const assert = chai.assert;
@@ -497,6 +517,7 @@ export function chaiAsPromised (chai, utils) {
     };
   });
 }
+
 export function chaiInterface (chai, utils) {
   var Assertion = chai.Assertion;
   var assert = chai.assert;

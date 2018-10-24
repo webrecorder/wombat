@@ -1,6 +1,13 @@
 export default function WombatLocation (orig_loc, wombat) {
   this._orig_loc = orig_loc;
-  this.wombat = wombat;
+
+  Object.defineProperty(this, 'wombat', {
+    configurable: true,
+    enumerable: false,
+    'get': function () {
+      return wombat;
+    }
+  });
 
   wombat.init_loc_override(this, this.orig_setter, this.orig_getter);
 
@@ -11,6 +18,7 @@ export default function WombatLocation (orig_loc, wombat) {
       this[prop] = orig_loc[prop];
     }
   }
+
   if (typeof self.Symbol !== 'undefined' && typeof self.Symbol.toStringTag !== 'undefined') {
     Object.defineProperty(this, self.Symbol.toStringTag, {
       get: function () {
@@ -52,4 +60,8 @@ WombatLocation.prototype.orig_setter = function orig_setter (prop, value) {
 
 WombatLocation.prototype.toString = function toString () {
   return this.href;
+};
+
+WombatLocation.prototype.valueOf = function valueOf () {
+  return this;
 };

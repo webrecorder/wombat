@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint-disable no-unused-expressions */
 describe('Wombat overrides', function () {
   const expect = window.chai.expect;
   before(window.initTestContext({init: true}));
@@ -20,10 +21,20 @@ describe('Wombat overrides', function () {
     });
   });
 
-  describe('WombatLocation', function () {
-    it('s', function () {
+  describe('init_wombat_loc', function () {
+    it('should add WB_wombat_location to window', function () {
       const {window} = this.wombatSandbox;
-      console.log(window.WB_wombat_location);
+      expect(window.WB_wombat_location).to.not.be.null;
+    });
+
+    it('should add the correct property values to WB_wombat_location', function () {
+      const {window} = this.wombatSandbox;
+      const url = new URL(window.wbinfo.url);
+      console.log(url)
+      console.log(Object.keys(url))
+      for(const prop of Object.keys(url)) {
+        console.log(prop);
+      }
     });
   });
 });

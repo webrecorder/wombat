@@ -1,4 +1,4 @@
-import uglify from 'rollup-plugin-uglify';
+import minify from 'rollup-plugin-babel-minify';
 
 const full = {
   input: 'src/newWombat/wbWombat.js',
@@ -11,7 +11,10 @@ const full = {
 
 if (process.env.NODE_ENV === 'production') {
   full.plugins = [
-    uglify()
+    minify({
+      comments: false,
+      sourceMap: false
+    })
   ];
 }
 

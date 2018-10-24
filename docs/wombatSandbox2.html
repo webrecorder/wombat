@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wombat sandbox</title>
+    <script>
+      function ll (event) {
+        window.top.postMessage({type: 'wombat-sandbox-ready'}, '*');
+      }
+    </script>
+    <script>
+      wbinfo = {}
+      wbinfo.top_url = location.href.replace('mp_', '');
+      wbinfo.url = "https://tests.wombat.io/";
+      wbinfo.timestamp = "20180803160549";
+      wbinfo.request_ts = "20180803160549";
+      wbinfo.prefix = decodeURI(`${window.location.protocol}//localhost:${window.location.port}/`);
+      wbinfo.mod = "mp_";
+      wbinfo.is_framed = true;
+      wbinfo.is_live = false;
+      wbinfo.coll = "";
+      wbinfo.proxy_magic = "";
+      wbinfo.static_prefix = "https://content.webrecorder.io/static/bundle/";
+
+      wbinfo.wombat_ts = "20180803160549";
+      wbinfo.wombat_sec = "1533312349";
+      wbinfo.wombat_scheme = "https";
+      wbinfo.wombat_host = "tests.wombat.io";
+
+      wbinfo.wombat_opts = {};
+      wbinfo.state = "";
+      wbinfo.metadata = {};
+    </script>
+</head>
+<body>
+<script src="https://localhost:8443/wombat-full.js" onload="ll()"></script>
+</body>
+</html>

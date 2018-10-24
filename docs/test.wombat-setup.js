@@ -158,7 +158,7 @@ describe('Wombat setup', function () {
 
       it('should add the property _wb_wombat to the window which is an object containing the exposed functions', function () {
         const {window} = this.wombatSandbox;
-        const ignored = new window._WBWombat(window, window.wbinfo);
+        const exposed = new window._WBWombat(window, window.wbinfo);
         expect(window._wb_wombat).to.have.interface({
           extract_orig: Function,
           rewrite_url: Function,
@@ -167,6 +167,8 @@ describe('Wombat setup', function () {
           init_paths: Function,
           local_init: Function
         });
+
+        expect(exposed).to.not.be.eq(null);
       });
     });
   });
@@ -174,7 +176,6 @@ describe('Wombat setup', function () {
   describe('after initialization', function () {
     before('wombatSetupAfterInitialization', async function () {
       await this._$internalHelper.refreshInit();
-      // this._$internalHelper.init()
     });
 
     describe('internal globals', function () {
@@ -188,9 +189,9 @@ describe('Wombat setup', function () {
         expect(window).to.have.property('__WB_replay_top').that.is.equal(window);
       });
 
-      it('should not define the property __WB_top_frame when it is the top replayed page', function () {
+      it('should define the property __WB_top_frame when it is the top replayed page', function () {
         const {window} = this.wombatSandbox;
-        expect(window).to.have.property('__WB_top_frame').that.is.equal(undefined, '__WB_top_frame not defined when it is the top replayed page and it should be our window');
+        expect(window).to.have.property('__WB_top_frame').that.is.not.equal(undefined, '__WB_top_frame not defined when it is the top replayed page and it should be our window');
       });
 
       it('should define the WB_wombat_top property on Object.prototype', function () {
@@ -629,6 +630,22 @@ describe('Wombat setup', function () {
           expect(wombatPD.set.toString()).to.containIgnoreSpaces('wombat');
         });
       }
+    });
+
+    it('should have sent actual top the loadMSG', function () {
+      expect(this.wombatMSGs.size).to.eq(1, 'Wombat should have notified top the page has loaded');
+      expect(this.wombatMSGs.numValues('load')).to.eq(1, 'Wombat should have notified top the page has loaded only once');
+      expect(this.wombatMSGs.firstValue('load')).to.deep.eq({
+        is_live: false,
+        readyState: 'complete',
+        request_ts: '20180803160549',
+        title: 'Wombat sandbox',
+        ts: '20180803160549',
+        url: 'https://tests.wombat.io',
+        wb_type: 'load'
+      },
+      'The message sent by wombat to inform top it has loaded should have the correct properties'
+      );
     });
   });
 });

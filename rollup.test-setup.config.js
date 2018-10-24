@@ -1,4 +1,5 @@
 import resolve from 'rollup-plugin-node-resolve';
+import minify from 'rollup-plugin-babel-minify';
 
 export default {
   input: 'test-setup/bundle.js',
@@ -12,6 +13,10 @@ export default {
       customResolveOptions: {
         moduleDirectory: 'node_modules'
       }
+    }),
+    minify({
+      comments: false,
+      sourceMap: false
     })
   ]
 };
