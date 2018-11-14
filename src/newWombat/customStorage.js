@@ -2,7 +2,7 @@ export default function CustomStorage (wombat) {
   this.data = {};
   this.wombat = wombat;
   Object.defineProperty(this, 'length', {
-    get: function () {
+    'get': function () {
       return Object.keys(this.data).length;
     }
   });

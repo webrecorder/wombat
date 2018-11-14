@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 /**
  * @param {Wombat} wombat
  */
@@ -63,7 +65,13 @@ AutoFetchWorker.prototype.terminate = function () {
   this.worker.terminate();
 };
 
-AutoFetchWorker.prototype.postMessage = function (msg) {
+AutoFetchWorker.prototype.postMessage = function (msg, deferred) {
+  if (deferred) {
+    var self = this;
+    return Promise.resolve().then(function () {
+      self.worker.postMessage(msg);
+    });
+  }
   this.worker.postMessage(msg);
 };
 
@@ -72,7 +80,7 @@ AutoFetchWorker.prototype.preserveSrcset = function (srcset) {
   this.postMessage({
     'type': 'values',
     'srcset': { 'values': srcset, 'presplit': true }
-  });
+  }, true);
 };
 
 AutoFetchWorker.prototype.preserveMedia = function (media) {
@@ -109,6 +117,9 @@ AutoFetchWorker.prototype.extractFromLocalDoc = function () {
   this.postMessage({
     'type': 'values',
     'media': media,
-    'srcset': { 'values': srcset, 'presplit': false }
-  });
+    'srcset': { 'values': srcset, 'presplit': false },
+    'context': {
+      'docBaseURI': this.wombat.$wbwindow.document.baseURI
+    }
+  }, true);
 };

@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 export default function WombatLocation (orig_loc, wombat) {
   this._orig_loc = orig_loc;
 

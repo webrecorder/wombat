@@ -1,9 +1,9 @@
-import Wombat from './wombat';
+import WombatLite from './wombatLite';
 
-window._WBWombat = Wombat;
+window._WBWombat = WombatLite;
 window._WBWombatInit = function (wbinfo) {
   if (!this._wb_wombat || !this._wb_wombat.actual) {
-    var wombat = new Wombat(this, wbinfo);
+    var wombat = new WombatLite(this, wbinfo);
     wombat.actual = true;
     this._wb_wombat = wombat.wombat_init();
     this._wb_wombat.actual = true;

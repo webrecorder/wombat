@@ -1,190 +1,169 @@
-'use strict';
-// thanks wombat
-var STYLE_REGEX = /(url\s*\(\s*[\\"']*)([^)'"]+)([\\"']*\s*\))/gi;
-var IMPORT_REGEX = /(@import\s+[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
-var srcsetSplit = /\s*(\S*\s+[\d.]+[wx]),|(?:\s*,(?:\s+|(?=https?:)))/;
-// the autofetcher instance for this worker
-var autofetcher = null;
+/* eslint-disable camelcase */
 
-function noop () {}
-
-if (typeof self.Promise === 'undefined') {
-  // not kewl we must polyfill Promise
-  self.Promise = function (executor) {
-    executor(noop, noop);
-  };
-  self.Promise.prototype.then = function (cb) {
-    if (cb) cb();
-    return this;
-  };
-  self.Promise.prototype.catch = function () {
-    return this;
-  };
-  self.Promise.all = function (values) {
-    return new Promise(noop);
-  };
+export default function AutoFetchWorkerProxyMode (wombat, isTop) {
+  if (!(this instanceof AutoFetchWorkerProxyMode)) {
+    return new AutoFetchWorkerProxyMode(wombat);
+  }
+  this.wombat = wombat;
+  this.checkIntervalTime = 15000;
+  this.checkIntervalCB = this.checkIntervalCB.bind(this);
+  if (isTop) {
+    // Cannot directly load our worker from the proxy origin into the current origin
+    // however we fetch it from proxy origin and can blob it into the current origin :)
+    var self = this;
+    fetch(wombat.wbAutoFetchWorkerPrefix)
+      .then(function (res) {
+        return res.text().then(function (text) {
+          var blob = new Blob([text], { 'type': 'text/javascript' });
+          self.worker = new self.wombat.$wbwindow.Worker(URL.createObjectURL(blob));
+          // use our origins reference to the document in order for us to parse stylesheets :/
+          self.styleTag = document.createElement('style');
+          self.styleTag.id = '$wrStyleParser$';
+          document.documentElement.appendChild(self.styleTag);
+          self.startCheckingInterval();
+        });
+      });
+  } else {
+    // add only the portions of the worker interface we use since we are not top and if in proxy mode start check polling
+    this.worker = {
+      'postMessage': function (msg) {
+        if (!msg.wb_type) {
+          msg = { 'wb_type': 'aaworker', 'msg': msg };
+        }
+        wombat.$wbwindow.top.postMessage(msg, '*');
+      },
+      'terminate': function () {}
+    };
+    this.startCheckingInterval();
+  }
 }
 
-if (typeof self.fetch === 'undefined') {
-  // not kewl we must polyfill fetch.
-  self.fetch = function (url) {
-    return new Promise(function (resolve) {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', url);
-      xhr.send();
-      resolve();
-    });
-  };
-}
-
-self.onmessage = function (event) {
-  var data = event.data;
-  switch (data.type) {
-    case 'values':
-      autofetcher.autofetchMediaSrcset(data);
-      break;
+AutoFetchWorkerProxyMode.prototype.startCheckingInterval = function () {
+  // if document ready state is complete do first extraction and start check polling
+  // otherwise wait for document ready state to complete to extract and start check polling
+  var self = this;
+  if (this.wombat.$wbwindow.document.readyState === 'complete') {
+    this.extractFromLocalDoc();
+    setInterval(this.checkIntervalCB, this.checkIntervalTime);
+  } else {
+    var i = setInterval(function () {
+      if (self.wombat.$wbwindow.document.readyState === 'complete') {
+        self.extractFromLocalDoc();
+        clearInterval(i);
+        setInterval(self.checkIntervalCB, self.checkIntervalTime);
+      }
+    }, 1000);
   }
 };
 
-function AutoFetcher () {
-  if (!(this instanceof AutoFetcher)) {
-    return new AutoFetcher();
-  }
-  // local cache of URLs fetched, to reduce server load
-  this.seen = {};
-  // array of promises returned by fetch(URL)
-  this.fetches = [];
-  // array of URL to be fetched
-  this.queue = [];
-  // should we queue a URL or not
-  this.queuing = false;
-  // a URL to resolve relative URLs found in the cssText of CSSMedia rules.
-  this.currentResolver = null;
-  this.urlExtractor = this.urlExtractor.bind(this);
-  this.fetchDone = this.fetchDone.bind(this);
-}
-
-AutoFetcher.prototype.safeFetch = function (url) {
-  // ensure we do not request data urls
-  if (url.indexOf('data:') === 0) return;
-  // check to see if we have seen this url before in order
-  // to lessen the load against the server content is autofetchd from
-  if (this.seen[url] != null) return;
-  this.seen[url] = true;
-  if (this.queuing) {
-    // we are currently waiting for a batch of fetches to complete
-    return this.queue.push(url);
-  }
-  // fetch this url
-  this.fetches.push(fetch(url));
+AutoFetchWorkerProxyMode.prototype.checkIntervalCB = function () {
+  this.extractFromLocalDoc();
 };
 
-AutoFetcher.prototype.safeResolve = function (url, resolver) {
-  // Guard against the exception thrown by the URL constructor if the URL or resolver is bad
-  // if resolver is undefined/null then this function passes url through
-  var resolvedURL = url;
-  if (resolver) {
-    try {
-      resolvedURL = (new URL(url, resolver)).href;
-    } catch (e) {
-      resolvedURL = url;
+AutoFetchWorkerProxyMode.prototype.terminate = function () {
+  // terminate the worker, a no op when not replay top
+  this.worker.terminate();
+};
+
+AutoFetchWorkerProxyMode.prototype.postMessage = function (msg) {
+  this.worker.postMessage(msg);
+};
+
+AutoFetchWorkerProxyMode.prototype.extractMediaRules = function (rules, href) {
+  // We are in proxy mode and must include a URL to resolve relative URLs in media rules
+  if (!rules) return [];
+  var rvlen = rules.length;
+  var text = [];
+  var rule;
+  for (var i = 0; i < rvlen; ++i) {
+    rule = rules[i];
+    if (rule.type === CSSRule.MEDIA_RULE) {
+      text.push({ 'cssText': rule.cssText, 'resolve': href });
     }
   }
-  return resolvedURL;
+  return text;
 };
 
-AutoFetcher.prototype.urlExtractor = function (match, n1, n2, n3, offset, string) {
-  // Same function as style_replacer in wombat.rewrite_style, n2 is our URL
-  // this.currentResolver is set to the URL which the browser would normally
-  // resolve relative urls with (URL of the stylesheet) in an exceptionless manner
-  // (resolvedURL will be undefined if an error occurred)
-  var resolvedURL = this.safeResolve(n2, this.currentResolver);
-  if (resolvedURL) {
-    this.safeFetch(resolvedURL);
-  }
-  return n1 + n2 + n3;
+AutoFetchWorkerProxyMode.prototype.corsCSSFetch = function (href) {
+  // because this JS in proxy mode operates as it would on the live web
+  // the rules of CORS apply and we cannot rely on URLs being rewritten correctly
+  // fetch the cross origin css file and then parse it using a style tag to get the rules
+  var url = location.protocol + '//' + this.wb_info.proxy_magic + '/proxy-fetch/' + href;
+  var aaw = this;
+  return fetch(url).then(function (res) {
+    return res.text().then(function (text) {
+      aaw.styleTag.textContent = text;
+      var sheet = aaw.styleTag.sheet || {};
+      return aaw.extractMediaRules(sheet.cssRules || sheet.rules, href);
+    });
+  }).catch(function () {
+    return [];
+  });
 };
 
-AutoFetcher.prototype.fetchDone = function () {
-  // indicate we no longer need to Q
-  this.queuing = false;
-  if (this.queue.length > 0) {
-    // we have a Q of some length drain it
-    this.drainQ();
-  }
+AutoFetchWorkerProxyMode.prototype.shouldSkipSheet = function (sheet) {
+  // we skip extracting rules from sheets if they are from our parsing style or come from pywb
+  if (sheet.id === '$wrStyleParser$') return true;
+  return !!(sheet.href && sheet.href.indexOf(this.wombat.wb_info.proxy_magic) !== -1);
 };
 
-AutoFetcher.prototype.fetchAll = function () {
-  // if we are queuing or have no fetches this is a no op
-  if (this.queuing) return;
-  if (this.fetches.length === 0) return;
-  // we are about to fetch queue anything that comes our way
-  this.queuing = true;
-  // initiate fetches by turning the initial fetch promises
-  // into rejctionless promises and "await" all clearing
-  // our fetches array in place
-  var runningFetchers = [];
-  while (this.fetches.length > 0) {
-    runningFetchers.push(this.fetches.shift().catch(noop));
-  }
-  Promise.all(runningFetchers)
-    .then(this.fetchDone)
-    .catch(this.fetchDone);
-};
-
-AutoFetcher.prototype.drainQ = function () {
-  // clear our Q in place and fill our fetches array
-  while (this.queue.length > 0) {
-    this.fetches.push(fetch(this.queue.shift()));
-  }
-  // fetch all the things
-  this.fetchAll();
-};
-
-AutoFetcher.prototype.extractMedia = function (mediaRules) {
-  // this is a broken down rewrite_style
-  if (mediaRules == null) return;
-  for (var i = 0; i < mediaRules.length; i++) {
-    // set currentResolver to the value of this stylesheets URL, done to ensure we do not have to
-    // create functions on each loop iteration because we potentially create a new `URL` object
-    // twice per iteration
-    this.currentResolver = mediaRules[i].resolve;
-    mediaRules[i].cssText
-      .replace(STYLE_REGEX, this.urlExtractor)
-      .replace(IMPORT_REGEX, this.urlExtractor);
-  }
-};
-
-AutoFetcher.prototype.extractSrcset = function (srcsets) {
-  // preservation worker in proxy mode sends us the value of the srcset attribute of an element
-  // and a URL to correctly resolve relative URLS. Thus we must recreate rewrite_srcset logic here
-  if (srcsets == null) return;
-  var length = srcsets.length;
-  var extractedSrcSet, srcsetValue, ssSplit, j;
-  for (var i = 0; i < length; i++) {
-    extractedSrcSet = srcsets[i];
-    ssSplit = extractedSrcSet.srcset.split(srcsetSplit);
-    for (j = 0; j < ssSplit.length; j++) {
-      if (ssSplit[j]) {
-        srcsetValue = ssSplit[j].trim();
-        if (srcsetValue.length > 0) {
-          // resolve the URL in an exceptionless manner (resolvedURL will be undefined if an error occurred)
-          var resolvedURL = this.safeResolve(srcsetValue.split(' ')[0], extractedSrcSet.resolve);
-          if (resolvedURL) {
-            this.safeFetch(resolvedURL);
-          }
+AutoFetchWorkerProxyMode.prototype.extractFromLocalDoc = function () {
+  var i = 0;
+  var media = [];
+  var deferredMediaURLS = [];
+  var srcset = [];
+  var sheet;
+  var resolve;
+  // We must use the window reference passed to us to access this origins stylesheets
+  var styleSheets = this.wombat.$wbwindow.document.styleSheets;
+  for (; i < styleSheets.length; ++i) {
+    sheet = styleSheets[i];
+    // if the sheet belongs to our parser node we must skip it
+    if (!this.shouldSkipSheet(sheet)) {
+      try {
+        // if no error is thrown due to cross origin sheet the urls then just add
+        // the resolved URLS if any to the media urls array
+        if (sheet.cssRules != null) {
+          resolve = sheet.href || this.wombat.$wbwindow.document.baseURI;
+          media = media.concat(this.extractMediaRules(sheet.cssRules, resolve));
+        } else if (sheet.href != null) {
+          // depending on the browser cross origin stylesheets will have their
+          // cssRules property null but href non-null
+          deferredMediaURLS.push(this.corsCSSFetch(sheet.href));
         }
+      } catch (error) {
+        // the stylesheet is cross origin and we must re-fetch via PYWB to get the contents for checking
+        deferredMediaURLS.push(this.corsCSSFetch(sheet.href));
       }
     }
   }
-};
+  // We must use the window reference passed to us to access this origins elements with srcset attr
+  // like cssRule handling we must include a URL to resolve relative URLs by
+  var srcsetElems = this.wombat.$wbwindow.document.querySelectorAll('img[srcset]');
+  var ssElem, resolveAgainst;
+  for (i = 0; i < srcsetElems.length; i++) {
+    ssElem = srcsetElems[i];
+    resolveAgainst = ssElem.src != null && ssElem.src !== ' ' ? ssElem.src : this.wombat.$wbwindow.document.baseURI;
+    srcset.push({ 'srcset': ssElem.srcset, 'resolve': resolveAgainst });
+  }
 
-AutoFetcher.prototype.autofetchMediaSrcset = function (data) {
-  // we got a message and now we autofetch!
-  // these calls turn into no ops if they have no work
-  this.extractMedia(data.media);
-  this.extractSrcset(data.srcset);
-  this.fetchAll();
-};
+  // send what we have extracted, if anything, to the worker for processing
+  if (media.length > 0 || srcset.length > 0) {
+    this.postMessage({ 'type': 'values', 'media': media, 'srcset': srcset });
+  }
 
-autofetcher = new AutoFetcher();
+  if (deferredMediaURLS.length > 0) {
+    // wait for all our deferred fetching and extraction of cross origin
+    // stylesheets to complete and then send those values, if any, to the worker
+    var aaw = this;
+    Promise.all(deferredMediaURLS).then(function (values) {
+      var results = [];
+      while (values.length > 0) {
+        results = results.concat(values.shift());
+      }
+      if (results.length > 0) {
+        aaw.postMessage({ 'type': 'values', 'media': results });
+      }
+    });
+  }
+};
