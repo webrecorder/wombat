@@ -13,7 +13,8 @@
 </head>
 <body>
 <script>
-  wbinfo = {}
+  wbinfo = {};
+  wbinfo.enable_auto_fetch = false;
   wbinfo.top_url = location.href.replace('mp_', '');
   wbinfo.url = "https://tests.wombat.io/";
   wbinfo.timestamp = "20180803160549";
@@ -35,6 +36,6 @@
   wbinfo.state = "";
   wbinfo.metadata = {};
 </script>
-<script src="wombat-full.js"></script>
+<script src="https://localhost:8080/wombat-full.js"></script>
 </body>
 </html>
