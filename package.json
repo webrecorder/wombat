@@ -44,6 +44,7 @@
   },
   "scripts": {
     "build-dev": "rollup -c rollup.config.js",
+    "build-dev-watch": "rollup --watch -c rollup.config.dev.js",
     "build-test-bundle": "rollup -c rollup.test-setup.config.js",
     "build": "NODE_ENV=production rollup -c",
     "lint": "semistandard --verbose src/newWombat/*.js | snazzy",
@@ -57,5 +58,8 @@
       "WB_wombat_location"
     ],
     "env": "browser"
+  },
+  "devDependencies": {
+    "chokidar": "^2.0.4"
   }
 }

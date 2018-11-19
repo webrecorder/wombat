@@ -293,11 +293,24 @@ describe('Wombat setup', function () {
         expect(wombatWindow.Element.prototype.insertAdjacentHTML.toString()).to.not.equal(window.Element.prototype.insertAdjacentHTML.toString());
       });
 
-      for (const prop of window.setupAfter.window) {
+      for (const prop of window.setupAfter.window.fn) {
         it(`should apply an override to window.${prop}`, function () {
           const wombatWindow = this.wombatSandbox.window;
-          console.log(prop, wombatWindow[prop]);
           expect(wombatWindow[prop].toString()).to.not.equal(window[prop].toString());
+        });
+      }
+
+      for (const prop of window.setupAfter.window.props) {
+        it(`should apply an override to window.${prop}`, function () {
+          const wombatWindow = this.wombatSandbox.window;
+          expect(wombatWindow[prop]).to.not.equal(window[prop]);
+        });
+      }
+
+      for (const prop of window.setupAfter.document.props) {
+        it(`should apply an override to document.${prop}`, function () {
+          const wombatDoc = this.wombatSandbox.window.document;
+          expect(wombatDoc[prop]).to.not.equal(document[prop]);
         });
       }
 
@@ -409,6 +422,13 @@ describe('Wombat setup', function () {
         expect(window[styleProtoOn].prototype).to.have.own.property('setProperty').that.is.a('function');
         expect(window[styleProtoOn].prototype.setProperty.toString()).to.have.string('wombat');
       });
+
+      for (const fn of window.setupAfter.Node.fn) {
+        it(`should apply an override to Node.${fn}`, function () {
+          const wombatWindow = this.wombatSandbox.window;
+          expect(wombatWindow.Node.prototype[fn].toString()).to.not.eq(window.Node.prototype[fn].toString());
+        });
+      }
     });
 
     describe('property descriptor changes', function () {
