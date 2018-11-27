@@ -12,6 +12,7 @@
       "chai": true,
       "mocha": true,
       "WB_wombat_location": true,
-      "expect": true
+      "expect": true,
+      "_": true
    }
 }

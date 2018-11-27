@@ -2976,6 +2976,11 @@ locate-path@^2.0.0:
     p-locate "^2.0.0"
     path-exists "^3.0.0"
 
+lodash-es@^4.17.11:
+  version "4.17.11"
+  resolved "https://registry.yarnpkg.com/lodash-es/-/lodash-es-4.17.11.tgz#145ab4a7ac5c5e52a3531fb4f310255a152b4be0"
+  integrity sha512-DHb1ub+rMjjrxqlB3H56/6MXtm1lSksDp2rA2cNWjG8mlDUYFhUj3Di2Zn5IwSU87xLv8tNIQ7sSwE/YOX/D/Q==
+
 lodash.debounce@^4.0.8:
   version "4.0.8"
   resolved "https://registry.yarnpkg.com/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
@@ -3999,10 +4004,10 @@ ripemd160@^2.0.0, ripemd160@^2.0.1:
     hash-base "^3.0.0"
     inherits "^2.0.1"
 
-rollup-plugin-babel-minify@^6.1.1:
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-babel-minify/-/rollup-plugin-babel-minify-6.1.1.tgz#8fb568da0cc1ecd73e76f67c897055c21297cb81"
-  integrity sha512-MX0lqOHp1vHd7WbHTK5OG679msgPxzGzYf4VBEg6kKptO05fgheCbN51i3EoFYSa+8/VtNDjPc23iDdZfhO2uw==
+rollup-plugin-babel-minify@^6.2.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-babel-minify/-/rollup-plugin-babel-minify-6.2.0.tgz#d101fa6c1ff79c67b2af91632a87284bf1bd7f8b"
+  integrity sha512-Ahil4nyB97OSoMTqm8qDyuL8e3NU1juDDdTC3Tuy00DvCLJmuX7OVrfEhGVJtguh/D1aO2t/2pe59/dzT/k4mw==
   dependencies:
     "@babel/core" "^7.0.0"
     "@comandeer/babel-plugin-banner" "^4.0.0"
@@ -4070,10 +4075,10 @@ rollup-pluginutils@^2.3.3:
     estree-walker "^0.5.2"
     micromatch "^2.3.11"
 
-rollup@^0.67.1:
-  version "0.67.1"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.67.1.tgz#4094110c944d3c9e25b5bf196771b51132ec3adb"
-  integrity sha512-BfwL9pw5VyxrAWx/G1tP8epgG+NH4KcR78aoWacV7+dFp1Mj6ynH8QTIC/lDQ3KlwzDakqZmJQ4LQ7TmLg+pBA==
+rollup@^0.67.3:
+  version "0.67.3"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.67.3.tgz#55475b1b62c43220c3b4bd7edc5846233932f50b"
+  integrity sha512-TyNQCz97rKuVVbsKUTXfwIjV7UljWyTVd7cTMuE+aqlQ7WJslkYF5QaYGjMLR2BlQtUOO5CAxSVnpQ55iYp5jg==
   dependencies:
     "@types/estree" "0.0.39"
     "@types/node" "*"

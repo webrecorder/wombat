@@ -3,9 +3,14 @@ import 'mocha/mocha';
 import 'chai/chai';
 import 'chai-dom';
 import 'chai-string';
+import get from 'lodash-es/get';
+import zip from 'lodash-es/zip';
 import chaiAsPromised from './chai-as-promised';
 import chaiInterface from './chai-interface';
 import chaiURL from './chai-url';
+
+window.getViaPath = get;
+window.zip = zip;
 
 /**
  * @type {chai}

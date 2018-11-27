@@ -1,56 +1,3 @@
-window.setupAfter = {
-  EventTarget: ['addEventListener', 'removeEventListener'],
-  MessageEvent: ['target', 'srcElement', 'currentTarget', 'eventPhase', 'path'],
-  Document: {
-    fn: ['write', 'writeln', 'open', 'createElementNS', 'evaluate', 'createTreeWalker'],
-    props: ['URL', 'documentURI']
-  },
-  Node: {
-    fn: ['compareDocumentPosition', 'contains', 'replaceChild', 'appendChild', 'insertBefore']
-  },
-  override_html_assign: {
-    HTMLElement: ['innerHTML', 'outerHTML'],
-    HTMLIFrameElement: ['srcdoc'],
-    HTMLStyleElement: ['textContent']
-  },
-  Attr: ['nodeValue', 'value'],
-  window: {
-    fn: ['setTimeout', 'setInterval', 'getComputedStyle'],
-    props: ['origin']
-  },
-  document: {
-    props: ['origin', 'domain']
-  },
-  protoFns: {
-    Element: ['getAttribute', 'setAttribute'],
-    SVGImageElement: ['getAttribute', 'getAttributeNS', 'setAttribute', 'setAttributeNS']
-  },
-  elemAttrs: {
-    HTMLLinkElement: ['href'],
-    CSSStyleSheet: ['href'],
-    HTMLImageElement: ['src', 'srcset'],
-    HTMLIFrameElement: ['src'],
-    HTMLScriptElement: ['src'],
-    HTMLVideoElement: ['src', 'poster'],
-    HTMLAudioElement: ['src', 'poster'],
-    HTMLSourceElement: ['src', 'srcset'],
-    HTMLInputElement: ['src'],
-    HTMLEmbedElement: ['src'],
-    HTMLObjectElement: ['data'],
-    HTMLBaseElement: ['href'],
-    HTMLMetaElement: ['content'],
-    HTMLFormElement: ['action']
-  },
-
-  anchorElement: ['href', 'hash', 'pathname', 'host', 'hostname', 'protocol',
-    'origin', 'search', 'port'],
-
-  styleProto: {
-    on: window.CSS2Properties != null ? 'CSS2Properties' : 'CSSStyleDeclaration',
-    props: ['cssText', 'background', 'backgroundImage', 'cursor', 'border', 'borderImage', 'borderImageSource']
-  }
-};
-
 class ArrayMultimap {
   constructor () {
     this._map = new Map();
@@ -242,6 +189,8 @@ window.initTestContext = function initTestContext (options = { init: false }) {
     }
   };
 };
+
+window.untamperedWithWinDocObj = { window, document };
 
 mocha.setup({
   ui: 'bdd',
