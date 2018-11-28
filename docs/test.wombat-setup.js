@@ -194,11 +194,11 @@ describe('Wombat setup', function () {
         expect(window.Object.prototype)
           .to.have.ownPropertyDescriptor('WB_wombat_top')
           .that.has.interface({
-          configurable: Boolean,
-          enumerable: Boolean,
-          get: Function,
-          set: Function
-        });
+            configurable: Boolean,
+            enumerable: Boolean,
+            get: Function,
+            set: Function
+          });
       });
 
       it('should add the _WB_wombat_location property to window', function () {
@@ -257,7 +257,7 @@ describe('Wombat setup', function () {
       });
     });
 
-    describe('overrides', function () {
+    describe('applied overrides', function () {
       window.TestFunctionChanges.forEach(aTest => {
         if (aTest.constructors) {
           aTest.constructors.forEach(cnstructor => {
@@ -272,7 +272,7 @@ describe('Wombat setup', function () {
             it(`should override ${aTest.objPath.substr(aTest.objPath.indexOf('.') + 1)}.${fn}`, function () {
               const original = window.getViaPath(window.untamperedWithWinDocObj, aTest.objPath);
               const obj = window.getViaPath(this.wombatSandbox, aTest.objPath);
-              expect(obj[fn].toString()).to.not.eq(original[fn].toString(), `${aTest.objPath}.${fn} was not updated`);
+              expect(obj[fn].toString()).to.not.eq(original[fn].toString(), `${aTest.objPath}.${fn} equals the original`);
               expect(obj[ofn].toString()).to.equal(original[fn].toString(), `The persisted original function for ${aTest.objPath}.${fn} does not equal the original`);
             });
           });
@@ -287,33 +287,35 @@ describe('Wombat setup', function () {
             }
           });
         } else {
-          if (window.getViaPath(window.untamperedWithWinDocObj, aTest.objPath)) {
-            aTest.fns.forEach(fn => {
-              it(`should override ${aTest.objPath.substr(aTest.objPath.indexOf('.') + 1)}.${fn}`, function () {
-                const original = window.getViaPath(window.untamperedWithWinDocObj, aTest.objPath);
-                const obj = window.getViaPath(this.wombatSandbox, aTest.objPath);
+          aTest.fns.forEach(fn => {
+            it(`should override ${aTest.objPath.substr(aTest.objPath.indexOf('.') + 1)}.${fn}`, function () {
+              const obj = window.getViaPath(this.wombatSandbox, aTest.objPath);
+              const original = window.getViaPath(window.untamperedWithWinDocObj, aTest.objPath);
+              if (original[fn]) {
                 expect(obj[fn].toString()).to.not.eq(original[fn].toString(), `${aTest.objPath}.${fn} was not updated`);
-              });
+              } else {
+                // eslint-disable-next-line no-unused-expressions
+                expect(obj[fn], `${aTest.objPath}.${fn} was not overridden (is undefined/null)`).to.not.be.null;
+                expect(obj[fn].toString()).to.not.contain('[native code]', `${aTest.objPath}.${fn} was not overridden`);
+              }
             });
-          }
+          });
         }
       });
     });
 
     it('should have sent actual top the loadMSG', function () {
-      expect(this.wombatMSGs.size).to.eq(1, 'Wombat should have notified top the page has loaded');
-      expect(this.wombatMSGs.numValues('load')).to.eq(2, 'Wombat should have notified top the page has loaded only once');
       expect(this.wombatMSGs.firstValue('load')).to.deep.eq({
-          icons: [],
-          is_live: false,
-          readyState: 'complete',
-          request_ts: '20180803160549',
-          title: 'Wombat sandbox',
-          ts: '20180803160549',
-          url: 'https://tests.wombat.io',
-          wb_type: 'load'
-        },
-        'The message sent by wombat to inform top it has loaded should have the correct properties'
+        icons: [],
+        is_live: false,
+        readyState: 'complete',
+        request_ts: '20180803160549',
+        title: 'Wombat sandbox',
+        ts: '20180803160549',
+        url: 'https://tests.wombat.io/',
+        wb_type: 'load'
+      },
+      'The message sent by wombat to inform top it has loaded should have the correct properties'
       );
     });
   });

@@ -137,6 +137,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
   var STYLE_REGEX = /(url\s*\(\s*[\\"']*)([^)'"]+)([\\"']*\s*\))/gi;
   var IMPORT_REGEX = /(@import\s+[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
   var SRCSET_REGEX = /\s*(\S*\s+[\d\.]+[wx]),|(?:\s*,(?:\s+|(?=https?:)))/;
+  var FullHTMLRegex = /^\s*<(?:html|head|body|!doctype html)/i;
 
   function rwModForElement(elem, attrName) {
     // this function was created to help add in retrial of element attribute rewrite modifiers
@@ -183,6 +184,16 @@ var _WBWombat = function($wbwindow, wbinfo) {
       }
       return maybeWBOSRC;
     }
+  }
+
+  function isImageSrcset(elem) {
+    if (elem.tagName === 'IMG') return true;
+    return elem.tagName === 'SOURCE' && elem.parentElement && elem.parentElement.tagName === 'PICTURE';
+  }
+
+  function isImageDataSrcset(elem) {
+    if (isImageSrcset(elem)) return elem.dataset.srcset != null;
+    return false;
   }
 
   //============================================
@@ -504,7 +515,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
       }
 
       if (href != orig_href && !starts_with(href, VALID_PREFIXES)) {
-        href = HTTP_PREFIX + href;
+        href = wb_orig_scheme + href;
       }
     }
 
@@ -513,7 +524,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
     }
 
     if (starts_with(href, REL_PREFIX)) {
-      href = "http:" + href;
+      href = wb_info.wombat_scheme +  ":" + href;
     }
 
     return href;
@@ -1151,7 +1162,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
         } else if (lowername == "style") {
           value = rewrite_style(value);
         } else if (lowername == "srcset") {
-          value = rewrite_srcset(value, this.tagName === 'IMG');
+          value = rewrite_srcset(value, isImageSrcset(this));
         }
       }
       orig_setAttribute.call(this, name, value);
@@ -1422,16 +1433,74 @@ var _WBWombat = function($wbwindow, wbinfo) {
       }, true);
     };
 
+    AutoFetchWorker.prototype.preserveDataSrcset = function (srcset) {
+      // send values from rewrite_attr srcset to the worker deferred
+      // to ensure the page viewer sees the images first
+      this.postMessage({
+        'type': 'values',
+        'srcset': {'values': srcset, 'presplit': false},
+      }, true);
+    };
+
     AutoFetchWorker.prototype.preserveMedia = function (media) {
       // send CSSMediaRule values to the worker
-      this.postMessage({'type': 'values', 'media': media})
+      this.postMessage({'type': 'values', 'media': media}, true);
+    };
+
+    AutoFetchWorker.prototype.extractSrcset = function (elem) {
+      if (wb_getAttribute) {
+        return wb_getAttribute.call(elem, 'srcset');
+      }
+      return elem.getAttribute('srcset');
+    };
+
+    AutoFetchWorker.prototype.checkForPictureSourceDataSrcsets = function () {
+      var dataSS = $wbwindow.document.querySelectorAll('img[data-srcset], source[data-srcset]');
+      var elem;
+      var srcset = [];
+      for (var i = 0; i < dataSS.length; i++) {
+        elem = dataSS[i];
+        if (elem.tagName === 'SOURCE') {
+          if (elem.parentElement && elem.parentElement.tagName === 'PICTURE' && elem.dataset.srcset) {
+            srcset.push({srcset: elem.dataset.srcset});
+          }
+        } else if (elem.dataset.srcset) {
+          srcset.push({srcset: elem.dataset.srcset});
+        }
+      }
+      if (srcset.length) {
+        this.postMessage({
+          'type': 'values',
+          'srcset': {'values': srcset, 'presplit': false},
+          'context': {
+            'docBaseURI': $wbwindow.document.baseURI
+          }
+        }, true);
+      }
+    };
+
+    AutoFetchWorker.prototype.extractImgPictureSourceSrcsets = function () {
+      var i;
+      var elem = null;
+      var srcset = [];
+      var ssElements = $wbwindow.document.querySelectorAll('img[srcset], source[srcset]');
+      for (i = 0; i < ssElements.length; i++) {
+        elem = ssElements[i];
+        if (elem.tagName === 'SOURCE') {
+          if (elem.parentElement && elem.parentElement.tagName === 'PICTURE') {
+            srcset.push({srcset: this.extractSrcset(elem)});
+          }
+        } else {
+          srcset.push({tagSrc: elem.src, srcset: this.extractSrcset(elem)});
+        }
+      }
+      return srcset;
     };
 
     AutoFetchWorker.prototype.extractFromLocalDoc = function () {
       // get the values to be preserved from the  documents stylesheets
       // and all elements with a srcset
       var media = [];
-      var srcset = [];
       var sheets = $wbwindow.document.styleSheets;
       var i = 0;
       for (; i < sheets.length; ++i) {
@@ -1443,16 +1512,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
           }
         }
       }
-      var srcsetElems = $wbwindow.document.querySelectorAll('img[srcset]');
-      for (i = 0; i < srcsetElems.length; i++) {
-        var ssv = {tagSrc: srcsetElems[i].src};
-        if (wb_getAttribute) {
-          ssv.srcset = wb_getAttribute.call(srcsetElems[i], 'srcset');
-        } else {
-          ssv.srcset = srcsetElems[i].getAttribute('srcset');
-        }
-        srcset.push(ssv);
-      }
+      var srcset = this.extractImgPictureSourceSrcsets();
       // send the extracted values to the worker deferred
       // to ensure the page viewer sees the images first
       this.postMessage({
@@ -1463,6 +1523,12 @@ var _WBWombat = function($wbwindow, wbinfo) {
           'docBaseURI': $wbwindow.document.baseURI
         }
       }, true);
+      // deffer the checking of img/source data-srcset
+      // so that we do not clobber the UI thread
+      var self = this;
+      Promise.resolve().then(function () {
+        self.checkForPictureSourceDataSrcsets();
+      });
     };
 
     WBAutoFetchWorker = new AutoFetchWorker(wb_abs_prefix, wbinfo.mod);
@@ -1614,7 +1680,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
     } else if (name == "style") {
       new_value = rewrite_style(value);
     } else if (name == "srcset") {
-      new_value = rewrite_srcset(value, elem.tagName === 'IMG');
+      new_value = rewrite_srcset(value, isImageSrcset(elem));
     } else {
       // Only rewrite if absolute url
       if (abs_url_only && !starts_with(value, VALID_PREFIXES)) {
@@ -1622,6 +1688,9 @@ var _WBWombat = function($wbwindow, wbinfo) {
       }
       var mod = rwModForElement(elem, name);
       new_value = rewrite_url(value, false, mod, elem.ownerDocument);
+      if (wbUseAFWorker && isImageDataSrcset(elem)) {
+        WBAutoFetchWorker.preserveDataSrcset(elem.dataset.srcset);
+      }
     }
 
     if (new_value != value) {
@@ -1723,7 +1792,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
     if (elem.getAttribute("src") || !elem.textContent || !$wbwindow.Proxy) {
       return rewrite_attr(elem, "src");
     }
-
+    if (elem.type && (elem.type === 'application/json' || elem.type.indexOf('text/template') !== -1)) return;
     if (elem.textContent.indexOf("_____WB$wombat$assign$function_____") >= 0) {
       return false;
     }
@@ -1849,37 +1918,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
 
   var write_buff = "";
 
-  //============================================
-  function isHTMLFullRW(string) {
-    // case insensitive check for is html full rewrite
-    var strlen = string.length;
-    if (strlen < 5 || string[0] !== '<') return false;
-    var i = 2;
-    var j = 0;
-    var is = false;
-    var test = true;
-    var char = string[1].toLowerCase();
-    if (char === 'h' || char === 'b') {
-      var html = "tml", head = "ead", body = 'ody';
-      for(; j < 3; ++i, ++j) {
-        char = string[i].toLowerCase();
-        // test is starts as true and if any of the 3 tests head body html are true
-        // it will always be true && true = true
-        test = test && (html[j] === char || head[j] === char || body[j] === char);
-      }
-      is = test;
-    } else if (char === '!' && strlen > 14) {
-      var doctype = 'doctype html>';
-      for(; j < 13; ++i, ++j) {
-        // similarly test starts as true and the true && true | false results will
-        // be propagated throughout the test
-        test = test && doctype[j] === string[i].toLowerCase();
-      }
-      is = test;
-    }
-    return is;
-  }
-
+  //===========================================
   function rewrite_html(string, check_end_tag) {
     if (!string) {
       return string;
@@ -1899,7 +1938,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
       string = string.replace(/((id|class)=".*)WB_wombat_([^"]+)/, '$1$3');
     }
 
-    if (!$wbwindow.HTMLTemplateElement || isHTMLFullRW(string)) {
+    if (!$wbwindow.HTMLTemplateElement || FullHTMLRegex.test(string)) {
       return rewrite_html_full(string, check_end_tag);
     }
 
@@ -2058,7 +2097,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
       if (mod == "cs_" && orig.indexOf("data:text/css") == 0) {
         val = rewrite_inline_style(orig);
       } else if (attr == "srcset") {
-        val = rewrite_srcset(orig, this.tagName === 'IMG');
+        val = rewrite_srcset(orig, isImageSrcset(this));
       } else if (this.tagName === 'LINK' && attr === 'href') {
         var relV = this.rel;
         if (relV === 'import' || relV === 'preload') {
@@ -3848,7 +3887,6 @@ var _WBWombat = function($wbwindow, wbinfo) {
     override_func_arg_proxy_to_obj($wbwindow.Node, "contains");
     override_func_arg_proxy_to_obj($wbwindow.Document, "createTreeWalker");
     override_func_arg_proxy_to_obj($wbwindow.Document, "evaluate", 1);
-    override_func_arg_proxy_to_obj($wbwindow.XSLTProcessor, "transformToFragment", 1);
 
 
     override_func_this_proxy_to_obj($wbwindow, "getComputedStyle", $wbwindow);

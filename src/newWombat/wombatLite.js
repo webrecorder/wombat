@@ -149,9 +149,16 @@ WombatLite.prototype.initAutoFetchWorker = function () {
     return;
   }
   var isTop = this.$wbwindow.self === this.$wbwindow.top;
-
-  this.WBAutoFetchWorker = new AutoFetchWorkerProxyMode(this, isTop);
-
+  if (this.$wbwindow.$WBAutoFetchWorker$ == null) {
+    this.WBAutoFetchWorker = new AutoFetchWorkerProxyMode(this, isTop);
+    // expose the WBAutoFetchWorker
+    Object.defineProperty(this.$wbwindow, '$WBAutoFetchWorker$', {
+      'enumerable': false,
+      'value': this.WBAutoFetchWorker
+    });
+  } else {
+    this.WBAutoFetchWorker = this.$wbwindow.$WBAutoFetchWorker$;
+  }
   if (isTop) {
     var wombatLite = this;
     this.$wbwindow.addEventListener('message', function (event) {

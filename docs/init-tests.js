@@ -78,7 +78,7 @@ class WombatTestUtil {
       const container = document.getElementById('wombatSandboxContainer');
       const wbif = document.createElement('iframe');
       if (window.location.protocol === 'https:') {
-        wbif.src = '/20180803160549mp_/https://tests.wombat.io';
+        wbif.src = '/20180803160549mp_/https://tests.wombat.io/';
       } else {
         wbif.src = 'wombatSandbox.html';
       }
@@ -178,6 +178,13 @@ window.initTestContext = function initTestContext (options = { init: false }) {
       },
       async refreshInit () {
         await this.refresh();
+        this.init();
+      },
+      async goBackToTest () {
+        await window.wombatTestUtil.removeWombatSandbox();
+        wombatIf = await window.wombatTestUtil.addWombatSandbox();
+        testSelf.wombatSandbox.window = wombatIf.contentWindow;
+        testSelf.wombatSandbox.document = wombatIf.contentDocument;
         this.init();
       },
       init () {

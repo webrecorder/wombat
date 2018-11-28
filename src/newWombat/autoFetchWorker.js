@@ -83,16 +83,74 @@ AutoFetchWorker.prototype.preserveSrcset = function (srcset) {
   }, true);
 };
 
+AutoFetchWorker.prototype.preserveDataSrcset = function (srcset) {
+  // send values from rewrite_attr srcset to the worker deferred
+  // to ensure the page viewer sees the images first
+  this.postMessage({
+    'type': 'values',
+    'srcset': { 'values': srcset, 'presplit': false }
+  }, true);
+};
+
 AutoFetchWorker.prototype.preserveMedia = function (media) {
   // send CSSMediaRule values to the worker
   this.postMessage({ 'type': 'values', 'media': media });
+};
+
+AutoFetchWorker.prototype.extractSrcset = function (elem) {
+  if (this.wombat.wb_getAttribute) {
+    return this.wombat.wb_getAttribute.call(elem, 'srcset');
+  }
+  return elem.getAttribute('srcset');
+};
+
+AutoFetchWorker.prototype.checkForPictureSourceDataSrcsets = function () {
+  var dataSS = this.wombat.$wbwindow.document.querySelectorAll('img[data-srcset], source[data-srcset]');
+  var elem;
+  var srcset = [];
+  for (var i = 0; i < dataSS.length; i++) {
+    elem = dataSS[i];
+    if (elem.tagName === 'SOURCE') {
+      if (elem.parentElement && elem.parentElement.tagName === 'PICTURE' && elem.dataset.srcset) {
+        srcset.push({ srcset: elem.dataset.srcset });
+      }
+    } else if (elem.dataset.srcset) {
+      srcset.push({ srcset: elem.dataset.srcset });
+    }
+  }
+  if (srcset.length) {
+    this.postMessage({
+      'type': 'values',
+      'srcset': { 'values': srcset, 'presplit': false },
+      'context': {
+        'docBaseURI': this.wombat.$wbwindow.document.baseURI
+      }
+    }, true);
+  }
+};
+
+AutoFetchWorker.prototype.extractImgPictureSourceSrcsets = function () {
+  var i;
+  var elem = null;
+  var srcset = [];
+  var ssElements = this.wombat.$wbwindow.document.querySelectorAll('img[srcset], source[srcset]');
+  for (i = 0; i < ssElements.length; i++) {
+    elem = ssElements[i];
+    if (elem.tagName === 'SOURCE') {
+      if (elem.parentElement && elem.parentElement.tagName === 'PICTURE') {
+        srcset.push({ srcset: this.extractSrcset(elem) });
+      }
+    } else {
+      srcset.push({ tagSrc: elem.src, srcset: this.extractSrcset(elem) });
+    }
+  }
+  return srcset;
 };
 
 AutoFetchWorker.prototype.extractFromLocalDoc = function () {
   // get the values to be preserved from the  documents stylesheets
   // and all elements with a srcset
   var media = [];
-  var srcset = [];
   var sheets = this.wombat.$wbwindow.document.styleSheets;
   var i = 0;
   for (; i < sheets.length; ++i) {
@@ -104,16 +162,9 @@ AutoFetchWorker.prototype.extractFromLocalDoc = function () {
       }
     }
   }
-  var srcsetElems = this.wombat.$wbwindow.document.querySelectorAll('img[srcset]');
-  var wb_getAttribute = this.wombat.wb_getAttribute;
-  for (i = 0; i < srcsetElems.length; i++) {
-    var srcsetElem = srcsetElems[i];
-    if (wb_getAttribute) {
-      srcset.push(wb_getAttribute.call(srcsetElem, 'srcset'));
-    } else {
-      srcset.push(srcsetElem.getAttribute('srcset'));
-    }
-  }
+  var srcset = this.extractImgPictureSourceSrcsets();
+  // send the extracted values to the worker deferred
+  // to ensure the page viewer sees the images first
   this.postMessage({
     'type': 'values',
     'media': media,
@@ -122,4 +173,10 @@ AutoFetchWorker.prototype.extractFromLocalDoc = function () {
       'docBaseURI': this.wombat.$wbwindow.document.baseURI
     }
   }, true);
+  // deffer the checking of img/source data-srcset
+  // so that we do not clobber the UI thread
+  var self = this;
+  Promise.resolve().then(function () {
+    self.checkForPictureSourceDataSrcsets();
+  });
 };

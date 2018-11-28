@@ -307,7 +307,18 @@ window.TestedPropertyDescriptorUpdates = [
   },
   {
     objPath: `window.${window.CSS2Properties != null ? 'CSS2Properties' : 'CSSStyleDeclaration'}.prototype`,
-    props: ['cssText', 'background', 'backgroundImage', 'cursor', 'listStyle', 'listStyleImage', 'border', 'borderImage', 'borderImageSource'],
+    props: ['cssText', 'background', 'backgroundImage', 'cursor', 'listStyle', 'listStyleImage', 'border', 'borderImage', 'borderImageSource', 'maskImage'],
+    expectedInterface: {
+      configurable: Boolean,
+      enumerable: Boolean,
+      get: Function,
+      set: Function
+    },
+    skipGet: new Set(['cssText'])
+  },
+  {
+    objPath: 'window.CSSRule.prototype',
+    props: ['cssText'],
     expectedInterface: {
       configurable: Boolean,
       enumerable: Boolean,
@@ -380,9 +391,11 @@ window.TestedPropertyDescriptorUpdates = [
   }
 ];
 
+var maybeInitUIEvents = ['window.UIEvent', 'window.MouseEvent', 'window.TouchEvent', 'window.FocusEvent', 'window.KeyboardEvent', 'window.WheelEvent', 'window.InputEvent', 'window.CompositionEvent'];
+
 window.TestFunctionChanges = [
   {
-    constructors: ['window.Date', 'window.Request', 'window.Audio', 'window.Worker', 'window.SharedWorker', 'window.MouseEvent', 'window.FontFace']
+    constructors: ['window.Date', 'window.Request', 'window.Audio', 'window.Worker', 'window.SharedWorker', 'window.FontFace'].concat(maybeInitUIEvents)
   },
   {
     objPath: 'window.history',
@@ -398,10 +411,6 @@ window.TestFunctionChanges = [
     fns: ['postMessage']
   },
   {
-    objPath: 'window.EventTarget.prototype',
-    fns: ['addEventListener', 'removeEventListener']
-  },
-  {
     objPath: 'window.Document.prototype',
     fns: ['write', 'writeln', 'open', 'createElementNS', 'evaluate', 'createTreeWalker']
   },
@@ -412,10 +421,6 @@ window.TestFunctionChanges = [
   {
     objPath: 'window.XMLHttpRequest.prototype',
     fns: ['open']
-  },
-  {
-    objPath: 'window.MouseEvent.prototype',
-    fns: ['initMouseEvent']
   },
   {
     objPath: 'window.navigator',
@@ -472,10 +477,6 @@ window.TestFunctionChanges = [
     fns: ['compareDocumentPosition', 'contains', 'replaceChild', 'appendChild', 'insertBefore']
   },
   {
-    objPath: 'window.geolocation',
-    fns: ['getCurrentPosition', 'watchPosition']
-  },
-  {
     objPath: 'window.Function.prototype',
     fns: ['apply']
   },
@@ -484,11 +485,59 @@ window.TestFunctionChanges = [
     fns: ['insertRule']
   },
   {
+    objPath: `window.${window.CSS2Properties != null ? 'CSS2Properties' : 'CSSStyleDeclaration'}.prototype`,
+    fns: ['setProperty']
+  },
+  {
     objPath: 'window.Text.prototype',
     fns: ['appendData', 'insertData', 'replaceData']
   },
   {
     objPath: 'window.XSLTProcessor.prototype',
     fns: ['transformToFragment']
+  },
+  {
+    objPath: 'document',
+    fns: ['write', 'writeln', 'open', 'createElementNS', 'evaluate', 'createTreeWalker', 'createTouch']
+  },
+  {
+    objPath: `${(window.EventTarget && window.EventTarget.prototype) ? 'window.EventTarget.prototype' : 'window'}`,
+    fns: ['addEventListener', 'removeEventListener']
   }
+];
+
+if (window.geolocation) {
+  window.TestFunctionChanges.push({
+    objPath: 'window.geolocation',
+    fns: ['getCurrentPosition', 'watchPosition']
+  });
+}
+
+if (window.Worklet) {
+  window.TestFunctionChanges.push({
+    objPath: 'window.Worklet.prototype',
+    fns: ['addModule']
+  });
+}
+
+if (window.StylePropertyMap) {
+  window.TestFunctionChanges.push({
+    objPath: 'window.StylePropertyMap.prototype',
+    fns: ['set', 'append']
+  });
+}
+
+maybeInitUIEvents.forEach(uie => {
+  const event = uie.split('.')[1];
+  if (window.getViaPath(window, `${uie}.prototype.init${event}`)) {
+    window.TestFunctionChanges.push({
+      objPath: `${uie}.prototype`,
+      fns: [`init${event}`]
+    });
+  }
+});
+
+window.URLParts = [
+  'href', 'hash', 'pathname', 'host', 'hostname', 'protocol',
+  'origin', 'search', 'port'
 ];

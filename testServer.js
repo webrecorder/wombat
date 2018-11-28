@@ -54,6 +54,9 @@ async function start () {
     next();
   });
 
+  server.get('/20180803160549mp_/https://tests.wombat.io/', (req, res) => {
+    res.sendFile(sandbox);
+  });
   server.get('/20180803160549mp_/https://tests.wombat.io', (req, res) => {
     res.sendFile(sandbox);
   });
