@@ -69,6 +69,13 @@ class WombatTestUtil {
     this.wombatMSGs = new ArrayMultimap();
   }
 
+  getSandboxURL () {
+    if (window.location.protocol === 'https:') {
+      return `${location.origin}/live/20180803160549mp_/https://tests.wombat.io/`;
+    }
+    return 'wombatSandbox.html';
+  }
+
   /**
    * @return {Promise<HTMLIFrameElement>}
    */
@@ -77,11 +84,7 @@ class WombatTestUtil {
     if (!this.addedSandbox) {
       const container = document.getElementById('wombatSandboxContainer');
       const wbif = document.createElement('iframe');
-      if (window.location.protocol === 'https:') {
-        wbif.src = '/20180803160549mp_/https://tests.wombat.io/';
-      } else {
-        wbif.src = 'wombatSandbox.html';
-      }
+      wbif.src = this.getSandboxURL();
       wbif.id = 'wombatSandbox';
       container.appendChild(wbif);
       this.sandbox = wbif;
@@ -151,30 +154,36 @@ window.initTestContext = function initTestContext (options = { init: false }) {
      */
     this.wombatSandbox = {
       window: wombatIf.contentWindow,
-      document: wombatIf.contentDocument
+      document: wombatIf.contentDocument,
+      originalLocation: wombatIf.src
+    };
+
+    this.testHelpers = {
+      baseURLMP: `${window.WB_PREFIX}mp_`
     };
 
     Object.defineProperty(this, 'wombatMSGs', {
       get () { return window.wombatTestUtil.wombatMSGs; }
     });
 
+    this.delay = function (dtime = 500) {
+      return new Promise(resolve => setTimeout(resolve, dtime));
+    };
+
     const testSelf = this;
-    this._$internalHelper = {
+    this.$internalHelper = {
       validTestTitles: {
         '"before all" hook': true,
         '"before" hook': true
       },
-      checkValidCall () {
-        if (!this.validTestTitles[testSelf.test.title]) {
-          console.log(this.validTestTitles, testSelf.test.title);
-          throw new Error(`Invalid usage of internal helpers at ${testSelf.test.title}`);
-        }
+      _updateSandboxInfo (sandbox) {
+        testSelf.wombatSandbox.window = sandbox.contentWindow;
+        testSelf.wombatSandbox.document = sandbox.contentDocument;
+        testSelf.originalLocation = sandbox.src;
       },
       async refresh () {
-        this.checkValidCall();
         wombatIf = await window.wombatTestUtil.refreshSandbox();
-        testSelf.wombatSandbox.window = wombatIf.contentWindow;
-        testSelf.wombatSandbox.document = wombatIf.contentDocument;
+        this._updateSandboxInfo(wombatIf);
       },
       async refreshInit () {
         await this.refresh();
@@ -183,16 +192,17 @@ window.initTestContext = function initTestContext (options = { init: false }) {
       async goBackToTest () {
         await window.wombatTestUtil.removeWombatSandbox();
         wombatIf = await window.wombatTestUtil.addWombatSandbox();
-        testSelf.wombatSandbox.window = wombatIf.contentWindow;
-        testSelf.wombatSandbox.document = wombatIf.contentDocument;
-        this.init();
+        this.init(wombatIf);
       },
-      init () {
+      init (sandbox) {
+        if (sandbox != null) {
+          this._updateSandboxInfo(sandbox);
+        }
         testSelf.wombatSandbox.window._WBWombatInit(testSelf.wombatSandbox.window.wbinfo);
       }
     };
     if (options.init) {
-      await this._$internalHelper.refreshInit();
+      await this.$internalHelper.refreshInit();
     }
   };
 };

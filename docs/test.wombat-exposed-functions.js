@@ -27,7 +27,7 @@ describe('Wombat exposed functions', function () {
 
   describe('extract_orig', function () {
     before(async function () {
-      await this._$internalHelper.refreshInit();
+      await this.$internalHelper.refreshInit();
     });
 
     it('should extract the original url', function () {
@@ -54,7 +54,7 @@ describe('Wombat exposed functions', function () {
 
   describe('rewrite_url', function () {
     before(async function () {
-      await this._$internalHelper.refreshInit();
+      await this.$internalHelper.refreshInit();
     });
 
     funkyEncodings.forEach(encoding => {

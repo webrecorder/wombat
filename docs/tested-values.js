@@ -391,7 +391,7 @@ window.TestedPropertyDescriptorUpdates = [
   }
 ];
 
-var maybeInitUIEvents = ['window.UIEvent', 'window.MouseEvent', 'window.TouchEvent', 'window.FocusEvent', 'window.KeyboardEvent', 'window.WheelEvent', 'window.InputEvent', 'window.CompositionEvent'];
+const maybeInitUIEvents = ['window.UIEvent', 'window.MouseEvent', 'window.TouchEvent', 'window.FocusEvent', 'window.KeyboardEvent', 'window.WheelEvent', 'window.InputEvent', 'window.CompositionEvent'];
 
 window.TestFunctionChanges = [
   {
@@ -538,6 +538,192 @@ maybeInitUIEvents.forEach(uie => {
 });
 
 window.URLParts = [
-  'href', 'hash', 'pathname', 'host', 'hostname', 'protocol',
-  'origin', 'search', 'port'
+  'href', 'hash', 'pathname', 'host', 'hostname', 'protocol', 'origin', 'search', 'port'
 ];
+
+window.WB_PREFIX = `${location.protocol}//localhost:${location.port}/live/20180803160549`;
+
+window.fullHTML = ({ prefix, onlyBody, onlyHead, onlyHTML } = {}) => {
+  const cssPrefix = prefix != null ? `${prefix}cs_/` : '';
+  const jsPrefix = prefix != null ? `${prefix}js_/` : '';
+  const body = `<body><script id="theScript" src="${jsPrefix}http://javaScript.com/script.js"></script></body>`;
+  if (onlyBody) return body;
+  const headString = `<head><link id="theLink" rel="stylesheet" href="${cssPrefix}http://cssHeaven.com/angelic.css"></head>`;
+  let topMatter = `<!doctype html><html>${headString}${body}`;
+  let bottomMatter = `</html>`;
+  if (onlyHTML) {
+    topMatter = `<html>${headString}${body}`;
+    bottomMatter = `</html>`;
+  } else if (onlyHead) {
+    topMatter = headString;
+    bottomMatter = '';
+  }
+  return `${topMatter}${bottomMatter}`;
+};
+
+window.TextNodeTest = {
+  fnTests: ['appendData', 'insertData', 'replaceData'],
+  theStyle: '.hi { background-image: url(https://funky/png.png); }',
+  theStyleRw: `.hi { background-image: url(${window.WB_PREFIX}mp_/https://funky/png.png); }`,
+  makeTextNode (doc, inStyle) {
+    const results = {
+      tn: doc.createTextNode('')
+    };
+    if (inStyle) {
+      results.tnParent = doc.createElement('style');
+      results.tnParent.appendChild(results.tn);
+      results.cleanUp = () => {
+        results.tnParent.remove();
+      };
+    } else {
+      results.tnParent = doc.createElement('p');
+      results.tnParent.appendChild(results.tn);
+      results.cleanUp = () => {
+        results.tnParent.remove();
+      };
+    }
+    return results;
+  }
+};
+
+window.HTMLAssign = {
+  innerOuterHTML: [
+    {
+      which: 'innerHTML',
+      unrw: '<a href="http://example.com">hi</a>',
+      rw: `<a href="${window.WB_PREFIX}mp_/http://example.com">hi</a>`
+    },
+    {
+      which: 'outerHTML',
+      unrw: '<div id="oHTML"><a href="http://example.com">hi</a></div>',
+      rw: `<div id="oHTML"><a href="${window.WB_PREFIX}mp_/http://example.com">hi</a></div>`
+    }
+  ]
+};
+
+window.LinkAsTypes = {
+  script: 'js_',
+  worker: 'js_',
+  style: 'cs_',
+  image: 'im_',
+  document: 'if_',
+  fetch: 'mp_',
+  font: 'oe_',
+  audio: 'oe_',
+  video: 'oe_',
+  embed: 'oe_',
+  object: 'oe_',
+  track: 'oe_'
+};
+
+window.TagToMod = {
+  'A': { 'href': 'mp_' },
+  'AREA': { 'href': 'mp_' },
+  'IMG': { 'src': 'im_', 'srcset': 'im_' },
+  'IFRAME': { 'src': 'if_' },
+  'FRAME': { 'src': 'if_' },
+  'SCRIPT': { 'src': 'js_' },
+  'VIDEO': { 'src': 'oe_', 'poster': 'im_' },
+  'AUDIO': { 'src': 'oe_', 'poster': 'im_' },
+  'SOURCE': { 'src': 'oe_', 'srcset': 'oe_' },
+  'INPUT': { 'src': 'oe_' },
+  'EMBED': { 'src': 'oe_' },
+  'OBJECT': { 'data': 'oe_' },
+  'BASE': { 'href': 'mp_' },
+  'META': { 'content': 'mp_' },
+  'FORM': { 'action': 'mp_' },
+  'TRACK': { 'src': 'oe_' }
+};
+
+window.ElementGetSetAttribute = [
+  {
+    elem: 'link',
+    prop: 'href',
+    unrw: 'http://example.com/whatever'
+  },
+  {
+    elem: 'img',
+    props: ['src', 'srcset'],
+    unrws: ['http://example.com/whatever', 'http://example.com/whatever 1.5x']
+  },
+  {
+    elem: 'iframe',
+    props: ['src'],
+    unrws: ['http://example.com/whatever']
+  },
+  {
+    elem: 'script',
+    props: ['src'],
+    unrws: ['http://example.com/whatever.js']
+  },
+  {
+    elem: 'video',
+    props: ['src', 'poster'],
+    unrws: ['http://example.com/whatever', 'http://example.com/whatever']
+  },
+  {
+    elem: 'audio',
+    props: ['src', 'poster'],
+    unrws: ['http://example.com/whatever', 'http://example.com/whatever']
+  },
+  {
+    elem: 'source',
+    props: ['src', 'srcset'],
+    unrws: ['http://example.com/whatever', 'http://example.com/whatever 1.5x']
+  },
+  {
+    elem: 'input',
+    props: ['src'],
+    unrws: ['http://example.com/whatever']
+  },
+  {
+    elem: 'embed',
+    props: ['src'],
+    unrws: ['http://example.com/whatever']
+  },
+  {
+    elem: 'base',
+    props: ['href'],
+    unrws: ['http://example.com/whatever']
+  },
+  {
+    elem: 'meta',
+    props: ['content'],
+    unrws: ['http://example.com/whatever']
+  },
+  {
+    elem: 'form',
+    props: ['action'],
+    unrws: ['http://example.com/whatever']
+  },
+  {
+    elem: 'frame',
+    props: ['src'],
+    unrws: ['http://example.com/whatever']
+  },
+  {
+    elem: 'track',
+    props: ['src'],
+    unrws: ['http://example.com/whatever']
+  },
+  {
+    elem: 'area',
+    props: ['href'],
+    unrws: ['http://example.com/whatever']
+  },
+  {
+    elem: 'a',
+    props: ['href'],
+    unrws: ['http://example.com/whatever']
+  }
+];
+
+// {
+//   elem: 'area',
+//     props: ['href', 'hash', 'pathname', 'host', 'hostname', 'protocol', 'origin', 'search', 'port'],
+//   unrws: ['http://username:password@example.com:80/whatever#bang?search=1', '#bang', '/whatever', '', '', '', '', '', '']
+// },
+// {
+//   elem: 'a',
+//     props: ['href', 'hash', 'pathname', 'host', 'hostname', 'protocol', 'origin', 'search', 'port'],
+// }

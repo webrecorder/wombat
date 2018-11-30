@@ -215,6 +215,16 @@ ajv-keywords@^3.0.0:
   resolved "https://registry.yarnpkg.com/ajv-keywords/-/ajv-keywords-3.2.0.tgz#e86b819c602cf8821ad637413698f1dec021847a"
   integrity sha1-6GuBnGAs+IIa1jdBNpjx3sAhhHo=
 
+ajv@6.5.5:
+  version "6.5.5"
+  resolved "https://registry.yarnpkg.com/ajv/-/ajv-6.5.5.tgz#cf97cdade71c6399a92c6d6c4177381291b781a1"
+  integrity sha512-7q7gtRQDJSyuEHjuVgHoUa2VuemFiCMrfQc9Tc08XTAc4Zj/5U1buQJ0HU6i7fKjXU09SVgSmxa4sLvuvS8Iyg==
+  dependencies:
+    fast-deep-equal "^2.0.1"
+    fast-json-stable-stringify "^2.0.0"
+    json-schema-traverse "^0.4.1"
+    uri-js "^4.2.2"
+
 ajv@^6.0.0, ajv@^6.0.1, ajv@^6.5.0:
   version "6.5.2"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-6.5.2.tgz#678495f9b82f7cca6be248dd92f59bff5e1f4360"
@@ -1992,14 +2002,14 @@ fastify-static@^0.14.0:
     readable-stream "^3.0.0"
     send "^0.16.0"
 
-fastify@^1.13.0:
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/fastify/-/fastify-1.13.0.tgz#1e68bd7bc69257afa989f6ae94c885255087a403"
-  integrity sha512-0aqsHEk2WtgGxPVDTOqDLv5XLHQE2EuH7eCq4XRLLnktLehNvr3/Afi/nEn6pPoLiVGMrbWHv4l1+wDhiSIFoA==
+fastify@^1.13.1:
+  version "1.13.1"
+  resolved "https://registry.yarnpkg.com/fastify/-/fastify-1.13.1.tgz#9e16a8d05133a405d9ba88e96e9cb246f70f9f99"
+  integrity sha512-Ctpv8/tVMS0xocMOEC9KsKbIiVpdNK+bxgsV2cZHM6QzuEgdAyJv6oJzBO/6kpKp8OP0ywhuOXsw8Z4WJhAO8w==
   dependencies:
     "@types/pino" "^4.16.0"
     abstract-logging "^1.0.0"
-    ajv "^6.5.4"
+    ajv "6.5.5"
     avvio "^5.8.0"
     end-of-stream "^1.4.1"
     fast-json-stringify "^1.8.0"
@@ -2009,7 +2019,7 @@ fastify@^1.13.0:
     middie "^3.1.0"
     pino "^4.17.3"
     proxy-addr "^2.0.3"
-    tiny-lru "^1.6.1"
+    tiny-lru "^2.0.0"
 
 fastparallel@^2.3.0:
   version "2.3.0"
@@ -4687,10 +4697,10 @@ timers-browserify@^1.0.1:
   dependencies:
     process "~0.11.0"
 
-tiny-lru@^1.6.1:
-  version "1.6.1"
-  resolved "https://registry.yarnpkg.com/tiny-lru/-/tiny-lru-1.6.1.tgz#addb5c043311d1f07cd3a81d706ae739b8efebb1"
-  integrity sha512-m8oyPnHjnQlbDk8+MCw33qRMp6+BxPxoayN9C743VToeyQ5zZV6F6vkklrYVEI0z9MQ3+jmc+22tKmvPg4gmoA==
+tiny-lru@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/tiny-lru/-/tiny-lru-2.0.0.tgz#1491ae2bd82d658246290fe48334039836cc6146"
+  integrity sha512-LcvsiH/JYkeItdNK5w8EJjlHcOuaULkpjA97cfLBMvylHKlXAcccNFqKUw4EGhbYaFnhn6q7xqfTyO0xIOj59Q==
 
 tls-keygen@^3.6.1:
   version "3.6.1"
