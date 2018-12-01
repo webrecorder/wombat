@@ -8,7 +8,6 @@ import zip from 'lodash-es/zip';
 import chaiAsPromised from './chai-as-promised';
 import chaiInterface from './chai-interface';
 import chaiURL from './chai-url';
-import chaiAssertType from './chai-asserttype';
 import chaiWombat from './chai-wombat';
 
 window.getViaPath = get;
@@ -22,7 +21,6 @@ chai.use(chaiWombat);
 chai.use(chaiAsPromised);
 chai.use(chaiInterface);
 chai.use(chaiURL);
-chai.use(chaiAssertType);
 
 /**
  * @type {function() : chai.Assertion}

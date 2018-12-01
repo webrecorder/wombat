@@ -1655,6 +1655,7 @@ Wombat.prototype.overrideAnchorAreaElem = function (whichObj) {
   }
   var originalGetSets = {};
   var originalProto = whichObj.prototype;
+
   var anchorAreaSetter = function (prop, value) {
     var func = originalGetSets['set_' + prop];
     if (func) {
@@ -1672,13 +1673,19 @@ Wombat.prototype.overrideAnchorAreaElem = function (whichObj) {
       return '';
     }
   };
+
   for (var i = 0; i < this.URL_PROPS.length; i++) {
     var prop = this.URL_PROPS[i];
     originalGetSets['get_' + prop] = this.get_orig_getter(originalProto, prop);
     originalGetSets['set_' + prop] = this.get_orig_setter(originalProto, prop);
+    if (Object.defineProperty) {
+      this.def_prop(originalProto, prop,
+        this.make_set_loc_prop(prop, anchorAreaSetter, anchorAreaGetter),
+        this.make_get_loc_prop(prop, anchorAreaGetter),
+        true
+      );
+    }
   }
-
-  this.init_loc_override(originalProto, anchorAreaSetter, anchorAreaGetter);
   originalProto.toString = function toString () { return this.href; };
 };
 

@@ -5,9 +5,8 @@ describe('Wombat overrides', function () {
   const prefix = window.WB_PREFIX;
   before(window.initTestContext({ init: true }));
 
-  afterEach(async function () {
+  afterEach(function () {
     this.wombatMSGs.clear();
-    await this.$internalHelper.refreshInit();
   });
 
   describe('init_top_frame', function () {
@@ -542,7 +541,7 @@ describe('Wombat overrides', function () {
 
     window.ElementGetSetAttribute.forEach(aTest => {
       if (aTest.elem === 'link') {
-        for (const [as, mod] of Object.entries(window.LinkAsTypes)) {
+        Object.entries(window.LinkAsTypes).forEach(([as, mod]) => {
           it(`should un-rewrite the value returned by getAttribute for the href attribute of <link rel="preload" as="${as}">`, function () {
             const { document } = this.wombatSandbox;
             const elem = document.createElement(aTest.elem);
@@ -580,7 +579,23 @@ describe('Wombat overrides', function () {
             expect(elem.getAttribute(aTest.prop)).to.equal(aTest.unrw);
             expect(elem).to.have.rewrittenAttr(aTest.prop, `${prefix}${mod}/${aTest.unrw}`);
           });
-        }
+        });
+        it(`should un-rewrite the value returned by getAttribute for the href attribute of <link rel="stylesheet">`, function () {
+          const { document } = this.wombatSandbox;
+          const elem = document.createElement(aTest.elem);
+          elem.rel = 'stylesheet';
+          elem.setAttribute(aTest.prop, aTest.unrw);
+          expect(elem.getAttribute(aTest.prop)).to.equal(aTest.unrw);
+        });
+
+        it(`should un-rewrite the value returned by getAttribute for the href attribute of <link rel="stylesheet">`, function () {
+          const { document } = this.wombatSandbox;
+          const elem = document.createElement(aTest.elem);
+          elem.rel = 'stylesheet';
+          elem.setAttribute(aTest.prop, aTest.unrw);
+          expect(elem.getAttribute(aTest.prop)).to.equal(aTest.unrw);
+          expect(elem).to.have.rewrittenAttr(aTest.prop, `${prefix}cs_/${aTest.unrw}`);
+        });
       } else {
         window.zip(aTest.props, aTest.unrws).forEach(([prop, unrw]) => {
           it(`should un-rewrite the value returned by getAttribute for ${aTest.elem}.${prop}`, function () {
@@ -599,6 +614,101 @@ describe('Wombat overrides', function () {
           });
         });
       }
+    });
+  });
+
+  describe('Node.prototype', function () {
+    it('should return the document Proxy object when ownerDocument is accessed', function () {
+      const { document } = this.wombatSandbox;
+      expect(document.body.ownerDocument).to.equal(document._WB_wombat_obj_proxy);
+    });
+
+    it('should rewrite a element with no children supplied to "appendChild"', function () {
+      const wombatDoc = this.wombatSandbox.document;
+      const div = wombatDoc.createElement('div');
+      const a = window.untamperedWithWinDocObj.document.createElement('a');
+      a.href = 'http://example.com';
+      div.appendChild(a);
+      expect(a).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+    });
+
+    it('should rewrite a element with multiple children supplied to "appendChild"', function () {
+      const wombatDoc = this.wombatSandbox.document;
+      const div = wombatDoc.createElement('div');
+      const a1 = window.untamperedWithWinDocObj.document.createElement('a');
+      const a2 = window.untamperedWithWinDocObj.document.createElement('a');
+      const a3 = window.untamperedWithWinDocObj.document.createElement('a');
+      a1.href = 'http://example.com';
+      a2.href = 'http://example.com';
+      a3.href = 'http://example.com';
+      a1.appendChild(a2);
+      a1.appendChild(a3);
+      div.appendChild(a1);
+      expect(a1).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+      expect(a2).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+      expect(a3).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+    });
+
+    it('should rewrite a element with no children supplied to "insertBefore"', function () {
+      const wombatDoc = this.wombatSandbox.document;
+      const div = wombatDoc.createElement('div');
+      wombatDoc.body.appendChild(div);
+      const a = window.untamperedWithWinDocObj.document.createElement('a');
+      a.href = 'http://example.com';
+      wombatDoc.body.insertBefore(a, div);
+      div.remove();
+      a.remove();
+      expect(a).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+    });
+
+    it('should rewrite a element with multiple children supplied to "insertBefore"', function () {
+      const wombatDoc = this.wombatSandbox.document;
+      const div = wombatDoc.createElement('div');
+      wombatDoc.body.appendChild(div);
+      const a1 = window.untamperedWithWinDocObj.document.createElement('a');
+      const a2 = window.untamperedWithWinDocObj.document.createElement('a');
+      const a3 = window.untamperedWithWinDocObj.document.createElement('a');
+      a1.href = 'http://example.com';
+      a2.href = 'http://example.com';
+      a3.href = 'http://example.com';
+      a1.appendChild(a2);
+      a1.appendChild(a3);
+      wombatDoc.body.insertBefore(a1, div);
+      div.remove();
+      a1.remove();
+      expect(a1).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+      expect(a2).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+      expect(a3).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+    });
+
+    it('should rewrite a element with no children supplied to "replaceChild"', function () {
+      const wombatDoc = this.wombatSandbox.document;
+      const div = wombatDoc.createElement('div');
+      wombatDoc.body.appendChild(div);
+      const a = window.untamperedWithWinDocObj.document.createElement('a');
+      a.href = 'http://example.com';
+      wombatDoc.body.replaceChild(a, div);
+      a.remove();
+      expect(a).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+    });
+
+    it('should rewrite a element with multiple children supplied to "replaceChild"', function () {
+      const wombatDoc = this.wombatSandbox.document;
+      const div = wombatDoc.createElement('div');
+      wombatDoc.body.appendChild(div);
+      const a1 = window.untamperedWithWinDocObj.document.createElement('a');
+      const a2 = window.untamperedWithWinDocObj.document.createElement('a');
+      const a3 = window.untamperedWithWinDocObj.document.createElement('a');
+      a1.href = 'http://example.com';
+      a2.href = 'http://example.com';
+      a3.href = 'http://example.com';
+      a1.appendChild(a2);
+      a1.appendChild(a3);
+      wombatDoc.body.replaceChild(a1, div);
+      a1.remove();
+      expect(a1).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+      expect(a2).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
+      expect(a3).to.have.rewrittenAttr('href', `${this.testHelpers.baseURLMP}/http://example.com`);
     });
   });
 });

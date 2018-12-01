@@ -39,6 +39,7 @@ function makePropertyDescriptorTest (objectPath, prop, expectedInterface, skipGe
 }
 
 describe('Wombat setup', function () {
+  const expect = window.chai.expect;
   before(window.initTestContext());
 
   describe('before initialization', function () {
