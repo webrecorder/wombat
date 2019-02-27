@@ -20,7 +20,7 @@ This file is part of pywb, https://github.com/webrecorder/pywb
 
 // Creates the default pywb banner.
 
-(function () {
+(function() {
   if (window.top !== window) {
     return;
   }
@@ -28,7 +28,7 @@ This file is part of pywb, https://github.com/webrecorder/pywb
   /**
    * The default banner class
    */
-  function DefaultBanner () {
+  function DefaultBanner() {
     if (!(this instanceof DefaultBanner)) return new DefaultBanner();
     this.banner = null;
     this.captureInfo = null;
@@ -44,7 +44,7 @@ This file is part of pywb, https://github.com/webrecorder/pywb
   /**
    * @desc Initialize (display) the banner
    */
-  DefaultBanner.prototype.init = function () {
+  DefaultBanner.prototype.init = function() {
     if (window.wbinfo) {
       this.createBanner('_wb_plain_banner');
       this.set_banner(
@@ -63,7 +63,7 @@ This file is part of pywb, https://github.com/webrecorder/pywb
    * that the page is loading
    * @returns {boolean}
    */
-  DefaultBanner.prototype.stillIndicatesLoading = function () {
+  DefaultBanner.prototype.stillIndicatesLoading = function() {
     return document.getElementById(this.loadingId) != null;
   };
 
@@ -73,7 +73,7 @@ This file is part of pywb, https://github.com/webrecorder/pywb
    * If we are in live mode this is undefined/empty string
    * @param {boolean} is_live - A bool indicating if we are operating in live mode
    */
-  DefaultBanner.prototype.updateCaptureInfo = function (url, ts, is_live) {
+  DefaultBanner.prototype.updateCaptureInfo = function(url, ts, is_live) {
     if (is_live && !ts) {
       ts = new Date().toISOString().replace(/[-T:.Z]/g, '');
     }
@@ -85,7 +85,7 @@ This file is part of pywb, https://github.com/webrecorder/pywb
    * @param {MessageEvent} event - The message event containing the message received
    * from the replayed page
    */
-  DefaultBanner.prototype.onMessage = function (event) {
+  DefaultBanner.prototype.onMessage = function(event) {
     var type = event.data.wb_type;
 
     if (type === 'load' || type === 'replace-url') {
@@ -119,7 +119,12 @@ This file is part of pywb, https://github.com/webrecorder/pywb
       }
     }
 
-    this.set_banner(this.state.url, this.state.ts, this.state.is_live, this.title);
+    this.set_banner(
+      this.state.url,
+      this.state.ts,
+      this.state.is_live,
+      this.title
+    );
   };
 
   // Functions internal to the default banner
@@ -128,12 +133,13 @@ This file is part of pywb, https://github.com/webrecorder/pywb
    * @desc Creates the underlying HTML elements comprising the banner
    * @param {string} bid - The id for the banner
    */
-  DefaultBanner.prototype.createBanner = function (bid) {
+  DefaultBanner.prototype.createBanner = function(bid) {
     this.banner = document.createElement('wb_div', true);
     this.banner.setAttribute('id', bid);
     this.banner.setAttribute('lang', 'en');
     this.captureInfo = document.createElement('span');
-    this.captureInfo.innerHTML = '<span id="' + this.loadingId + '">Loading...</span>';
+    this.captureInfo.innerHTML =
+      '<span id="' + this.loadingId + '">Loading...</span>';
     this.captureInfo.id = '_wb_capture_info';
     this.banner.appendChild(this.captureInfo);
     document.body.insertBefore(this.banner, document.body.firstChild);
@@ -147,7 +153,7 @@ This file is part of pywb, https://github.com/webrecorder/pywb
    * @param {boolean} is_gmt - Is the returned date string to be in GMT time
    * @returns {string}
    */
-  DefaultBanner.prototype.ts_to_date = function (ts, is_gmt) {
+  DefaultBanner.prototype.ts_to_date = function(ts, is_gmt) {
     if (!ts) {
       return '';
     }
@@ -156,12 +162,19 @@ This file is part of pywb, https://github.com/webrecorder/pywb
       ts += '00000000000000'.substr(ts.length);
     }
 
-    var datestr = (ts.substring(0, 4) + '-' +
-      ts.substring(4, 6) + '-' +
-      ts.substring(6, 8) + 'T' +
-      ts.substring(8, 10) + ':' +
-      ts.substring(10, 12) + ':' +
-      ts.substring(12, 14) + '-00:00');
+    var datestr =
+      ts.substring(0, 4) +
+      '-' +
+      ts.substring(4, 6) +
+      '-' +
+      ts.substring(6, 8) +
+      'T' +
+      ts.substring(8, 10) +
+      ':' +
+      ts.substring(10, 12) +
+      ':' +
+      ts.substring(12, 14) +
+      '-00:00';
 
     var date = new Date(datestr);
 
@@ -179,7 +192,7 @@ This file is part of pywb, https://github.com/webrecorder/pywb
    * @param {boolean} is_live - Are we in live mode
    * @param {?string} title - The title of the replayed page to be displayed in the banner
    */
-  DefaultBanner.prototype.set_banner = function (url, ts, is_live, title) {
+  DefaultBanner.prototype.set_banner = function(url, ts, is_live, title) {
     var capture_str;
     var title_str;
 

@@ -20,7 +20,7 @@ This file is part of pywb, https://github.com/webrecorder/pywb
 /**
  * @param {Object} content_info - Information about the contents to be replayed
  */
-function ContentFrame (content_info) {
+function ContentFrame(content_info) {
   if (!(this instanceof ContentFrame)) return new ContentFrame(content_info);
   this.last_inner_hash = window.location.hash;
   this.last_url = content_info.url;
@@ -38,10 +38,12 @@ function ContentFrame (content_info) {
   if (document.readyState === 'complete') {
     this.init_iframe();
   } else {
-    document.addEventListener('DOMContentLoaded', this.init_iframe.bind(this), { once: true });
+    document.addEventListener('DOMContentLoaded', this.init_iframe.bind(this), {
+      once: true
+    });
   }
 
-  window.__WB_pmw = function (win) {
+  window.__WB_pmw = function(win) {
     this.pm_source = win;
     return this;
   };
@@ -51,8 +53,8 @@ function ContentFrame (content_info) {
  * @desc Initializes the replay iframe. If a banner exists (exposed on window as WBBanner)
  * then the init function of the banner is called.
  */
-ContentFrame.prototype.init_iframe = function () {
-  if (typeof (this.content_info.iframe) === 'string') {
+ContentFrame.prototype.init_iframe = function() {
+  if (typeof this.content_info.iframe === 'string') {
     this.iframe = document.querySelector(this.content_info.iframe);
   } else {
     this.iframe = this.content_info.iframe;
@@ -74,9 +76,10 @@ ContentFrame.prototype.init_iframe = function () {
 /**
  * @desc Initializes the prefixes used to load the pages to be replayed
  */
-ContentFrame.prototype.extract_prefix = function () {
+ContentFrame.prototype.extract_prefix = function() {
   this.app_prefix = this.content_info.app_prefix || this.content_info.prefix;
-  this.content_prefix = this.content_info.content_prefix || this.content_info.prefix;
+  this.content_prefix =
+    this.content_info.content_prefix || this.content_info.prefix;
 
   if (this.app_prefix && this.content_prefix) {
     return;
@@ -108,7 +111,7 @@ ContentFrame.prototype.extract_prefix = function () {
  * @param {?boolean} content_url - Is the abs URL to be constructed using the content_prefix or app_prefix
  * @returns {string}
  */
-ContentFrame.prototype.make_url = function (url, ts, content_url) {
+ContentFrame.prototype.make_url = function(url, ts, content_url) {
   var mod, prefix;
 
   if (content_url) {
@@ -134,14 +137,14 @@ ContentFrame.prototype.make_url = function (url, ts, content_url) {
  * @desc Handles and routes all messages received from the replay iframe.
  * @param {MessageEvent} event - A message event potentially containing a message from the replay iframe
  */
-ContentFrame.prototype.handle_event = function (event) {
+ContentFrame.prototype.handle_event = function(event) {
   var frame_win = this.iframe.contentWindow;
   if (event.source === window.parent) {
     // Pass to replay frame
     frame_win.postMessage(event.data, '*');
   } else if (event.source === frame_win) {
     // Check if iframe url change message
-    if (typeof (event.data) === 'object' && event.data['wb_type']) {
+    if (typeof event.data === 'object' && event.data['wb_type']) {
       this.handle_message(event);
     } else {
       // Pass to parent
@@ -155,7 +158,7 @@ ContentFrame.prototype.handle_event = function (event) {
  * is exposed, calls the onMessage function of the exposed banner.
  * @param {MessageEvent} event - The message event containing a message from the replay iframe
  */
-ContentFrame.prototype.handle_message = function (event) {
+ContentFrame.prototype.handle_message = function(event) {
   if (this.wbBanner) {
     this.wbBanner.onMessage(event);
   }
@@ -173,8 +176,11 @@ ContentFrame.prototype.handle_message = function (event) {
  * @desc Updates the URL of the top frame
  * @param {Object} state - The contents of a message rreceived from the replay iframe
  */
-ContentFrame.prototype.set_url = function (state) {
-  if (state.url && (state.url !== this.last_url || state.request_ts !== this.last_ts)) {
+ContentFrame.prototype.set_url = function(state) {
+  if (
+    state.url &&
+    (state.url !== this.last_url || state.request_ts !== this.last_ts)
+  ) {
     var new_url = this.make_url(state.url, state.request_ts, false);
 
     window.history.replaceState(state, '', new_url);
@@ -193,12 +199,12 @@ ContentFrame.prototype.set_url = function (state) {
  * @param {?string} newTs - The new timestamp of the replay iframe. Is falsy if
  * operating in live mode
  */
-ContentFrame.prototype.initBannerUpdateCheck = function (newUrl, newTs) {
+ContentFrame.prototype.initBannerUpdateCheck = function(newUrl, newTs) {
   if (!this.wbBanner) return;
   var contentFrame = this;
-  var replayIframeLoaded = function () {
+  var replayIframeLoaded = function() {
     contentFrame.iframe.removeEventListener('load', replayIframeLoaded);
-    contentFrame.checkBannerToId = setTimeout(function () {
+    contentFrame.checkBannerToId = setTimeout(function() {
       contentFrame.checkBannerToId = null;
       if (contentFrame.wbBanner.stillIndicatesLoading()) {
         contentFrame.wbBanner.updateCaptureInfo(
@@ -222,7 +228,7 @@ ContentFrame.prototype.initBannerUpdateCheck = function (newUrl, newTs) {
  * @param {?string} newTs - The new timestamp of the replay iframe. Is falsy if
  * operating in live mode
  */
-ContentFrame.prototype.load_url = function (newUrl, newTs) {
+ContentFrame.prototype.load_url = function(newUrl, newTs) {
   this.iframe.src = this.make_url(newUrl, newTs, true);
   if (this.wbBanner) {
     this.initBannerUpdateCheck(newUrl, newTs);
@@ -233,7 +239,7 @@ ContentFrame.prototype.load_url = function (newUrl, newTs) {
  * @desc Updates this frames hash to the one inside the replay iframe
  * @param {Object} state - The contents of message received from the replay iframe
  */
-ContentFrame.prototype.inner_hash_changed = function (state) {
+ContentFrame.prototype.inner_hash_changed = function(state) {
   if (window.location.hash !== state.hash) {
     window.location.hash = state.hash;
   }
@@ -244,13 +250,13 @@ ContentFrame.prototype.inner_hash_changed = function (state) {
  * @desc Updates the hash of the replay iframe on a hash change in this frame
  * @param event
  */
-ContentFrame.prototype.outer_hash_changed = function (event) {
+ContentFrame.prototype.outer_hash_changed = function(event) {
   if (window.location.hash === this.last_inner_hash) {
     return;
   }
 
   if (this.iframe) {
-    var message = { 'wb_type': 'outer_hashchange', 'hash': window.location.hash };
+    var message = { wb_type: 'outer_hashchange', hash: window.location.hash };
 
     this.iframe.contentWindow.postMessage(message, '*', undefined, true);
   }
@@ -259,7 +265,7 @@ ContentFrame.prototype.outer_hash_changed = function (event) {
 /**
  * @desc Cleans up any event listeners added by the content frame
  */
-ContentFrame.prototype.close = function () {
+ContentFrame.prototype.close = function() {
   window.removeEventListener('hashchange', this.outer_hash_changed);
   window.removeEventListener('message', this.handle_event);
 };

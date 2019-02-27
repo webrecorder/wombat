@@ -1,5 +1,5 @@
 {
-   "extends": ["semistandard"],
+   "extends": ["plugin:prettier/recommended"],
    "env": {
       "browser": true,
       "node": true
@@ -14,5 +14,8 @@
       "WB_wombat_location": true,
       "expect": true,
       "_": true
+   },
+   "parserOptions": {
+      "sourceType": "module"
    }
 }

@@ -1,18 +1,31 @@
+/* eslint-disable */
 // pywb mini rewriter for injection into web worker scripts
 
-function WBWombat (info) {
-  function rewrite_url (url) {
-    if (info.prefix) {
-      return info.prefix + url;
-    } else {
-      return url;
+function WBWombat(info) {
+  function maybeResolveURL(origURL) {
+    try {
+      var resolved = new URL(origURL, info.originalURL);
+      return resolved.href;
+    } catch (e) {
+      return origURL;
     }
   }
 
-  function init_ajax_rewrite () {
+  function rewrite_url(url) {
+    if (url.indexOf('blob:') === 0) return url;
+    if (url && info.originalURL && url.indexOf('/') === 0) {
+      url = maybeResolveURL(url);
+    }
+    if (info.prefix) {
+      return info.prefix + url;
+    }
+    return url;
+  }
+
+  function init_ajax_rewrite() {
     var orig = self.XMLHttpRequest.prototype.open;
 
-    function open_rewritten (method, url, async, user, password) {
+    function open_rewritten(method, url, async, user, password) {
       url = rewrite_url(url);
 
       // defaults to true
@@ -32,10 +45,10 @@ function WBWombat (info) {
 
   init_ajax_rewrite();
 
-  function rewriteArgs (argsObj) {
+  function rewriteArgs(argsObj) {
     // recreate the original arguments object just with URLs rewritten
-    var newArgObj = { length: argsObj.length };
-    for (var i = 0; i < argsObj.length; i++) {
+    var newArgObj = new Array(argsObj.length);
+    for (var i = 0; i < newArgObj.length; i++) {
       var arg = argsObj[i];
       newArgObj[i] = rewrite_url(arg);
     }
@@ -43,7 +56,7 @@ function WBWombat (info) {
   }
 
   var origImportScripts = self.importScripts;
-  self.importScripts = function importScripts () {
+  self.importScripts = function importScripts() {
     // rewrite the arguments object and call original function via fn.apply
     var rwArgs = rewriteArgs(arguments);
     return origImportScripts.apply(this, rwArgs);
@@ -52,8 +65,8 @@ function WBWombat (info) {
   if (self.fetch != null) {
     // this fetch is Worker.fetch
     var orig_fetch = self.fetch;
-    self.fetch = function (input, init_opts) {
-      var inputType = typeof (input);
+    self.fetch = function(input, init_opts) {
+      var inputType = typeof(input);
       if (inputType === 'string') {
         input = rewrite_url(input);
       } else if (inputType === 'object' && input.url) {

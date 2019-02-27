@@ -1,3 +1,4 @@
+/* eslint-disable */
 /*
 Copyright(c) 2013-2018 Rhizome and Ilya Kreymer. Released under the GNU General Public License.
 
@@ -119,7 +120,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
     'AREA': {'href': undefined},
     'IMG': {'src': 'im_', 'srcset': 'im_'},
     'IFRAME': {'src': 'if_'},
-    'FRAME': {'src': 'if_'},
+    'FRAME': {'src': 'fr_'},
     'SCRIPT': {'src': 'js_'},
     'VIDEO': {'src': 'oe_', 'poster': 'im_'},
     'AUDIO': {'src': 'oe_', 'poster': 'im_'},
@@ -186,13 +187,30 @@ var _WBWombat = function($wbwindow, wbinfo) {
     }
   }
 
-  function isImageSrcset(elem) {
-    if (elem.tagName === 'IMG') return true;
-    return elem.tagName === 'SOURCE' && elem.parentElement && elem.parentElement.tagName === 'PICTURE';
+  function isSavedSrcSrcset(elem) {
+    // returns true or false to indicate if the supplied element may have attributes that are auto-fetched
+    switch (elem.tagName) {
+      case 'IMG':
+      case 'VIDEO':
+      case 'AUDIO':
+        return true;
+      case 'SOURCE':
+        if (!elem.parentElement) return false;
+        switch (elem.parentElement.tagName) {
+          case 'PICTURE':
+          case 'VIDEO':
+          case 'AUDIO':
+            return true;
+          default:
+            return false;
+        }
+      default:
+        return false;
+    }
   }
 
-  function isImageDataSrcset(elem) {
-    if (isImageSrcset(elem)) return elem.dataset.srcset != null;
+  function isSavedDataSrcSrcset(elem) {
+    if (elem.dataset.srcset != null) return isSavedSrcSrcset(elem);
     return false;
   }
 
@@ -319,7 +337,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
       }
     }
 
-    // just in case wombat reference made it into url!
+    // just in case _wombat reference made it into url!
     url = url.replace("WB_wombat_", "");
 
     // ignore anchors, about, data
@@ -782,7 +800,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
     }
 
     if (req_href == orig_href) {
-      // Reset wombat loc to the unrewritten version
+      // Reset _wombat loc to the unrewritten version
       //if (wombat_loc) {
       //    wombat_loc.href = extract_orig(orig_href);
       //}
@@ -1162,7 +1180,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
         } else if (lowername == "style") {
           value = rewrite_style(value);
         } else if (lowername == "srcset") {
-          value = rewrite_srcset(value, isImageSrcset(this));
+          value = rewrite_srcset(value, this);
         }
       }
       orig_setAttribute.call(this, name, value);
@@ -1347,25 +1365,35 @@ var _WBWombat = function($wbwindow, wbinfo) {
   }
 
   //============================================
-  function initAutoFetchWorker() {
+  function initAutoFetchWorker(rwRe) {
     if (!wbUseAFWorker) {
       return;
     }
 
     var isTop = $wbwindow === $wbwindow.__WB_replay_top;
 
-    function AutoFetchWorker(prefix, mod) {
+    function AutoFetchWorker(opts) {
       if (!(this instanceof AutoFetchWorker)) {
-        return new AutoFetchWorker(prefix, mod);
+        return new AutoFetchWorker(opts);
       }
-      this.checkIntervalCB = this.checkIntervalCB.bind(this);
+      // specifically target the elements we desire
+      this.elemSelector = ['img', 'source', 'video', 'audio'].map(function (which) {
+        if (which === 'source') {
+          return ['picture > ', 'video > ', 'audio >'].map(function (parent) {
+            return parent + which + '[srcset], ' + parent + which + '[data-srcset], ' + parent + which + '[data-src]'
+          }).join(', ');
+        } else {
+          return which + '[srcset], ' + which + '[data-srcset], ' + which + '[data-src]';
+        }
+      }).join(', ');
+
       if (isTop) {
         // we are top and can will own this worker
         // setup URL for the kewl case
         // Normal replay and preservation mode pworker setup, its all one origin so YAY!
-        var workerURL = wbinfo.static_prefix +
+        var workerURL = (wbinfo.auto_fetch_worker_prefix || wbinfo.static_prefix) +
           'autoFetchWorker.js?init='+
-          encodeURIComponent(JSON.stringify({ 'mod': mod, 'prefix': prefix }));
+          encodeURIComponent(JSON.stringify(opts));
         this.worker = new $wbwindow.Worker(workerURL);
       } else {
         // add only the portions of the worker interface we use since we are not top and if in proxy mode start check polling
@@ -1381,20 +1409,17 @@ var _WBWombat = function($wbwindow, wbinfo) {
       }
     }
 
-    AutoFetchWorker.prototype.checkIntervalCB = function () {
-      this.extractFromLocalDoc();
-    };
-
     AutoFetchWorker.prototype.deferredSheetExtraction = function (sheet) {
       var rules = sheet.cssRules || sheet.rules;
       // if no rules this a no op
       if (!rules || rules.length === 0) return;
-      var self = this;
-      function extract() {
+      var afw = this;
+      // defer things until next time the Promise.resolve Qs are cleared
+      $wbwindow.Promise.resolve().then(function () {
         // loop through each rule of the stylesheet
         var media = [];
-        for (var j = 0; j < rules.length; ++j) {
-          var rule = rules[j];
+        for (var i = 0; i < rules.length; ++i) {
+          var rule = rules[i];
           if (rule.type === CSSRule.MEDIA_RULE) {
             // we are a media rule so get its text
             media.push(rule.cssText);
@@ -1402,11 +1427,9 @@ var _WBWombat = function($wbwindow, wbinfo) {
         }
         if (media.length > 0) {
           // we have some media rules to preserve
-          self.preserveMedia(media);
+          afw.preserveMedia(media);
         }
-      }
-      // defer things until next time the Promise.resolve Qs are cleared
-      $wbwindow.Promise.resolve().then(extract);
+      });
     };
 
     AutoFetchWorker.prototype.terminate = function () {
@@ -1416,29 +1439,29 @@ var _WBWombat = function($wbwindow, wbinfo) {
 
     AutoFetchWorker.prototype.postMessage = function (msg, deferred) {
       if (deferred) {
-        var self = this;
+        var afw = this;
         return Promise.resolve().then(function () {
-          self.worker.postMessage(msg);
+          afw.worker.postMessage(msg);
         });
       }
       this.worker.postMessage(msg);
     };
 
-    AutoFetchWorker.prototype.preserveSrcset = function (srcset) {
+    AutoFetchWorker.prototype.preserveSrcset = function (srcset, mod) {
       // send values from rewrite_srcset to the worker deferred
       // to ensure the page viewer sees the images first
       this.postMessage({
         'type': 'values',
-        'srcset': {'values': srcset, 'presplit': true},
+        'srcset': { 'value': srcset, 'mod': mod, 'presplit': true },
       }, true);
     };
 
-    AutoFetchWorker.prototype.preserveDataSrcset = function (srcset) {
+    AutoFetchWorker.prototype.preserveDataSrcset = function (elem) {
       // send values from rewrite_attr srcset to the worker deferred
       // to ensure the page viewer sees the images first
       this.postMessage({
         'type': 'values',
-        'srcset': {'values': srcset, 'presplit': false},
+        'srcset': {'value': elem.dataset.srcset, 'mod': this.rwMod(elem), 'presplit': false},
       }, true);
     };
 
@@ -1447,91 +1470,86 @@ var _WBWombat = function($wbwindow, wbinfo) {
       this.postMessage({'type': 'values', 'media': media}, true);
     };
 
-    AutoFetchWorker.prototype.extractSrcset = function (elem) {
+    AutoFetchWorker.prototype.getSrcset = function (elem) {
       if (wb_getAttribute) {
         return wb_getAttribute.call(elem, 'srcset');
       }
       return elem.getAttribute('srcset');
     };
 
-    AutoFetchWorker.prototype.checkForPictureSourceDataSrcsets = function () {
-      var dataSS = $wbwindow.document.querySelectorAll('img[data-srcset], source[data-srcset]');
-      var elem;
-      var srcset = [];
-      for (var i = 0; i < dataSS.length; i++) {
-        elem = dataSS[i];
-        if (elem.tagName === 'SOURCE') {
-          if (elem.parentElement && elem.parentElement.tagName === 'PICTURE' && elem.dataset.srcset) {
-            srcset.push({srcset: elem.dataset.srcset});
-          }
-        } else if (elem.dataset.srcset) {
-          srcset.push({srcset: elem.dataset.srcset});
-        }
-      }
-      if (srcset.length) {
-        this.postMessage({
-          'type': 'values',
-          'srcset': {'values': srcset, 'presplit': false},
-          'context': {
-            'docBaseURI': $wbwindow.document.baseURI
-          }
-        }, true);
-      }
-    };
-
-    AutoFetchWorker.prototype.extractImgPictureSourceSrcsets = function () {
-      var i;
-      var elem = null;
-      var srcset = [];
-      var ssElements = $wbwindow.document.querySelectorAll('img[srcset], source[srcset]');
-      for (i = 0; i < ssElements.length; i++) {
-        elem = ssElements[i];
-        if (elem.tagName === 'SOURCE') {
-          if (elem.parentElement && elem.parentElement.tagName === 'PICTURE') {
-            srcset.push({srcset: this.extractSrcset(elem)});
-          }
-        } else {
-          srcset.push({tagSrc: elem.src, srcset: this.extractSrcset(elem)});
-        }
-      }
-      return srcset;
+    AutoFetchWorker.prototype.rwMod = function (elem) {
+      return elem.tagName === "SOURCE" ?
+        elem.parentElement.tagName === "PICTURE" ? 'im_' : 'oe_'
+        : elem.tagName === "IMG" ? 'im_' : 'oe_';
     };
 
     AutoFetchWorker.prototype.extractFromLocalDoc = function () {
-      // get the values to be preserved from the  documents stylesheets
-      // and all elements with a srcset
-      var media = [];
-      var sheets = $wbwindow.document.styleSheets;
-      var i = 0;
-      for (; i < sheets.length; ++i) {
-        var rules = sheets[i].cssRules;
-        for (var j = 0; j < rules.length; ++j) {
-          var rule = rules[j];
-          if (rule.type === CSSRule.MEDIA_RULE) {
-            media.push(rule.cssText);
+      // get the values to be preserved from the documents stylesheets
+      // and all img, video, audio elements with (data-)?srcset or data-src
+      var afw = this;
+      Promise.resolve().then(function () {
+        var msg = { 'type': 'values', 'context': { 'docBaseURI': $wbwindow.document.baseURI } };
+        var media = [];
+        var i = 0;
+        var sheets = $wbwindow.document.styleSheets;
+        for (; i < sheets.length; ++i) {
+          var rules = sheets[i].cssRules;
+          for (var j = 0; j < rules.length; ++j) {
+            var rule = rules[j];
+            if (rule.type === CSSRule.MEDIA_RULE) {
+              media.push(rule.cssText);
+            }
           }
         }
-      }
-      var srcset = this.extractImgPictureSourceSrcsets();
-      // send the extracted values to the worker deferred
-      // to ensure the page viewer sees the images first
-      this.postMessage({
-        'type': 'values',
-        'media': media,
-        'srcset': {'values': srcset, 'presplit': false},
-        'context': {
-          'docBaseURI': $wbwindow.document.baseURI
+        var elems = $wbwindow.document.querySelectorAll(afw.elemSelector);
+        var srcset = { 'values': [], 'presplit': false };
+        var src = { 'values': [] };
+        var elem, srcv, mod;
+        for (i = 0; i < elems.length; ++i) {
+          elem = elems[i];
+          // we want the original src value in order to resolve URLs in the worker when needed
+          srcv = elem.src ? elem.src : null;
+          // a from value of 1 indicates images and a 2 indicates audio/video
+          mod = afw.rwMod(elem);
+          if (elem.srcset) {
+            srcset.values.push({
+              'srcset': afw.getSrcset(elem),
+              'mod': mod,
+              'tagSrc': srcv
+            });
+          }
+          if (elem.dataset.srcset) {
+            srcset.values.push({
+              'srcset': elem.dataset.srcset,
+              'mod': mod,
+              'tagSrc': srcv
+            });
+          }
+          if (elem.dataset.src) {
+            src.values.push({'src': elem.dataset.src, 'mod': mod});
+          }
+          if (elem.tagName === "SOURCE" && srcv) {
+            src.values.push({'src': srcv, 'mod': mod});
+          }
         }
-      }, true);
-      // deffer the checking of img/source data-srcset
-      // so that we do not clobber the UI thread
-      var self = this;
-      Promise.resolve().then(function () {
-        self.checkForPictureSourceDataSrcsets();
+        if (media.length) {
+          msg.media = media;
+        }
+        if (srcset.values.length) {
+          msg.srcset = srcset;
+        }
+        if (src.values.length) {
+          msg.src = src;
+        }
+        if (msg.media || msg.srcset || msg.src) {
+          afw.postMessage(msg);
+        }
       });
     };
 
-    WBAutoFetchWorker = new AutoFetchWorker(wb_abs_prefix, wbinfo.mod);
+    WBAutoFetchWorker = new AutoFetchWorker({
+      'prefix': wb_abs_prefix, 'mod': wbinfo.mod, 'rwRe': rwRe
+    });
 
     wbSheetMediaQChecker = function checkStyle() {
       // used only for link[rel='stylesheet'] so we remove our listener
@@ -1547,19 +1565,22 @@ var _WBWombat = function($wbwindow, wbinfo) {
     var fetch = true;
     var makeBlob = false;
     var rwURL;
-    if (!starts_with(workerUrl, 'blob:')) {
+    var isBlob = workerUrl.indexOf('blob:') === 0;
+    var isJSURL = false;
+    if (!isBlob) {
       if (starts_with(workerUrl, 'javascript:')) {
         // JS url, just strip javascript:
         fetch = false;
+        isJSURL = true;
         rwURL = workerUrl.replace('javascript:', '');
       } else if (!starts_with(workerUrl, VALID_PREFIXES.concat('/')) &&
         !starts_with(workerUrl, BAD_PREFIXES)) {
         // super relative url assets/js/xyz.js
         var rurl = resolve_rel_url(workerUrl, $wbwindow.document);
-        rwURL = rewrite_url(rurl, false, 'wkr_');
+        rwURL = rewrite_url(rurl, false, 'wkr_', $wbwindow.document);
       } else {
         // just rewrite it
-        rwURL = rewrite_url(workerUrl, false, 'wkr_');
+        rwURL = rewrite_url(workerUrl, false, 'wkr_', $wbwindow.document);
       }
     } else {
       // blob
@@ -1580,10 +1601,19 @@ var _WBWombat = function($wbwindow, wbinfo) {
     }
 
     if (wbinfo.static_prefix || wbinfo.ww_rw_script) {
+      var originalURL;
+      if (isBlob || isJSURL) {
+        originalURL = $wbwindow.document.baseURI;
+      } else if (workerUrl.indexOf('/') === 0) {
+        // console.log(workerUrl);
+        originalURL = resolve_rel_url(extract_orig(workerUrl), $wbwindow.document);
+      } else {
+        originalURL = extract_orig(workerUrl);
+      }
       // if we are here we can must return blob so set makeBlob to true
       var ww_rw = wbinfo.ww_rw_script || wbinfo.static_prefix + "ww_rw.js";
       var rw = "(function() { " + "self.importScripts('" + ww_rw + "');" +
-        "new WBWombat({'prefix': '" + wb_abs_prefix + 'wkr_' + "/'}); " + "})();";
+        "new WBWombat({'prefix': '" + wb_abs_prefix + 'wkr_' + "/','originalURL':'"+originalURL+"'}); " + "})();";
       workerCode = rw + workerCode;
       makeBlob = true;
     }
@@ -1680,7 +1710,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
     } else if (name == "style") {
       new_value = rewrite_style(value);
     } else if (name == "srcset") {
-      new_value = rewrite_srcset(value, isImageSrcset(elem));
+      new_value = rewrite_srcset(value, elem);
     } else {
       // Only rewrite if absolute url
       if (abs_url_only && !starts_with(value, VALID_PREFIXES)) {
@@ -1688,8 +1718,8 @@ var _WBWombat = function($wbwindow, wbinfo) {
       }
       var mod = rwModForElement(elem, name);
       new_value = rewrite_url(value, false, mod, elem.ownerDocument);
-      if (wbUseAFWorker && isImageDataSrcset(elem)) {
-        WBAutoFetchWorker.preserveDataSrcset(elem.dataset.srcset);
+      if (wbUseAFWorker && isSavedDataSrcSrcset(elem)) {
+        WBAutoFetchWorker.preserveDataSrcset(elem);
       }
     }
 
@@ -1725,7 +1755,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
   }
 
   //============================================
-  function rewrite_srcset(value, isImage)
+  function rewrite_srcset(value, elem)
   {
     if (!value) {
       return "";
@@ -1738,9 +1768,9 @@ var _WBWombat = function($wbwindow, wbinfo) {
       values[i] = rewrite_url(values[i].trim());
     }
 
-    if (wbUseAFWorker && isImage) {
+    if (wbUseAFWorker && isSavedSrcSrcset(elem)) {
       // send post split values to preservation worker
-      WBAutoFetchWorker.preserveSrcset(values);
+      WBAutoFetchWorker.preserveSrcset(values, WBAutoFetchWorker.rwMod(elem));
     }
     return values.join(", ");
   }
@@ -1752,7 +1782,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
     var new_value = undefined;
 
     // special case for rewriting javascript: urls that contain WB_wombat_
-    // must insert wombat init first!
+    // must insert _wombat init first!
     if (starts_with(value, "javascript:")) {
       if (value.indexOf("WB_wombat_") >= 0) {
         var JS = "javascript:";
@@ -1869,6 +1899,9 @@ var _WBWombat = function($wbwindow, wbinfo) {
         changed = rewrite_attr(elem, 'src');
         changed = rewrite_attr(elem, 'srcset') || changed;
         changed = rewrite_attr(elem, 'style')  || changed;
+        if (wbUseAFWorker && elem.dataset.srcset) {
+          WBAutoFetchWorker.preserveDataSrcset(elem);
+        }
         break;
       case 'OBJECT':
         changed = rewrite_attr(elem, "data", true);
@@ -2097,7 +2130,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
       if (mod == "cs_" && orig.indexOf("data:text/css") == 0) {
         val = rewrite_inline_style(orig);
       } else if (attr == "srcset") {
-        val = rewrite_srcset(orig, isImageSrcset(this));
+        val = rewrite_srcset(orig, this);
       } else if (this.tagName === 'LINK' && attr === 'href') {
         var relV = this.rel;
         if (relV === 'import' || relV === 'preload') {
@@ -3847,7 +3880,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
     initFontFaceOverride($wbwindow);
 
     // Worker override (experimental)
-    initAutoFetchWorker();
+    initAutoFetchWorker(rx);
     init_web_worker_override();
     init_service_worker_override();
     initSharedWorkerOverride();
@@ -3877,7 +3910,7 @@ var _WBWombat = function($wbwindow, wbinfo) {
 
 
     // iframe.contentWindow and iframe.contentDocument overrides to
-    // ensure wombat is inited on the iframe $wbwindow!
+    // ensure _wombat is inited on the iframe $wbwindow!
     override_iframe_content_access("contentWindow");
     override_iframe_content_access("contentDocument");
 
@@ -4212,5 +4245,4 @@ window._WBWombatInit = function(wbinfo) {
     console.warn("_wb_wombat missing!");
   }
 };
-
 
