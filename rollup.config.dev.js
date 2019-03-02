@@ -1,15 +1,14 @@
-
 const noStrict = {
-  renderChunk (code) {
+  renderChunk(code) {
     return code.replace("'use strict';", '');
   }
 };
 
 export default {
-  input: 'src/newWombat/wbWombat.js',
+  input: 'src/wbWombat.js',
   output: {
     name: 'wombat',
-    file: 'docs/wombat-full.js',
+    file: 'dist/wombat-full.js',
     format: 'iife'
   },
   watch: {

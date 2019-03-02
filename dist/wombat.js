@@ -1,4 +1,4 @@
-var wombat = (function () {
+(function () {
   
 
   function FuncMap() {
@@ -469,6 +469,12 @@ var wombat = (function () {
     };
   }
 
+  /**
+   * @param {function(*): *} origListener
+   * @param {Window} win
+   * @param {Wombat} wombat
+   * @return {function(*): *}
+   */
   function wrapEventListener(origListener, win, wombat) {
     return function(event) {
       var ne;
@@ -477,7 +483,7 @@ var wombat = (function () {
         if (
           event.data.to_origin !== '*' &&
           win.WB_wombat_location &&
-          !wombat.starts_with(event.data.to_origin, win.WB_wombat_location.origin)
+          !wombat.startsWith(event.data.to_origin, win.WB_wombat_location.origin)
         ) {
           console.warn(
             'Skipping message event to ' +
@@ -697,21 +703,6 @@ var wombat = (function () {
    * @param {Element} elem
    * @return {boolean}
    */
-  Wombat.prototype.isImageSrcset = function(elem) {
-    if (elem.tagName === 'IMG') return true;
-    return (
-      elem.tagName === 'SOURCE' &&
-      elem.parentElement &&
-      elem.parentElement.tagName === 'PICTURE'
-    );
-  };
-
-  /**
-   * Returns T/F indicating if the supplied element is an Image element that
-   * may have srcset values to be sent to the backing auto-fetch worker
-   * @param {Element} elem
-   * @return {boolean}
-   */
   Wombat.prototype.isSavedDataSrcSrcset = function(elem) {
     if (elem.dataset && elem.dataset.srcset != null) {
       return this.isSavedSrcSrcset(elem);
@@ -888,6 +879,12 @@ var wombat = (function () {
     );
   };
 
+  /**
+   * Calls the supplied function when the supplied element undergoes mutations
+   * @param elem
+   * @param func
+   * @return {boolean}
+   */
   Wombat.prototype.watchElem = function(elem, func) {
     if (!this.$wbwindow.MutationObserver) {
       return false;
@@ -1528,7 +1525,10 @@ var wombat = (function () {
   Wombat.prototype.replaceDomFunc = function(funcname) {
     var orig = this.$wbwindow.Node.prototype[funcname];
     var wombat = this;
-    this.$wbwindow.Node.prototype[funcname] = function(newNode, oldNode) {
+    this.$wbwindow.Node.prototype[funcname] = function rwDomFunc(
+      newNode,
+      oldNode
+    ) {
       if (newNode) {
         if (newNode.nodeType === Node.ELEMENT_NODE) {
           wombat.rewriteElem(newNode);
@@ -1544,9 +1544,7 @@ var wombat = (function () {
           wombat.recurseRewriteElem(newNode);
         }
       }
-
       var created = orig.call(wombat.proxyToObj(this), newNode, oldNode);
-
       if (created && created.tagName === 'IFRAME') {
         wombat.initIframeWombat(created);
       }
@@ -1973,11 +1971,14 @@ var wombat = (function () {
     return true;
   };
 
+  /**
+   * Rewrites the supplied element returning T/F indicating if a rewrite occured
+   * @param {Element|Node} elem - The element to be rewritten
+   * @return {boolean}
+   */
   Wombat.prototype.rewriteElem = function(elem) {
     var changed = false;
-    if (!elem) {
-      return changed;
-    }
+    if (!elem) return changed;
     if (elem instanceof SVGElement && elem.hasAttribute('filter')) {
       changed = this.rewriteAttr(elem, 'filter');
       changed = this.rewriteAttr(elem, 'style') || changed;
@@ -2062,6 +2063,12 @@ var wombat = (function () {
     return changed;
   };
 
+  /**
+   * Rewrites all the children of the supplied element and there descendants
+   * returning T/F if a rewrite occurred
+   * @param {Element|Node} curr
+   * @return {boolean}
+   */
   Wombat.prototype.recurseRewriteElem = function(curr) {
     var changed = false;
     var rw_q = [];
@@ -2083,6 +2090,14 @@ var wombat = (function () {
     return changed;
   };
 
+  /**
+   * Rewrites the supplied string containing HTML, if the supplied string
+   * is full HTML (starts with <HTML, <DOCUMENT...) the string is rewritten
+   * using {@link Wombat#rewriteHtmlFull}
+   * @param {string} string
+   * @param {boolean} checkEndTag
+   * @return {?string}
+   */
   Wombat.prototype.rewriteHtml = function(string, checkEndTag) {
     if (!string) {
       return string;
@@ -2142,7 +2157,7 @@ var wombat = (function () {
           }
         } else if (rwString[0] !== '<' || rwString[rwString.length - 1] !== '>') {
           this.write_buff += rwString;
-          return;
+          return undefined;
         }
       }
       return new_html;
@@ -2151,6 +2166,12 @@ var wombat = (function () {
     return rwString;
   };
 
+  /**
+   * Rewrites the supplied string containing full HTML
+   * @param {string} string
+   * @param {boolean} checkEndTag
+   * @return {?string}
+   */
   Wombat.prototype.rewriteHtmlFull = function(string, checkEndTag) {
     var inner_doc = new DOMParser().parseFromString(string, 'text/html');
 
@@ -2199,6 +2220,12 @@ var wombat = (function () {
     return string;
   };
 
+  /**
+   * Rewrites a CSS style string found in the style property of an element or
+   * FontFace
+   * @param {string} orig
+   * @return {string}
+   */
   Wombat.prototype.rewriteInlineStyle = function(orig) {
     var decoded;
 
@@ -2217,6 +2244,11 @@ var wombat = (function () {
     return this.rewriteStyle(orig);
   };
 
+  /**
+   * Rewrites the supplied cookie
+   * @param {string} cookie
+   * @return {string}
+   */
   Wombat.prototype.rewriteCookie = function(cookie) {
     var wombat = this;
     var rwCookie = cookie
@@ -2261,6 +2293,11 @@ var wombat = (function () {
     return rwCookie.replace(',|', ',');
   };
 
+  /**
+   * Rewrites the supplied web worker URL
+   * @param {string} workerUrl
+   * @return {string}
+   */
   Wombat.prototype.rewriteWorker = function(workerUrl) {
     var fetch = true;
     var makeBlob = false;
@@ -2345,7 +2382,11 @@ var wombat = (function () {
   };
 
   // override fns
-
+  /**
+   * Applies an Event property getter override for the supplied property
+   * @param {string} attr
+   * @param {Object} eventProto
+   */
   Wombat.prototype.addEventOverride = function(attr, eventProto) {
     if (!eventProto) {
       eventProto = this.$wbwindow.MessageEvent.prototype;
@@ -2365,6 +2406,9 @@ var wombat = (function () {
     });
   };
 
+  /**
+   * Overrides the nodeValue property of the Attr interface
+   */
   Wombat.prototype.overrideAttrProps = function() {
     var wombat = this;
 
@@ -2384,7 +2428,13 @@ var wombat = (function () {
     this.overridePropExtract(this.$wbwindow.Attr.prototype, 'value', isRwAttr);
   };
 
-  Wombat.prototype.overrideAttr = function(obj, attr, mod, defaultToSetget) {
+  /**
+   * Applies an override the attribute get/set override
+   * @param {Object} obj
+   * @param {string} attr
+   * @param {string} mod
+   */
+  Wombat.prototype.overrideAttr = function(obj, attr, mod) {
     var orig_getter = this.getOrigGetter(obj, attr);
     var orig_setter = this.getOrigSetter(obj, attr);
 
@@ -2417,6 +2467,12 @@ var wombat = (function () {
     this.defProp(obj, attr, setter, getter);
   };
 
+  /**
+   * Applies an attribute getter override IFF an original getter exists
+   * @param {Object} proto
+   * @param {string} prop
+   * @param {*} [cond]
+   */
   Wombat.prototype.overridePropExtract = function(proto, prop, cond) {
     var orig_getter = this.getOrigGetter(proto, prop);
     var wombat = this;
@@ -2433,6 +2489,13 @@ var wombat = (function () {
     }
   };
 
+  /**
+   * Applies an attribute getter override IFF an original getter exists that
+   * ensures that the results of retrieving the attributes value is not a
+   * wombat Proxy
+   * @param {Object} proto
+   * @param {string} prop
+   */
   Wombat.prototype.overridePropToProxy = function(proto, prop) {
     var orig_getter = this.getOrigGetter(proto, prop);
 
@@ -2447,16 +2510,17 @@ var wombat = (function () {
     }
   };
 
+  /**
+   * Applies an override to supplied history function name IFF it exists
+   * @param {string} funcName
+   * @return {?function}
+   */
   Wombat.prototype.overrideHistoryFunc = function(funcName) {
-    if (!this.$wbwindow.history) {
-      return;
-    }
+    if (!this.$wbwindow.history) return undefined;
 
     var orig_func = this.$wbwindow.history[funcName];
 
-    if (!orig_func) {
-      return;
-    }
+    if (!orig_func) return undefined;
 
     this.$wbwindow.history['_orig_' + funcName] = orig_func;
     var wombat = this;
@@ -2497,6 +2561,13 @@ var wombat = (function () {
     return rewrittenFunc;
   };
 
+  /**
+   * Applies an getter/setter override to the supplied style interface's attribute
+   * and prop name combination
+   * @param {Object} obj
+   * @param {string} attr
+   * @param {string} propName
+   */
   Wombat.prototype.overrideStyleAttr = function(obj, attr, propName) {
     var orig_getter = this.getOrigGetter(obj, attr);
     var orig_setter = this.getOrigSetter(obj, attr);
@@ -2527,6 +2598,10 @@ var wombat = (function () {
     }
   };
 
+  /**
+   * Applies an override to the setProperty function
+   * @param style_proto
+   */
   Wombat.prototype.overrideStyleSetProp = function(style_proto) {
     var orig_setProp = style_proto.setProperty;
     var wombat = this;
@@ -4891,6 +4966,16 @@ var wombat = (function () {
     };
   };
 
-  return Wombat;
+  window._WBWombat = Wombat;
+  window._WBWombatInit = function(wbinfo) {
+    if (!this._wb_wombat || !this._wb_wombat.actual) {
+      var wombat = new Wombat(this, wbinfo);
+      wombat.actual = true;
+      this._wb_wombat = wombat.wombatInit();
+      this._wb_wombat.actual = true;
+    } else if (!this._wb_wombat) {
+      console.warn('_wb_wombat missing!');
+    }
+  };
 
 }());

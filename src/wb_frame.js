@@ -64,7 +64,6 @@ ContentFrame.prototype.init_iframe = function() {
     console.warn('no iframe found ' + this.content_info.iframe + ' found');
     return;
   }
-
   this.extract_prefix();
   if (window.WBBanner) {
     this.wbBanner = window.WBBanner;

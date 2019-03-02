@@ -36,15 +36,11 @@
     "tls-keygen": "^3.7.0"
   },
   "scripts": {
-    "build-dev": "rollup -c rollup.config.js",
+    "build-x": "rollup -c rollup.config.js",
+    "build-dev": "rollup -c rollup.config.dev.js",
     "build-dev-watch": "rollup --watch -c rollup.config.dev.js",
     "build-test-bundle": "rollup -c rollup.test-setup.config.js",
-    "build": "NODE_ENV=production rollup -c",
-    "lint": "semistandard --verbose src/newWombat/*.js | snazzy",
-    "lint-w": "semistandard --verbose src/newWombat/wombat.js | snazzy",
-    "lint-fix": "semistandard --fix src/newWombat/*.js testServer.js",
-    "lint-fix-originals": "semistandard --fix src/newWombat/*.js testServer.js",
-    "lint-fix-tests": "semistandard --fix docs/test.wombat*.js",
+    "build": "NODE_ENV=production rollup -c rollup.config.js",
     "start-test-server": "node testServer.js"
   },
   "prettier": {

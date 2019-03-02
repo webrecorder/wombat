@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { addToStringTagToClass } from 'wombatUtils';
+import { addToStringTagToClass } from './wombatUtils';
 
 //TODO(n0tan3rd): figure out how to add ancestorOrigin to WombatLocation
 
@@ -23,7 +23,7 @@ export default function WombatLocation(orig_loc, wombat) {
     }
   });
 
-  wombat.init_loc_override(this, this.orig_setter, this.orig_getter);
+  wombat.initLocOverride(this, this.orig_setter, this.orig_getter);
 
   wombat.setLoc(this, orig_loc.href);
 

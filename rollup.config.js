@@ -1,55 +1,58 @@
 import minify from 'rollup-plugin-babel-minify';
 
 const noStrict = {
-  renderChunk (code) {
+  renderChunk(code) {
     return code.replace("'use strict';", '');
   }
 };
 
-const wombatFull = {
-  input: 'src/newWombat/wbWombat.js',
-  output: {
-    name: 'wombat',
-    file: 'docs/wombat-full.js',
-    format: 'iife'
-  },
-  plugins: [noStrict]
-};
-
-const wombatLiteFull = {
-  input: 'src/newWombat/wbWombatProxyMode.js',
-  output: {
-    name: 'wombat',
-    file: 'docs/wombatProxyMode-full.js',
-    format: 'iife'
-  },
-  plugins: [noStrict]
-};
-
-if (process.env.NODE_ENV === 'production') {
-  wombatFull.plugins.push(
-    minify({
-      comments: false,
-      sourceMap: false
-    })
-  );
-  wombatLiteFull.plugins.push(
-    minify({
-      comments: false,
-      sourceMap: false
-    })
-  );
-}
-
 export default [
-  wombatFull,
-  wombatLiteFull,
   {
-    input: 'src/newWombat/wombat.js',
+    input: 'src/wbWombat.js',
     output: {
       name: 'wombat',
-      file: 'docs/wombat-only.js',
-      format: 'es'
-    }
+      file: 'dist/wombat.js',
+      format: 'iife'
+    },
+    plugins: [noStrict]
+  },
+  {
+    input: 'src/wbWombat.js',
+    output: {
+      name: 'wombat',
+      file: 'dist/wombat.min.js',
+      format: 'iife'
+    },
+    plugins: [
+      noStrict,
+      minify({
+        comments: false,
+        sourceMap: false
+      })
+    ]
+  },
+  {
+    input: 'src/wbWombatProxyMode.js',
+    output: {
+      name: 'wombat',
+      file: 'dist/wombatProxyMode.js',
+      format: 'iife'
+    },
+    plugins: [noStrict]
+  },
+  {
+    input: 'src/wbWombatProxyMode.js',
+    output: {
+      name: 'wombat',
+      file: 'dist/wombatProxyMode.min.js',
+      format: 'iife'
+    },
+    plugins: [
+      noStrict,
+      minify({
+        comments: false,
+        sourceMap: false
+      })
+    ]
   }
 ];
