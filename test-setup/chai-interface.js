@@ -4,40 +4,40 @@ var connective = {
   each: Array.prototype.forEach,
   every: Array.prototype.every,
   some: Array.prototype.some,
-  or () {
+  or() {
     var terms = arguments;
-    return function () {
+    return function() {
       var ctx = this;
       var args = arguments;
-      return connective.some.call(terms, function (term) {
+      return connective.some.call(terms, function(term) {
         return !!term.apply(ctx, args);
       });
     };
   },
-  and () {
+  and() {
     var terms = arguments;
-    return function () {
+    return function() {
       var ctx = this;
       var args = arguments;
-      return connective.every.call(terms, function (term) {
+      return connective.every.call(terms, function(term) {
         return !!term.apply(ctx, args);
       });
     };
   },
-  not (term) {
-    return function () {
+  not(term) {
+    return function() {
       return !term.apply(this, arguments);
     };
   }
 };
 
-function K (x) {
-  return function () {
+function K(x) {
+  return function() {
     return x;
   };
 }
 
-function is (predicate) {
+function is(predicate) {
   if (predicate === Function) return is.Function;
   if (predicate === Boolean) return is.Boolean;
   if (predicate === Object) return is.Object;
@@ -45,7 +45,8 @@ function is (predicate) {
   if (predicate === String) return is.String;
   if (predicate === Array) return Array.isArray;
 
-  if (predicate && predicate.name && predicate.name in global) return is[predicate.name];
+  if (predicate && predicate.name && predicate.name in global)
+    return is[predicate.name];
 
   if (predicate instanceof RegExp) return is.RegExMatch(predicate);
   if (is.Function(predicate)) return predicate;
@@ -58,33 +59,35 @@ function is (predicate) {
   return K(false);
 }
 
-function all (predicate) {
-  return function (arr) {
+function all(predicate) {
+  return function(arr) {
     return arr.every(predicate);
   };
 }
 
-is.TypeOf = function (type) {
+is.TypeOf = function(type) {
   type = type.toLowerCase();
-  return function (subject) {
+  return function(subject) {
     return typeof subject === type;
   };
 };
 
-is.ObjectOf = function (constructorName) {
+is.ObjectOf = function(constructorName) {
   var signature = '[object ' + constructorName + ']';
-  return function (subject) {
+  return function(subject) {
     return Object.prototype.toString.call(subject) === signature;
   };
 };
 
-is.RegExMatch = function (regex) {
-  return function (str) {
+is.RegExMatch = function(regex) {
+  return function(str) {
     return is.String(str) && regex.test(str);
   };
 };
 
-is.Null = function (x) { return x === null; };
+is.Null = function(x) {
+  return x === null;
+};
 is.Number = connective.and(is.TypeOf('number'), connective.not(Number.isNaN));
 is.Function = is.TypeOf('Function');
 is.Boolean = is.TypeOf('Boolean');
@@ -105,8 +108,8 @@ is.Uint8Array = is.ObjectOf('Uint8Array');
 is.Uint16Array = is.ObjectOf('Uint16Array');
 is.Uint32Array = is.ObjectOf('Uint32Array');
 
-function Collection (predicate) {
-  return function (obj) {
+function Collection(predicate) {
+  return function(obj) {
     for (var key in obj) {
       if (!predicate(obj[key])) {
         return false;
@@ -116,11 +119,11 @@ function Collection (predicate) {
   };
 }
 
-function tracery (structure) {
+function tracery(structure) {
   if (Array.isArray(structure)) {
     return is(structure);
   }
-  return function (obj) {
+  return function(obj) {
     if (obj === undefined || obj === null) {
       return false;
     }
@@ -140,18 +143,18 @@ function tracery (structure) {
   };
 }
 
-function Optional (type) {
+function Optional(type) {
   return connective.or(is(type), is.Undefined);
 }
 
-function Nullable (type) {
+function Nullable(type) {
   return connective.or(is(type), is.Null);
 }
 
-function Vector (structure) {
+function Vector(structure) {
   var predicates = structure.map(is);
   var len = structure.length;
-  return function (arr) {
+  return function(arr) {
     if (!Array.isArray(arr)) return false;
     if (arr.length !== len) return false;
     for (var i = 0; i < len; i++) {
@@ -162,13 +165,13 @@ function Vector (structure) {
   };
 }
 
-function InstanceOf (constructor) {
-  return function (x) {
+function InstanceOf(constructor) {
+  return function(x) {
     return x instanceof constructor;
   };
 }
 
-function diff (Interface, doc) {
+function diff(Interface, doc) {
   var d = {};
   var same = true;
 
@@ -186,7 +189,11 @@ function diff (Interface, doc) {
       if (!actual) {
         // and it's mising
         same = false;
-        d[prop] = { actual: toString(actual), expected: toString(expected), actualValue: actual };
+        d[prop] = {
+          actual: toString(actual),
+          expected: toString(expected),
+          actualValue: actual
+        };
       } else {
         // it's an object, recurse
         var dd = diff(expected, actual);
@@ -197,16 +204,22 @@ function diff (Interface, doc) {
       }
     } else if (!is(expected)(actual)) {
       same = false;
-      d[prop] = { actual: toString(actual), expected: toString(expected), actualValue: actual };
+      d[prop] = {
+        actual: toString(actual),
+        expected: toString(expected),
+        actualValue: actual
+      };
     }
   }
 
   return same ? false : d;
 }
 
-function toString (type) {
+function toString(type) {
   // null
-  if (is.Null(type)) { return 'Null'; }
+  if (is.Null(type)) {
+    return 'Null';
+  }
 
   var t = typeof type;
   // builtin functions and custom pattern predicates
@@ -220,7 +233,11 @@ function toString (type) {
   // typed arrays
   if (Array.isArray(type)) {
     var t0 = toString(type[0]);
-    if (type.every(function (ele) { return toString(ele) === t0; })) {
+    if (
+      type.every(function(ele) {
+        return toString(ele) === t0;
+      })
+    ) {
       return 'Array<' + t0 + '>';
     } else {
       return 'Array';
@@ -231,26 +248,26 @@ function toString (type) {
   return Object.prototype.toString(type).replace(/[\[\]]/g, '');
 }
 
-function format (diff) {
+function format(diff) {
   var str = 'Interface not as expected:\n';
   // pretty print json
   str += JSON.stringify(diff, null, 2);
   return str;
 }
 
-export default function chaiInterface (chai, utils) {
+export default function chaiInterface(chai, utils) {
   var Assertion = chai.Assertion;
   var assert = chai.assert;
 
-  utils.addMethod(Assertion.prototype, 'interface', function (interfaceMap) {
+  utils.addMethod(Assertion.prototype, 'interface', function(interfaceMap) {
     // map is an object map with property names as keys and strings for
     // typeof checks or a nested interfaceMap
-    assert(typeof this._obj === 'object' || typeof this._obj === 'function', 'object or function expected');
+    assert(
+      typeof this._obj === 'object' || typeof this._obj === 'function',
+      'object or function expected'
+    );
 
     var hasInterface = tracery(interfaceMap);
-    assert(
-      hasInterface(this._obj),
-      format(diff(interfaceMap, this._obj))
-    );
+    assert(hasInterface(this._obj), format(diff(interfaceMap, this._obj)));
   });
 }

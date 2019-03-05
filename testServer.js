@@ -8,7 +8,7 @@ const keyCert = {
   cert: path.join(__dirname, 'certs', 'certificate.pem')
 };
 
-async function start () {
+async function start() {
   let useHTTPS = process.argv.indexOf('--noTLS') === -1;
 
   if (useHTTPS) {
@@ -56,39 +56,55 @@ async function start () {
     next();
   });
 
-  server.get('/live/20180803160549mp_/https://tests.wombat.io/', (req, res) => {
+  server.get('/live/20180803160549mp_/https://test.wombat.io/', (req, res) => {
     res.type('text/html').send(fs.createReadStream(sandboxPath, 'utf8'));
   });
 
-  server.get('/live/20180803160549mp_/https://tests.wombat.io', (req, res) => {
+  server.get('/live/20180803160549mp_/https://test.wombat.io', (req, res) => {
     res.type('text/html').send(fs.createReadStream(sandboxPath, 'utf8'));
   });
 
-  server.get('/live/20180803160549mp_/https://tests.wombat.io/test', (req, res) => {
-    res.send({ headers: req.headers, url: req.raw.originalUrl });
-  });
+  server.get(
+    '/live/20180803160549mp_/https://test.wombat.io/test',
+    (req, res) => {
+      res.send({ headers: req.headers, url: req.raw.originalUrl });
+    }
+  );
 
   let wasWorkerRequested = false;
-  server.get('/live/20180803160549wkr_/https://tests.wombat.io/worker.js', (req, res) => {
-    res.type('application/javascript; charset=UTF-8').send('console.log("hi")');
-    wasWorkerRequested = true;
-  });
+  server.get(
+    '/live/20180803160549wkr_/https://test.wombat.io/worker.js',
+    (req, res) => {
+      res
+        .type('application/javascript; charset=UTF-8')
+        .send('console.log("hi")');
+      wasWorkerRequested = true;
+    }
+  );
 
   server.get('/wasWorkerRequest', (req, res) => {
     res.send({ requested: wasWorkerRequested ? 'yes' : 'no' });
     wasWorkerRequested = false;
   });
 
-  server.get('/live/20180803160549sw_/https://tests.wombat.io/worker.js', (req, res) => {
-    res
-      .code(200)
-      .type('application/javascript; charset=UTF-8')
-      .header('Service-Worker-Allowed ', `${address}/live/20180803160549mp_/https://tests.wombat.io/`)
-      .send('console.log("hi")');
-  });
+  server.get(
+    '/live/20180803160549sw_/https://test.wombat.io/worker.js',
+    (req, res) => {
+      res
+        .code(200)
+        .type('application/javascript; charset=UTF-8')
+        .header(
+          'Service-Worker-Allowed ',
+          `${address}/live/20180803160549mp_/https://tests.wombat.io/`
+        )
+        .send('console.log("hi")');
+    }
+  );
 
   const address = await server.listen(port, 'localhost');
-  console.log(`server listening on ${address.replace('127.0.0.1', 'localhost')}`);
+  console.log(
+    `server listening on ${address.replace('127.0.0.1', 'localhost')}`
+  );
 }
 
 start().catch(error => console.error(error));

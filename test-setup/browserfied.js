@@ -1,4 +1,4 @@
-export function chaiURL (chai, utils) {
+export function chaiURL(chai, utils) {
   const Assertion = chai.Assertion;
   const props = [
     'hash',
@@ -11,39 +11,47 @@ export function chaiURL (chai, utils) {
     'port',
     'protocol',
     'search',
-    'username'];
+    'username'
+  ];
 
   const matchers = {
-    protocol (expected, actual, contains) {
+    protocol(expected, actual, contains) {
       if (contains) return actual.includes(expected);
       return expected === actual || expected + ':' === actual;
     },
-    hash (expected, actual, contains) {
-      return matchers.default(expected, actual, contains) || matchers.default('#' + expected, actual, contains);
+    hash(expected, actual, contains) {
+      return (
+        matchers.default(expected, actual, contains) ||
+        matchers.default('#' + expected, actual, contains)
+      );
     },
-    port (expected, actual, contains) {
+    port(expected, actual, contains) {
       if (contains) {
-        console.warn('chai-url: `contains` flag should not be used with port matching and will be ignored');
+        console.warn(
+          'chai-url: `contains` flag should not be used with port matching and will be ignored'
+        );
       }
       return expected === actual || expected === parseInt(actual, 10);
     },
-    default (expected, actual, contains) {
+    default(expected, actual, contains) {
       return contains ? actual.includes(expected) : actual === expected;
     }
   };
 
-  function assertIsUrl () {
+  function assertIsUrl() {
     const obj = this._obj;
     new Assertion(() => new URL(obj)).to.not.throw();
   }
 
-  function chainIsUrl () {
+  function chainIsUrl() {
     const obj = this._obj;
     try {
       utils.flag(this, 'URL', new URL(obj));
     } catch (e) {
       // hack :'(
-      new Assertion(() => { throw e; }).to.not.throw();
+      new Assertion(() => {
+        throw e;
+      }).to.not.throw();
     }
   }
 
@@ -52,7 +60,7 @@ export function chaiURL (chai, utils) {
   let i = props.length;
   while (i--) {
     let prop = props[i];
-    Assertion.addMethod(prop, function (value) {
+    Assertion.addMethod(prop, function(value) {
       const maybeURL = utils.flag(this, 'URL');
       if (maybeURL) {
         const contains = utils.flag(this, 'contains');
@@ -68,7 +76,9 @@ export function chaiURL (chai, utils) {
       } else {
         const str = this._obj;
         const url = new URL('about:blank');
-        new Assertion(() => { url.href = str; }).to.not.throw();
+        new Assertion(() => {
+          url.href = str;
+        }).to.not.throw();
         const contains = utils.flag(this, 'contains');
         const matcher = matchers[prop] || matchers.default;
         const match = matcher(value, url[prop], contains);
@@ -84,19 +94,22 @@ export function chaiURL (chai, utils) {
   }
 }
 
-export function chaiAsPromised (chai, utils) {
+export function chaiAsPromised(chai, utils) {
   const Assertion = chai.Assertion;
   const assert = chai.assert;
   const proxify = utils.proxify;
 
-  function compatibleInstance (thrown, errorLike) {
+  function compatibleInstance(thrown, errorLike) {
     return errorLike instanceof Error && thrown === errorLike;
   }
 
-  function compatibleConstructor (thrown, errorLike) {
+  function compatibleConstructor(thrown, errorLike) {
     if (errorLike instanceof Error) {
       // If `errorLike` is an instance of any error we compare their constructors
-      return thrown.constructor === errorLike.constructor || thrown instanceof errorLike.constructor;
+      return (
+        thrown.constructor === errorLike.constructor ||
+        thrown instanceof errorLike.constructor
+      );
     } else if (errorLike.prototype instanceof Error || errorLike === Error) {
       // If `errorLike` is a constructor that inherits from Error, we compare `thrown` to `errorLike` directly
       return thrown.constructor === errorLike || thrown instanceof errorLike;
@@ -104,7 +117,7 @@ export function chaiAsPromised (chai, utils) {
 
     return false;
   }
-  function compatibleMessage (thrown, errMatcher) {
+  function compatibleMessage(thrown, errMatcher) {
     var comparisonString = typeof thrown === 'string' ? thrown : thrown.message;
     if (errMatcher instanceof RegExp) {
       return errMatcher.test(comparisonString);
@@ -116,7 +129,7 @@ export function chaiAsPromised (chai, utils) {
   }
 
   var functionNameMatch = /\s*function(?:\s|\s*\/\*[^(?:*\/)]+\*\/\s*)*([^\(\/]+)/;
-  function getFunctionName (constructorFn) {
+  function getFunctionName(constructorFn) {
     var name = '';
     if (typeof constructorFn.name === 'undefined') {
       // Here we run a polyfill if constructorFn.name is not defined
@@ -131,7 +144,7 @@ export function chaiAsPromised (chai, utils) {
     return name;
   }
 
-  function getConstructorName (errorLike) {
+  function getConstructorName(errorLike) {
     var constructorName = errorLike;
     if (errorLike instanceof Error) {
       constructorName = getFunctionName(errorLike.constructor);
@@ -139,14 +152,14 @@ export function chaiAsPromised (chai, utils) {
       // If `err` is not an instance of Error it is an error constructor itself or another function.
       // If we've got a common function we get its name, otherwise we may need to create a new instance
       // of the error just in case it's a poorly-constructed error. Please see chaijs/chai/issues/45 to know more.
-      constructorName = getFunctionName(errorLike).trim() ||
-        getFunctionName(new errorLike()); // eslint-disable-line new-cap
+      constructorName =
+        getFunctionName(errorLike).trim() || getFunctionName(new errorLike()); // eslint-disable-line new-cap
     }
 
     return constructorName;
   }
 
-  function getMessage (errorLike) {
+  function getMessage(errorLike) {
     var msg = '';
     if (errorLike && errorLike.message) {
       msg = errorLike.message;
@@ -178,61 +191,67 @@ export function chaiAsPromised (chai, utils) {
     checkError = utils.checkError;
   }
 
-  function isLegacyJQueryPromise (thenable) {
+  function isLegacyJQueryPromise(thenable) {
     // jQuery promises are Promises/A+-compatible since 3.0.0. jQuery 3.0.0 is also the first version
     // to define the catch method.
-    return typeof thenable.catch !== 'function' &&
+    return (
+      typeof thenable.catch !== 'function' &&
       typeof thenable.always === 'function' &&
       typeof thenable.done === 'function' &&
       typeof thenable.fail === 'function' &&
       typeof thenable.pipe === 'function' &&
       typeof thenable.progress === 'function' &&
-      typeof thenable.state === 'function';
+      typeof thenable.state === 'function'
+    );
   }
 
-  function assertIsAboutPromise (assertion) {
+  function assertIsAboutPromise(assertion) {
     if (typeof assertion._obj.then !== 'function') {
-      throw new TypeError(utils.inspect(assertion._obj) + ' is not a thenable.');
+      throw new TypeError(
+        utils.inspect(assertion._obj) + ' is not a thenable.'
+      );
     }
     if (isLegacyJQueryPromise(assertion._obj)) {
-      throw new TypeError('Chai as Promised is incompatible with thenables of jQuery<3.0.0, sorry! Please ' +
-        'upgrade jQuery or use another Promises/A+ compatible library (see ' +
-        'http://promisesaplus.com/).');
+      throw new TypeError(
+        'Chai as Promised is incompatible with thenables of jQuery<3.0.0, sorry! Please ' +
+          'upgrade jQuery or use another Promises/A+ compatible library (see ' +
+          'http://promisesaplus.com/).'
+      );
     }
   }
 
-  function proxifyIfSupported (assertion) {
+  function proxifyIfSupported(assertion) {
     return proxify === undefined ? assertion : proxify(assertion);
   }
 
-  function method (name, asserter) {
-    utils.addMethod(Assertion.prototype, name, function () {
+  function method(name, asserter) {
+    utils.addMethod(Assertion.prototype, name, function() {
       assertIsAboutPromise(this);
       return asserter.apply(this, arguments);
     });
   }
 
-  function property (name, asserter) {
-    utils.addProperty(Assertion.prototype, name, function () {
+  function property(name, asserter) {
+    utils.addProperty(Assertion.prototype, name, function() {
       assertIsAboutPromise(this);
       return proxifyIfSupported(asserter.apply(this, arguments));
     });
   }
 
-  function doNotify (promise, done) {
+  function doNotify(promise, done) {
     promise.then(() => done(), done);
   }
 
   // These are for clarity and to bypass Chai refusing to allow `undefined` as actual when used with `assert`.
-  function assertIfNegated (assertion, message, extra) {
+  function assertIfNegated(assertion, message, extra) {
     assertion.assert(true, null, message, extra.expected, extra.actual);
   }
 
-  function assertIfNotNegated (assertion, message, extra) {
+  function assertIfNotNegated(assertion, message, extra) {
     assertion.assert(false, message, null, extra.expected, extra.actual);
   }
 
-  function getBasePromise (assertion) {
+  function getBasePromise(assertion) {
     // We need to chain subsequent asserters on top of ones in the chain already (consider
     // `eventually.have.property("foo").that.equals("bar")`), only running them after the existing ones pass.
     // So the first base-promise is `assertion._obj`, but after that we use the assertions themselves, i.e.
@@ -240,8 +259,10 @@ export function chaiAsPromised (chai, utils) {
     return typeof assertion.then === 'function' ? assertion : assertion._obj;
   }
 
-  function getReasonName (reason) {
-    return reason instanceof Error ? reason.toString() : checkError.getConstructorName(reason);
+  function getReasonName(reason) {
+    return reason instanceof Error
+      ? reason.toString()
+      : checkError.getConstructorName(reason);
   }
 
   // Grab these first, before we modify `Assertion.prototype`.
@@ -250,21 +271,28 @@ export function chaiAsPromised (chai, utils) {
 
   const propertyDescs = {};
   for (const name of propertyNames) {
-    propertyDescs[name] = Object.getOwnPropertyDescriptor(Assertion.prototype, name);
+    propertyDescs[name] = Object.getOwnPropertyDescriptor(
+      Assertion.prototype,
+      name
+    );
   }
 
-  property('fulfilled', function () {
+  property('fulfilled', function() {
     const derivedPromise = getBasePromise(this).then(
       value => {
-        assertIfNegated(this,
+        assertIfNegated(
+          this,
           'expected promise not to be fulfilled but it was fulfilled with #{act}',
-          { actual: value });
+          { actual: value }
+        );
         return value;
       },
       reason => {
-        assertIfNotNegated(this,
+        assertIfNotNegated(
+          this,
           'expected promise to be fulfilled but it was rejected with #{act}',
-          { actual: getReasonName(reason) });
+          { actual: getReasonName(reason) }
+        );
         return reason;
       }
     );
@@ -273,18 +301,22 @@ export function chaiAsPromised (chai, utils) {
     return this;
   });
 
-  property('rejected', function () {
+  property('rejected', function() {
     const derivedPromise = getBasePromise(this).then(
       value => {
-        assertIfNotNegated(this,
+        assertIfNotNegated(
+          this,
           'expected promise to be rejected but it was fulfilled with #{act}',
-          { actual: value });
+          { actual: value }
+        );
         return value;
       },
       reason => {
-        assertIfNegated(this,
+        assertIfNegated(
+          this,
           'expected promise not to be rejected but it was rejected with #{act}',
-          { actual: getReasonName(reason) });
+          { actual: getReasonName(reason) }
+        );
 
         // Return the reason, transforming this into a fulfillment, to allow further assertions, e.g.
         // `promise.should.be.rejected.and.eventually.equal("reason")`.
@@ -296,14 +328,17 @@ export function chaiAsPromised (chai, utils) {
     return this;
   });
 
-  method('rejectedWith', function (errorLike, errMsgMatcher, message) {
+  method('rejectedWith', function(errorLike, errMsgMatcher, message) {
     let errorLikeName = null;
     const negate = utils.flag(this, 'negate') || false;
 
     // rejectedWith with that is called without arguments is
     // the same as a plain ".rejected" use.
-    if (errorLike === undefined && errMsgMatcher === undefined &&
-      message === undefined) {
+    if (
+      errorLike === undefined &&
+      errMsgMatcher === undefined &&
+      message === undefined
+    ) {
       /* eslint-disable no-unused-expressions */
       return this.rejected;
       /* eslint-enable no-unused-expressions */
@@ -336,10 +371,12 @@ export function chaiAsPromised (chai, utils) {
         let expected = null;
 
         if (errorLike) {
-          assertionMessage = 'expected promise to be rejected with #{exp} but it was fulfilled with #{act}';
+          assertionMessage =
+            'expected promise to be rejected with #{exp} but it was fulfilled with #{act}';
           expected = errorLikeName;
         } else if (errMsgMatcher) {
-          assertionMessage = `expected promise to be rejected with an error ${matcherRelation} #{exp} but ` +
+          assertionMessage =
+            `expected promise to be rejected with an error ${matcherRelation} #{exp} but ` +
             `it was fulfilled with #{act}`;
           expected = errMsgMatcher;
         }
@@ -348,40 +385,49 @@ export function chaiAsPromised (chai, utils) {
         return value;
       },
       reason => {
-        const errorLikeCompatible = errorLike && (errorLike instanceof Error
-          ? checkError.compatibleInstance(reason, errorLike)
-          : checkError.compatibleConstructor(reason, errorLike));
+        const errorLikeCompatible =
+          errorLike &&
+          (errorLike instanceof Error
+            ? checkError.compatibleInstance(reason, errorLike)
+            : checkError.compatibleConstructor(reason, errorLike));
 
-        const errMsgMatcherCompatible = errMsgMatcher && checkError.compatibleMessage(reason, errMsgMatcher);
+        const errMsgMatcherCompatible =
+          errMsgMatcher && checkError.compatibleMessage(reason, errMsgMatcher);
 
         const reasonName = getReasonName(reason);
 
         if (negate && everyArgIsDefined) {
           if (errorLikeCompatible && errMsgMatcherCompatible) {
-            this.assert(true,
+            this.assert(
+              true,
               null,
               'expected promise not to be rejected with #{exp} but it was rejected ' +
-              'with #{act}',
+                'with #{act}',
               errorLikeName,
-              reasonName);
+              reasonName
+            );
           }
         } else {
           if (errorLike) {
-            this.assert(errorLikeCompatible,
+            this.assert(
+              errorLikeCompatible,
               'expected promise to be rejected with #{exp} but it was rejected with #{act}',
               'expected promise not to be rejected with #{exp} but it was rejected ' +
-              'with #{act}',
+                'with #{act}',
               errorLikeName,
-              reasonName);
+              reasonName
+            );
           }
 
           if (errMsgMatcher) {
-            this.assert(errMsgMatcherCompatible,
+            this.assert(
+              errMsgMatcherCompatible,
               `expected promise to be rejected with an error ${matcherRelation} #{exp} but got ` +
-              `#{act}`,
+                `#{act}`,
               `expected promise not to be rejected with an error ${matcherRelation} #{exp}`,
               errMsgMatcher,
-              checkError.getMessage(reason));
+              checkError.getMessage(reason)
+            );
           }
         }
 
@@ -393,17 +439,17 @@ export function chaiAsPromised (chai, utils) {
     return this;
   });
 
-  property('eventually', function () {
+  property('eventually', function() {
     utils.flag(this, 'eventually', true);
     return this;
   });
 
-  method('notify', function (done) {
+  method('notify', function(done) {
     doNotify(getBasePromise(this), done);
     return this;
   });
 
-  method('become', function (value, message) {
+  method('become', function(value, message) {
     return this.eventually.deep.equal(value, message);
   });
 
@@ -415,9 +461,13 @@ export function chaiAsPromised (chai, utils) {
   });
 
   methodNames.forEach(methodName => {
-    Assertion.overwriteMethod(methodName, originalMethod => function () {
-      return doAsserterAsyncAndAddThen(originalMethod, this, arguments);
-    });
+    Assertion.overwriteMethod(
+      methodName,
+      originalMethod =>
+        function() {
+          return doAsserterAsyncAndAddThen(originalMethod, this, arguments);
+        }
+    );
   });
 
   const getterNames = propertyNames.filter(name => {
@@ -427,26 +477,36 @@ export function chaiAsPromised (chai, utils) {
   getterNames.forEach(getterName => {
     // Chainable methods are things like `an`, which can work both for `.should.be.an.instanceOf` and as
     // `should.be.an("object")`. We need to handle those specially.
-    const isChainableMethod = Assertion.prototype.__methods.hasOwnProperty(getterName);
+    const isChainableMethod = Assertion.prototype.__methods.hasOwnProperty(
+      getterName
+    );
 
     if (isChainableMethod) {
       Assertion.overwriteChainableMethod(
         getterName,
-        originalMethod => function () {
-          return doAsserterAsyncAndAddThen(originalMethod, this, arguments);
-        },
-        originalGetter => function () {
-          return doAsserterAsyncAndAddThen(originalGetter, this);
-        }
+        originalMethod =>
+          function() {
+            return doAsserterAsyncAndAddThen(originalMethod, this, arguments);
+          },
+        originalGetter =>
+          function() {
+            return doAsserterAsyncAndAddThen(originalGetter, this);
+          }
       );
     } else {
-      Assertion.overwriteProperty(getterName, originalGetter => function () {
-        return proxifyIfSupported(doAsserterAsyncAndAddThen(originalGetter, this));
-      });
+      Assertion.overwriteProperty(
+        getterName,
+        originalGetter =>
+          function() {
+            return proxifyIfSupported(
+              doAsserterAsyncAndAddThen(originalGetter, this)
+            );
+          }
+      );
     }
   });
 
-  function doAsserterAsyncAndAddThen (asserter, assertion, args) {
+  function doAsserterAsyncAndAddThen(asserter, assertion, args) {
     // Since we're intercepting all methods/properties, we need to just pass through if they don't want
     // `eventually`, or if we've already fulfilled the promise (see below).
     if (!utils.flag(assertion, 'eventually')) {
@@ -454,58 +514,71 @@ export function chaiAsPromised (chai, utils) {
       return assertion;
     }
 
-    const derivedPromise = getBasePromise(assertion).then(value => {
-      // Set up the environment for the asserter to actually run: `_obj` should be the fulfillment value, and
-      // now that we have the value, we're no longer in "eventually" mode, so we won't run any of this code,
-      // just the base Chai code that we get to via the short-circuit above.
-      assertion._obj = value;
-      utils.flag(assertion, 'eventually', false);
+    const derivedPromise = getBasePromise(assertion)
+      .then(value => {
+        // Set up the environment for the asserter to actually run: `_obj` should be the fulfillment value, and
+        // now that we have the value, we're no longer in "eventually" mode, so we won't run any of this code,
+        // just the base Chai code that we get to via the short-circuit above.
+        assertion._obj = value;
+        utils.flag(assertion, 'eventually', false);
 
-      return args ? module.exports.transformAsserterArgs(args) : args;
-    }).then(newArgs => {
-      asserter.apply(assertion, newArgs);
+        return args ? module.exports.transformAsserterArgs(args) : args;
+      })
+      .then(newArgs => {
+        asserter.apply(assertion, newArgs);
 
-      // Because asserters, for example `property`, can change the value of `_obj` (i.e. change the "object"
-      // flag), we need to communicate this value change to subsequent chained asserters. Since we build a
-      // promise chain paralleling the asserter chain, we can use it to communicate such changes.
-      return assertion._obj;
-    });
+        // Because asserters, for example `property`, can change the value of `_obj` (i.e. change the "object"
+        // flag), we need to communicate this value change to subsequent chained asserters. Since we build a
+        // promise chain paralleling the asserter chain, we can use it to communicate such changes.
+        return assertion._obj;
+      });
 
     module.exports.transferPromiseness(assertion, derivedPromise);
     return assertion;
   }
 
   // ### Now use the `Assertion` framework to build an `assert` interface.
-  const originalAssertMethods = Object.getOwnPropertyNames(assert).filter(propName => {
-    return typeof assert[propName] === 'function';
-  });
+  const originalAssertMethods = Object.getOwnPropertyNames(assert).filter(
+    propName => {
+      return typeof assert[propName] === 'function';
+    }
+  );
 
-  assert.isFulfilled = (promise, message) => (new Assertion(promise, message)).to.be.fulfilled;
+  assert.isFulfilled = (promise, message) =>
+    new Assertion(promise, message).to.be.fulfilled;
 
   assert.isRejected = (promise, errorLike, errMsgMatcher, message) => {
     const assertion = new Assertion(promise, message);
     return assertion.to.be.rejectedWith(errorLike, errMsgMatcher, message);
   };
 
-  assert.becomes = (promise, value, message) => assert.eventually.deepEqual(promise, value, message);
+  assert.becomes = (promise, value, message) =>
+    assert.eventually.deepEqual(promise, value, message);
 
-  assert.doesNotBecome = (promise, value, message) => assert.eventually.notDeepEqual(promise, value, message);
+  assert.doesNotBecome = (promise, value, message) =>
+    assert.eventually.notDeepEqual(promise, value, message);
 
   assert.eventually = {};
   originalAssertMethods.forEach(assertMethodName => {
-    assert.eventually[assertMethodName] = function (promise) {
+    assert.eventually[assertMethodName] = function(promise) {
       const otherArgs = Array.prototype.slice.call(arguments, 1);
 
       let customRejectionHandler;
       const message = arguments[assert[assertMethodName].length - 1];
       if (typeof message === 'string') {
         customRejectionHandler = reason => {
-          throw new chai.AssertionError(`${message}\n\nOriginal reason: ${utils.inspect(reason)}`);
+          throw new chai.AssertionError(
+            `${message}\n\nOriginal reason: ${utils.inspect(reason)}`
+          );
         };
       }
 
       const returnedPromise = promise.then(
-        fulfillmentValue => assert[assertMethodName].apply(assert, [fulfillmentValue].concat(otherArgs)),
+        fulfillmentValue =>
+          assert[assertMethodName].apply(
+            assert,
+            [fulfillmentValue].concat(otherArgs)
+          ),
         customRejectionHandler
       );
 
@@ -518,36 +591,36 @@ export function chaiAsPromised (chai, utils) {
   });
 }
 
-export function chaiInterface (chai, utils) {
+export function chaiInterface(chai, utils) {
   var Assertion = chai.Assertion;
   var assert = chai.assert;
   var every = Array.prototype.every;
   var some = Array.prototype.some;
 
-  function or () {
+  function or() {
     var terms = arguments;
-    return function () {
+    return function() {
       var ctx = this;
       var args = arguments;
-      return some.call(terms, function (term) {
+      return some.call(terms, function(term) {
         return !!term.apply(ctx, args);
       });
     };
   }
 
-  function and () {
+  function and() {
     var terms = arguments;
-    return function () {
+    return function() {
       var ctx = this;
       var args = arguments;
-      return every.call(terms, function (term) {
+      return every.call(terms, function(term) {
         return !!term.apply(ctx, args);
       });
     };
   }
 
-  function not (term) {
-    return function () {
+  function not(term) {
+    return function() {
       return !term.apply(this, arguments);
     };
   }
@@ -562,55 +635,54 @@ export function chaiInterface (chai, utils) {
     not: not_1
   };
 
-  var commonjsGlobal = typeof window !== 'undefined'
-    ? window
-    : typeof global !== 'undefined' ? global : typeof self !== 'undefined'
+  var commonjsGlobal =
+    typeof window !== 'undefined'
+      ? window
+      : typeof global !== 'undefined'
+      ? global
+      : typeof self !== 'undefined'
       ? self
       : {};
 
-  var k = function K (x) {
-    return function () {
+  var k = function K(x) {
+    return function() {
       return x;
     };
   };
 
-  function all (predicate) {
-    return function (arr) {
+  function all(predicate) {
+    return function(arr) {
       return arr.every(predicate);
     };
   }
 
-  is.TypeOf = function (type) {
+  is.TypeOf = function(type) {
     type = type.toLowerCase();
-    return function (subject) {
+    return function(subject) {
       return typeof subject === type;
     };
   };
 
-  is.ObjectOf = function (constructorName) {
+  is.ObjectOf = function(constructorName) {
     var signature = '[object ' + constructorName + ']';
-    return function (subject) {
+    return function(subject) {
       return Object.prototype.toString.call(subject) === signature;
     };
   };
 
-  is.RegExMatch = function (regex) {
-    return function (str) {
+  is.RegExMatch = function(regex) {
+    return function(str) {
       return is.String(str) && regex.test(str);
     };
   };
 
-  is.Null = function (x) { return x === null; };
+  is.Null = function(x) {
+    return x === null;
+  };
   is.Number = connective.and(is.TypeOf('number'), connective.not(Number.isNaN));
 
-  var types = [
-    'Function',
-    'Boolean',
-    'Object',
-    'Undefined',
-    'String'
-  ];
-  types.forEach(function (type) {
+  var types = ['Function', 'Boolean', 'Object', 'Undefined', 'String'];
+  types.forEach(function(type) {
     is[type] = is.TypeOf(type);
   });
 
@@ -628,11 +700,11 @@ export function chaiInterface (chai, utils) {
     'Uint16Array',
     'Uint32Array'
   ];
-  builtins.forEach(function (cons) {
+  builtins.forEach(function(cons) {
     is[cons] = is.ObjectOf(cons);
   });
 
-  function is (predicate) {
+  function is(predicate) {
     if (predicate === Function) return is.Function;
     if (predicate === Boolean) return is.Boolean;
     if (predicate === Object) return is.Object;
@@ -640,8 +712,8 @@ export function chaiInterface (chai, utils) {
     if (predicate === String) return is.String;
     if (predicate === Array) return Array.isArray;
 
-    if (predicate && predicate.name && predicate.name in
-      commonjsGlobal) return is[predicate.name];
+    if (predicate && predicate.name && predicate.name in commonjsGlobal)
+      return is[predicate.name];
 
     if (predicate instanceof RegExp) return is.RegExMatch(predicate);
     if (is.Function(predicate)) return predicate;
@@ -656,8 +728,8 @@ export function chaiInterface (chai, utils) {
 
   var is_1 = is;
 
-  function Collection (predicate) {
-    return function (obj) {
+  function Collection(predicate) {
+    return function(obj) {
       for (var key in obj) {
         if (!predicate(obj[key])) {
           return false;
@@ -669,12 +741,12 @@ export function chaiInterface (chai, utils) {
 
   var collection = Collection;
 
-  function tracery (structure) {
+  function tracery(structure) {
     if (Array.isArray(structure)) {
       return is_1(structure);
     }
 
-    return function (obj) {
+    return function(obj) {
       if (obj === undefined || obj === null) {
         return false;
       }
@@ -690,18 +762,18 @@ export function chaiInterface (chai, utils) {
     };
   }
 
-  function Optional (type) {
+  function Optional(type) {
     return connective.or(is_1(type), is_1.Undefined);
   }
 
-  function Nullable (type) {
+  function Nullable(type) {
     return connective.or(is_1(type), is_1.Null);
   }
 
-  function Vector (structure) {
+  function Vector(structure) {
     var predicates = structure.map(is_1);
     var len = structure.length;
-    return function (arr) {
+    return function(arr) {
       if (!Array.isArray(arr)) return false;
       if (arr.length !== len) return false;
       for (var i = 0; i < len; i++) {
@@ -712,12 +784,12 @@ export function chaiInterface (chai, utils) {
     };
   }
 
-  function InstanceOf (constructor) {
-    return function (x) {
+  function InstanceOf(constructor) {
+    return function(x) {
       return x instanceof constructor;
     };
   }
-  function format (diff) {
+  function format(diff) {
     var str = 'Interface not as expected:\n';
     // pretty print json
     str += JSON.stringify(diff, null, 2);
@@ -735,7 +807,7 @@ export function chaiInterface (chai, utils) {
   tracery_1.Vector = Vector_1;
   tracery_1.InstanceOf = InstanceOf_1;
 
-  function diff (Interface, doc) {
+  function diff(Interface, doc) {
     var d = {};
     var same = true;
 
@@ -775,9 +847,11 @@ export function chaiInterface (chai, utils) {
     return same ? false : d;
   }
 
-  function toString (type) {
+  function toString(type) {
     // null
-    if (is_1.Null(type)) { return 'Null'; }
+    if (is_1.Null(type)) {
+      return 'Null';
+    }
 
     var t = typeof type;
     // builtin functions and custom pattern predicates
@@ -791,7 +865,11 @@ export function chaiInterface (chai, utils) {
     // typed arrays
     if (Array.isArray(type)) {
       var t0 = toString(type[0]);
-      if (type.every(function (ele) { return toString(ele) === t0; })) {
+      if (
+        type.every(function(ele) {
+          return toString(ele) === t0;
+        })
+      ) {
         return 'Array<' + t0 + '>';
       } else {
         return 'Array';
@@ -803,15 +881,15 @@ export function chaiInterface (chai, utils) {
   }
 
   var diff_1 = diff;
-  utils.addMethod(Assertion.prototype, 'interface', function (interfaceMap) {
+  utils.addMethod(Assertion.prototype, 'interface', function(interfaceMap) {
     // map is an object map with property names as keys and strings for
     // typeof checks or a nested interfaceMap
-    assert(typeof this._obj === 'object' || typeof this._obj === 'function',
-      'object or function expected');
+    assert(
+      typeof this._obj === 'object' || typeof this._obj === 'function',
+      'object or function expected'
+    );
 
     var hasInterface = tracery_1(interfaceMap);
-    assert(
-      hasInterface(this._obj),
-      format(diff_1(interfaceMap, this._obj)));
+    assert(hasInterface(this._obj), format(diff_1(interfaceMap, this._obj)));
   });
 }

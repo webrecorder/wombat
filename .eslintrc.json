@@ -16,6 +16,7 @@
       "_": true
    },
    "parserOptions": {
+      "ecmaVersion": 9,
       "sourceType": "module"
    }
 }

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Test Page</title>
+    <script src="lodashFns.js"></script>
+    <script>
+      window.untamperedWithWinDocObj = { window, document };
+      window.getOriginalWinDomViaPath = objectPath =>
+        window.getViaPath(window.untamperedWithWinDocObj, objectPath);
+      window.getElementPropertyAsIs = (element, prop) =>
+        Element.prototype.getAttribute.call(element, prop);
+      window.wbMessages = {
+        load: false
+      };
+      window.addEventListener(
+        'message',
+        event => {
+          if (event.data) {
+            const { data } = event;
+            switch (data.wb_type) {
+              case 'load':
+                window.wbMessages.load =
+                  window.wbMessages.load || data.readyState === 'complete';
+                break;
+              case 'replace-url':
+                window.wbMessages['replace-url'] = data;
+                break;
+              case 'title':
+                window.wbMessages.tile = data.tile;
+                break;
+            }
+          }
+        },
+        false
+      );
+    </script>
+  </head>
+  <body>
+    <iframe
+      id="wombat-sandbox"
+      src="/live/20180803160549mp_/https://tests.wombat.io/"
+    ></iframe>
+  </body>
+</html>

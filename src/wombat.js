@@ -1671,7 +1671,7 @@ Wombat.prototype.rewriteHtmlFull = function(string, checkEndTag) {
       inner_doc.head._no_rewrite = true;
       inner_doc.body._no_rewrite = true;
 
-      new_html = inner_doc.head.innerHTML + inner_doc.body.innerHTML;
+      new_html = inner_doc.head.outerHTML + inner_doc.body.outerHTML;
       if (checkEndTag) {
         if (inner_doc.all.length > 3) {
           var end_tag = '</' + inner_doc.all[3].tagName.toLowerCase() + '>';
@@ -1848,6 +1848,7 @@ Wombat.prototype.rewriteWorker = function(workerUrl) {
   }
 
   if (makeBlob) {
+    console.log(workerCode);
     var blob = new Blob([workerCode], { type: 'text/javascript' });
     return URL.createObjectURL(blob);
   } else {
@@ -2130,11 +2131,11 @@ Wombat.prototype.overrideAnchorAreaElem = function(whichObj) {
 };
 
 Wombat.prototype.overrideHtmlAssign = function(elem, prop, rewriteGetter) {
-  if (!this.$wbwindow.DOMParser || !elem || !elem.prototype) {
+  if (!this.$wbwindow.DOMParser || !elem || !elem.prototype || !elem.__proto__) {
     return;
   }
 
-  var obj = elem.prototype;
+  var obj = elem.prototype || elem.__proto__;
 
   var orig_getter = this.getOrigGetter(obj, prop);
   var orig_setter = this.getOrigSetter(obj, prop);
@@ -3887,15 +3888,32 @@ Wombat.prototype.initDisableNotifications = function() {
     };
   }
 
+  var applyOverride = function(on) {
+    if (!on) return;
+    if (on.getCurrentPosition) {
+      on.getCurrentPosition = function getCurrentPosition(
+        success,
+        error,
+        options
+      ) {
+        if (error) {
+          error({ code: 2, message: 'not available' });
+        }
+      };
+    }
+    if (on.watchPosition) {
+      on.watchPosition = function watchPosition(success, error, options) {
+        if (error) {
+          error({ code: 2, message: 'not available' });
+        }
+      };
+    }
+  };
   if (window.geolocation) {
-    var disabled = function disabled(success, error, options) {
-      if (error) {
-        error({ code: 2, message: 'not available' });
-      }
-    };
-
-    window.geolocation.getCurrentPosition = disabled;
-    window.geolocation.watchPosition = disabled;
+    applyOverride(window.geolocation);
+  }
+  if (window.navigator.geolocation) {
+    applyOverride(window.navigator.geolocation);
   }
 };
 

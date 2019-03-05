@@ -1,4 +1,4 @@
-export default function assertType (chai) {
+export default function assertType(chai) {
   const strings = {
     v: 'value',
     n: 'number',
@@ -17,7 +17,7 @@ export default function assertType (chai) {
   const messages = {};
   const predicates = {};
 
-  const collections = [ 'array', 'arrayLike', 'iterable', 'object' ];
+  const collections = ['array', 'arrayLike', 'iterable', 'object'];
   const slice = Array.prototype.slice;
   const neginf = Number.NEGATIVE_INFINITY;
   const posinf = Number.POSITIVE_INFINITY;
@@ -65,18 +65,21 @@ export default function assertType (chai) {
     { n: 'date', f: date, s: 'd' },
     { n: 'function', f: isFunction, s: 'f' },
     { n: 'hasLength', f: hasLength, s: 'l' }
-  ].map(function (data) {
+  ].map(function(data) {
     var n = data.n;
     messages[n] = 'Invalid ' + strings[data.s || 'n'];
     predicates[n] = data.f;
   });
 
-  const functions = mixin({
-    apply: apply,
-    map: map,
-    all: all,
-    any: any
-  }, predicates);
+  const functions = mixin(
+    {
+      apply: apply,
+      map: map,
+      all: all,
+      any: any
+    },
+    predicates
+  );
   const assert = createModifiedPredicates(assertModifier, assertImpl);
   const not = createModifiedPredicates(notModifier, notImpl);
   const maybe = createModifiedPredicates(maybeModifier, maybeImpl);
@@ -94,7 +97,7 @@ export default function assertType (chai) {
    * Returns true if `lhs` and `rhs` are strictly equal, without coercion.
    * Returns false otherwise.
    */
-  function equal (lhs, rhs) {
+  function equal(lhs, rhs) {
     return lhs === rhs;
   }
 
@@ -103,7 +106,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is undefined, false otherwise.
    */
-  function isUndefined (data) {
+  function isUndefined(data) {
     return data === undefined;
   }
 
@@ -112,7 +115,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is null, false otherwise.
    */
-  function isNull (data) {
+  function isNull(data) {
     return data === null;
   }
 
@@ -121,7 +124,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is not null or undefined, false otherwise.
    */
-  function assigned (data) {
+  function assigned(data) {
     return data !== undefined && data !== null;
   }
 
@@ -130,7 +133,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a primitive type, false otherwise.
    */
-  function primitive (data) {
+  function primitive(data) {
     var type;
 
     switch (data) {
@@ -142,7 +145,11 @@ export default function assertType (chai) {
     }
 
     type = typeof data;
-    return type === 'string' || type === 'number' || (haveSymbols && type === 'symbol');
+    return (
+      type === 'string' ||
+      type === 'number' ||
+      (haveSymbols && type === 'symbol')
+    );
   }
 
   /**
@@ -150,7 +157,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is zero, false otherwise.
    */
-  function zero (data) {
+  function zero(data) {
     return data === 0;
   }
 
@@ -159,7 +166,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is positive or negative infinity, false otherwise.
    */
-  function infinity (data) {
+  function infinity(data) {
     return data === neginf || data === posinf;
   }
 
@@ -168,7 +175,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a number, false otherwise.
    */
-  function number (data) {
+  function number(data) {
     return typeof data === 'number' && data > neginf && data < posinf;
   }
 
@@ -177,7 +184,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is an integer, false otherwise.
    */
-  function integer (data) {
+  function integer(data) {
     return typeof data === 'number' && data % 1 === 0;
   }
 
@@ -186,7 +193,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is an even number, false otherwise.
    */
-  function even (data) {
+  function even(data) {
     return typeof data === 'number' && data % 2 === 0;
   }
 
@@ -195,7 +202,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is an odd number, false otherwise.
    */
-  function odd (data) {
+  function odd(data) {
     return integer(data) && data % 2 !== 0;
   }
 
@@ -204,7 +211,7 @@ export default function assertType (chai) {
    *
    * Returns true if `lhs` is a number greater than `rhs`, false otherwise.
    */
-  function greater (lhs, rhs) {
+  function greater(lhs, rhs) {
     return number(lhs) && lhs > rhs;
   }
 
@@ -213,7 +220,7 @@ export default function assertType (chai) {
    *
    * Returns true if `lhs` is a number less than `rhs`, false otherwise.
    */
-  function less (lhs, rhs) {
+  function less(lhs, rhs) {
     return number(lhs) && lhs < rhs;
   }
 
@@ -222,7 +229,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a number between `x` and `y`, false otherwise.
    */
-  function between (data, x, y) {
+  function between(data, x, y) {
     if (x < y) {
       return greater(data, x) && data < y;
     }
@@ -236,7 +243,7 @@ export default function assertType (chai) {
    * Returns true if `lhs` is a number greater than or equal to `rhs`, false
    * otherwise.
    */
-  function greaterOrEqual (lhs, rhs) {
+  function greaterOrEqual(lhs, rhs) {
     return number(lhs) && lhs >= rhs;
   }
 
@@ -246,7 +253,7 @@ export default function assertType (chai) {
    * Returns true if `lhs` is a number less than or equal to `rhs`, false
    * otherwise.
    */
-  function lessOrEqual (lhs, rhs) {
+  function lessOrEqual(lhs, rhs) {
     return number(lhs) && lhs <= rhs;
   }
 
@@ -255,7 +262,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a number in the range `x..y`, false otherwise.
    */
-  function inRange (data, x, y) {
+  function inRange(data, x, y) {
     if (x < y) {
       return greaterOrEqual(data, x) && data <= y;
     }
@@ -268,7 +275,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a positive number, false otherwise.
    */
-  function positive (data) {
+  function positive(data) {
     return greater(data, 0);
   }
 
@@ -277,7 +284,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a negative number, false otherwise.
    */
-  function negative (data) {
+  function negative(data) {
     return less(data, 0);
   }
 
@@ -286,7 +293,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a string, false otherwise.
    */
-  function string (data) {
+  function string(data) {
     return typeof data === 'string';
   }
 
@@ -295,7 +302,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is the empty string, false otherwise.
    */
-  function emptyString (data) {
+  function emptyString(data) {
     return data === '';
   }
 
@@ -304,7 +311,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a non-empty string, false otherwise.
    */
-  function nonEmptyString (data) {
+  function nonEmptyString(data) {
     return string(data) && data !== '';
   }
 
@@ -314,7 +321,7 @@ export default function assertType (chai) {
    * Returns true if `data` is a string that contains `substring`, false
    * otherwise.
    */
-  function contains (data, substring) {
+  function contains(data, substring) {
     return string(data) && data.indexOf(substring) !== -1;
   }
 
@@ -323,7 +330,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a string that matches `regex`, false otherwise.
    */
-  function match (data, regex) {
+  function match(data, regex) {
     return string(data) && !!data.match(regex);
   }
 
@@ -332,7 +339,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a boolean value, false otherwise.
    */
-  function boolean (data) {
+  function boolean(data) {
     return data === false || data === true;
   }
 
@@ -341,7 +348,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a plain-old JS object, false otherwise.
    */
-  function object (data) {
+  function object(data) {
     return Object.prototype.toString.call(data) === '[object Object]';
   }
 
@@ -350,7 +357,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is an empty object, false otherwise.
    */
-  function emptyObject (data) {
+  function emptyObject(data) {
     return object(data) && Object.keys(data).length === 0;
   }
 
@@ -359,7 +366,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a non-empty object, false otherwise.
    */
-  function nonEmptyObject (data) {
+  function nonEmptyObject(data) {
     return object(data) && Object.keys(data).length > 0;
   }
 
@@ -368,7 +375,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is an instance of `prototype`, false otherwise.
    */
-  function instanceStrict (data, prototype) {
+  function instanceStrict(data, prototype) {
     try {
       return data instanceof prototype;
     } catch (error) {
@@ -383,11 +390,14 @@ export default function assertType (chai) {
    * Falls back to testing constructor.name and Object.prototype.toString
    * if the initial instanceof test fails.
    */
-  function instance (data, prototype) {
+  function instance(data, prototype) {
     try {
-      return instanceStrict(data, prototype) ||
+      return (
+        instanceStrict(data, prototype) ||
         data.constructor.name === prototype.name ||
-        Object.prototype.toString.call(data) === '[object ' + prototype.name + ']';
+        Object.prototype.toString.call(data) ===
+          '[object ' + prototype.name + ']'
+      );
     } catch (error) {
       return false;
     }
@@ -399,12 +409,15 @@ export default function assertType (chai) {
    * Tests whether `data` 'quacks like a duck'. Returns true if `data` has all
    * of the properties of `archetype` (the 'duck'), false otherwise.
    */
-  function like (data, archetype) {
+  function like(data, archetype) {
     var name;
 
     for (name in archetype) {
       if (archetype.hasOwnProperty(name)) {
-        if (data.hasOwnProperty(name) === false || typeof data[name] !== typeof archetype[name]) {
+        if (
+          data.hasOwnProperty(name) === false ||
+          typeof data[name] !== typeof archetype[name]
+        ) {
           return false;
         }
 
@@ -422,7 +435,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is an array, false otherwise.
    */
-  function array (data) {
+  function array(data) {
     return isArray(data);
   }
 
@@ -431,7 +444,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is an empty array, false otherwise.
    */
-  function emptyArray (data) {
+  function emptyArray(data) {
     return array(data) && data.length === 0;
   }
 
@@ -440,7 +453,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a non-empty array, false otherwise.
    */
-  function nonEmptyArray (data) {
+  function nonEmptyArray(data) {
     return array(data) && greater(data.length, 0);
   }
 
@@ -449,7 +462,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is an array-like object, false otherwise.
    */
-  function arrayLike (data) {
+  function arrayLike(data) {
     return assigned(data) && greaterOrEqual(data.length, 0);
   }
 
@@ -458,7 +471,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is an iterable, false otherwise.
    */
-  function iterable (data) {
+  function iterable(data) {
     if (!haveSymbols) {
       // Fall back to `arrayLike` predicate in pre-ES6 environments.
       return arrayLike(data);
@@ -472,7 +485,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` contains `value`, false otherwise.
    */
-  function includes (data, value) {
+  function includes(data, value) {
     var iterator, iteration, keys, length, i;
 
     if (!assigned(data)) {
@@ -510,7 +523,7 @@ export default function assertType (chai) {
    * Returns true if `data` has a length property that equals `length`, false
    * otherwise.
    */
-  function hasLength (data, length) {
+  function hasLength(data, length) {
     return assigned(data) && data.length === length;
   }
 
@@ -519,7 +532,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a valid date, false otherwise.
    */
-  function date (data) {
+  function date(data) {
     return instanceStrict(data, Date) && integer(data.getTime());
   }
 
@@ -528,7 +541,7 @@ export default function assertType (chai) {
    *
    * Returns true if `data` is a function, false otherwise.
    */
-  function isFunction (data) {
+  function isFunction(data) {
     return typeof data === 'function';
   }
 
@@ -540,11 +553,11 @@ export default function assertType (chai) {
    * data, a single predicate function may be passed in.
    *
    */
-  function apply (data, predicates) {
+  function apply(data, predicates) {
     assert.array(data);
 
     if (isFunction(predicates)) {
-      return data.map(function (value) {
+      return data.map(function(value) {
         return predicates(value);
       });
     }
@@ -552,7 +565,7 @@ export default function assertType (chai) {
     assert.array(predicates);
     assert.hasLength(data, predicates.length);
 
-    return data.map(function (value, index) {
+    return data.map(function(value, index) {
       return predicates[index](value);
     });
   }
@@ -566,7 +579,7 @@ export default function assertType (chai) {
    * function may be passed in.
    *
    */
-  function map (data, predicates) {
+  function map(data, predicates) {
     assert.object(data);
 
     if (isFunction(predicates)) {
@@ -578,20 +591,20 @@ export default function assertType (chai) {
     return mapComplex(data, predicates);
   }
 
-  function mapSimple (data, predicate) {
+  function mapSimple(data, predicate) {
     var result = {};
 
-    Object.keys(data).forEach(function (key) {
+    Object.keys(data).forEach(function(key) {
       result[key] = predicate(data[key]);
     });
 
     return result;
   }
 
-  function mapComplex (data, predicates) {
+  function mapComplex(data, predicates) {
     var result = {};
 
-    Object.keys(predicates).forEach(function (key) {
+    Object.keys(predicates).forEach(function(key) {
       var predicate = predicates[key];
 
       if (isFunction(predicate)) {
@@ -616,7 +629,7 @@ export default function assertType (chai) {
    * or object (returned from `map`).
    *
    */
-  function all (data) {
+  function all(data) {
     if (array(data)) {
       return testArray(data, false);
     }
@@ -626,7 +639,7 @@ export default function assertType (chai) {
     return testObject(data, false);
   }
 
-  function testArray (data, result) {
+  function testArray(data, result) {
     var i;
 
     for (i = 0; i < data.length; i += 1) {
@@ -638,7 +651,7 @@ export default function assertType (chai) {
     return !result;
   }
 
-  function testObject (data, result) {
+  function testObject(data, result) {
     var key, value;
 
     for (key in data) {
@@ -666,7 +679,7 @@ export default function assertType (chai) {
    * or object (returned from `map`).
    *
    */
-  function any (data) {
+  function any(data) {
     if (array(data)) {
       return testArray(data, true);
     }
@@ -676,8 +689,8 @@ export default function assertType (chai) {
     return testObject(data, true);
   }
 
-  function mixin (target, source) {
-    Object.keys(source).forEach(function (key) {
+  function mixin(target, source) {
+    Object.keys(source).forEach(function(key) {
       target[key] = source[key];
     });
 
@@ -689,13 +702,13 @@ export default function assertType (chai) {
    *
    * Throws if `predicate` returns false.
    */
-  function assertModifier (predicate, defaultMessage) {
-    return function () {
+  function assertModifier(predicate, defaultMessage) {
+    return function() {
       return assertPredicate(predicate, arguments, defaultMessage);
     };
   }
 
-  function assertPredicate (predicate, args, defaultMessage) {
+  function assertPredicate(predicate, args, defaultMessage) {
     var argCount = predicate.l || predicate.length;
     var message = args[argCount];
     var ErrorType = args[argCount + 1];
@@ -707,7 +720,7 @@ export default function assertType (chai) {
     return args[0];
   }
 
-  function assertImpl (value, message, ErrorType) {
+  function assertImpl(value, message, ErrorType) {
     if (value) {
       return value;
     }
@@ -719,15 +732,15 @@ export default function assertType (chai) {
    *
    * Negates `predicate`.
    */
-  function notModifier (predicate) {
-    var modifiedPredicate = function () {
+  function notModifier(predicate) {
+    var modifiedPredicate = function() {
       return notImpl(predicate.apply(null, arguments));
     };
     modifiedPredicate.l = predicate.length;
     return modifiedPredicate;
   }
 
-  function notImpl (value) {
+  function notImpl(value) {
     return !value;
   }
 
@@ -737,8 +750,8 @@ export default function assertType (chai) {
    * Returns true if predicate argument is  null or undefined,
    * otherwise propagates the return value from `predicate`.
    */
-  function maybeModifier (predicate) {
-    var modifiedPredicate = function () {
+  function maybeModifier(predicate) {
+    var modifiedPredicate = function() {
       if (not.assigned(arguments[0])) {
         return true;
       }
@@ -756,7 +769,7 @@ export default function assertType (chai) {
     return modifiedPredicate;
   }
 
-  function maybeImpl (value) {
+  function maybeImpl(value) {
     if (assigned(value) === false) {
       return true;
     }
@@ -769,8 +782,8 @@ export default function assertType (chai) {
    *
    * Applies the chained predicate to members of the collection.
    */
-  function ofModifier (target, type, predicate) {
-    var modifiedPredicate = function () {
+  function ofModifier(target, type, predicate) {
+    var modifiedPredicate = function() {
       var collection, args;
 
       collection = arguments[0];
@@ -787,10 +800,10 @@ export default function assertType (chai) {
       args = slice.call(arguments, 1);
 
       try {
-        collection.forEach(function (item) {
+        collection.forEach(function(item) {
           if (
             (target !== 'maybe' || assigned(item)) &&
-            !predicate.apply(null, [ item ].concat(args))
+            !predicate.apply(null, [item].concat(args))
           ) {
             // TODO: Replace with for...of when ES6 is required.
             throw 0;
@@ -806,12 +819,12 @@ export default function assertType (chai) {
     return modifiedPredicate;
   }
 
-  function coerceCollection (type, collection) {
+  function coerceCollection(type, collection) {
     switch (type) {
       case arrayLike:
         return slice.call(collection);
       case object:
-        return Object.keys(collection).map(function (key) {
+        return Object.keys(collection).map(function(key) {
           return collection[key];
         });
       default:
@@ -819,11 +832,11 @@ export default function assertType (chai) {
     }
   }
 
-  function createModifiedPredicates (modifier, object) {
-    return createModifiedFunctions([ modifier, predicates, object ]);
+  function createModifiedPredicates(modifier, object) {
+    return createModifiedFunctions([modifier, predicates, object]);
   }
 
-  function createModifiedFunctions (args) {
+  function createModifiedFunctions(args) {
     var modifier, object, functions, result;
 
     modifier = args.shift();
@@ -832,7 +845,7 @@ export default function assertType (chai) {
 
     result = object || {};
 
-    Object.keys(functions).forEach(function (key) {
+    Object.keys(functions).forEach(function(key) {
       Object.defineProperty(result, key, {
         configurable: false,
         enumerable: true,
@@ -844,27 +857,36 @@ export default function assertType (chai) {
     return result;
   }
 
-  function createModifiedModifier (modifier, modified) {
-    return createModifiedFunctions([ modifier, modified, null ]);
+  function createModifiedModifier(modifier, modified) {
+    return createModifiedFunctions([modifier, modified, null]);
   }
 
-  function createOfPredicates (key) {
-    predicates[key].of = createModifiedFunctions(
-      [ ofModifier.bind(null, null), predicates[key], predicates, null ]
-    );
+  function createOfPredicates(key) {
+    predicates[key].of = createModifiedFunctions([
+      ofModifier.bind(null, null),
+      predicates[key],
+      predicates,
+      null
+    ]);
   }
 
-  function createOfModifiers (base, modifier) {
-    collections.forEach(function (key) {
+  function createOfModifiers(base, modifier) {
+    collections.forEach(function(key) {
       base[key].of = createModifiedModifier(modifier, predicates[key].of);
     });
   }
 
-  function createMaybeOfModifiers (key) {
-    maybe[key].of = createModifiedFunctions(
-      [ ofModifier.bind(null, 'maybe'), predicates[key], predicates, null ]
+  function createMaybeOfModifiers(key) {
+    maybe[key].of = createModifiedFunctions([
+      ofModifier.bind(null, 'maybe'),
+      predicates[key],
+      predicates,
+      null
+    ]);
+    assert.maybe[key].of = createModifiedModifier(
+      assertModifier,
+      maybe[key].of
     );
-    assert.maybe[key].of = createModifiedModifier(assertModifier, maybe[key].of);
     assert.not[key].of = createModifiedModifier(assertModifier, not[key].of);
   }
 
@@ -874,10 +896,18 @@ export default function assertType (chai) {
     maybe: maybe
   });
 
-  const types = ['number', 'string', 'boolean', 'object', 'array', 'date', 'function'];
+  const types = [
+    'number',
+    'string',
+    'boolean',
+    'object',
+    'array',
+    'date',
+    'function'
+  ];
 
-  types.forEach((type) => {
-    chai.Assertion.addMethod(type, function () {
+  types.forEach(type => {
+    chai.Assertion.addMethod(type, function() {
       this.assert(
         check[type](this._obj),
         `expected #{this} to be ${type}`,
