@@ -1,8 +1,14 @@
 /* eslint-disable camelcase */
 
+/**
+ *
+ * @param {Function} origListener
+ * @param {Window} win
+ * @return {Function}
+ */
 export function wrapSameOriginEventListener(origListener, win) {
-  return function(event) {
-    if (window !== win) {
+  return function wrappedSameOriginEventListener(event) {
+    if (window != win) {
       return;
     }
     return origListener(event);
@@ -10,26 +16,26 @@ export function wrapSameOriginEventListener(origListener, win) {
 }
 
 /**
- * @param {function(*): *} origListener
- * @param {Window} win
+ * @param {Function} origListener
+ * @param {Object} obj
  * @param {Wombat} wombat
- * @return {function(*): *}
+ * @return {Function}
  */
-export function wrapEventListener(origListener, win, wombat) {
-  return function(event) {
+export function wrapEventListener(origListener, obj, wombat) {
+  return function wrappedEventListener(event) {
     var ne;
 
     if (event.data && event.data.from && event.data.message) {
       if (
         event.data.to_origin !== '*' &&
-        win.WB_wombat_location &&
-        !wombat.startsWith(event.data.to_origin, win.WB_wombat_location.origin)
+        obj.WB_wombat_location &&
+        !wombat.startsWith(event.data.to_origin, obj.WB_wombat_location.origin)
       ) {
         console.warn(
           'Skipping message event to ' +
             event.data.to_origin +
             " doesn't start with origin " +
-            win.WB_wombat_location.origin
+            obj.WB_wombat_location.origin
         );
         return;
       }
@@ -37,13 +43,13 @@ export function wrapEventListener(origListener, win, wombat) {
       var source = event.source;
 
       if (event.data.from_top) {
-        source = win.__WB_top_frame;
+        source = obj.__WB_top_frame;
       } else if (
         event.data.src_id &&
-        win.__WB_win_id &&
-        win.__WB_win_id[event.data.src_id]
+        obj.__WB_win_id &&
+        obj.__WB_win_id[event.data.src_id]
       ) {
-        source = win.__WB_win_id[event.data.src_id];
+        source = obj.__WB_win_id[event.data.src_id];
       }
 
       ne = new MessageEvent('message', {

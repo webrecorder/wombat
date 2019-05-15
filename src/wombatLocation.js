@@ -1,12 +1,13 @@
 /* eslint-disable camelcase */
 import { addToStringTagToClass } from './wombatUtils';
 
-//TODO(n0tan3rd): figure out how to add ancestorOrigin to WombatLocation
-
 /**
- *
+ * A re-implementation of the Location interface that ensure that operations
+ * on the location interface behaves as expected during replay.
  * @param {Location} orig_loc
  * @param {Wombat} wombat
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Location
+ * @see https://html.spec.whatwg.org/multipage/browsers.html#the-location-interface
  */
 export default function WombatLocation(orig_loc, wombat) {
   // hide our values from enumeration, spreed, et al
@@ -20,6 +21,18 @@ export default function WombatLocation(orig_loc, wombat) {
       configurable: true,
       enumerable: false,
       value: wombat
+    },
+    orig_getter: {
+      enumerable: false,
+      value: function(prop) {
+        return this._orig_loc[prop];
+      }
+    },
+    orig_setter: {
+      enumerable: false,
+      value: function(prop, value) {
+        this._orig_loc[prop] = value;
+      }
     }
   });
 
@@ -34,6 +47,14 @@ export default function WombatLocation(orig_loc, wombat) {
   }
 }
 
+/**
+ * Replaces the current resource with the one at the provided URL.
+ * The difference from the assign() method is that after using replace() the
+ * current page will not be saved in session History, meaning the user won't
+ * be able to use the back button to navigate to it.
+ * @param {string} url
+ * @return {*}
+ */
 WombatLocation.prototype.replace = function replace(url) {
   var new_url = this.wombat.rewriteUrl(url);
   var orig = this.wombat.extractOriginalURL(new_url);
@@ -43,6 +64,11 @@ WombatLocation.prototype.replace = function replace(url) {
   return this._orig_loc.replace(new_url);
 };
 
+/**
+ * Loads the resource at the URL provided in parameter
+ * @param {string} url
+ * @return {*}
+ */
 WombatLocation.prototype.assign = function assign(url) {
   var new_url = this.wombat.rewriteUrl(url);
   var orig = this.wombat.extractOriginalURL(new_url);
@@ -52,22 +78,28 @@ WombatLocation.prototype.assign = function assign(url) {
   return this._orig_loc.assign(new_url);
 };
 
-WombatLocation.prototype.reload = function reload() {
-  return this._orig_loc.reload();
+/**
+ * Reloads the resource from the current URL. Its optional unique parameter
+ * is a Boolean, which, when it is true, causes the page to always be reloaded
+ * from the server. If it is false or not specified, the browser may reload
+ * the page from its cache.
+ * @param {boolean} [forcedReload = false]
+ * @return {*}
+ */
+WombatLocation.prototype.reload = function reload(forcedReload) {
+  return this._orig_loc.reload(forcedReload || false);
 };
 
-WombatLocation.prototype.orig_getter = function orig_getter(prop) {
-  return this._orig_loc[prop];
-};
-
-WombatLocation.prototype.orig_setter = function orig_setter(prop, value) {
-  this._orig_loc[prop] = value;
-};
-
+/**
+ * @return {string}
+ */
 WombatLocation.prototype.toString = function toString() {
   return this.href;
 };
 
+/**
+ * @return {WombatLocation}
+ */
 WombatLocation.prototype.valueOf = function valueOf() {
   return this;
 };

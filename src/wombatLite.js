@@ -18,6 +18,12 @@ export default function WombatLite($wbwindow, wbinfo) {
   this.WBAutoFetchWorker = null;
 }
 
+/**
+ * Applies an override to Math.seed and Math.random using the supplied
+ * seed in order to ensure that random numbers are deterministic during
+ * replay
+ * @param {string} seed
+ */
 WombatLite.prototype.initSeededRandom = function(seed) {
   // Adapted from:
   // http://indiegamr.com/generate-repeatable-random-numbers-in-js/
@@ -32,6 +38,10 @@ WombatLite.prototype.initSeededRandom = function(seed) {
   };
 };
 
+/**
+ * Applies an override to crypto.getRandomValues in order to make
+ * the values it returns are deterministic during replay
+ */
 WombatLite.prototype.initCryptoRandom = function() {
   if (!this.$wbwindow.crypto || !this.$wbwindow.Crypto) return;
 
@@ -48,6 +58,10 @@ WombatLite.prototype.initCryptoRandom = function() {
   this.$wbwindow.crypto.getRandomValues = new_getrandom;
 };
 
+/**
+ * Forces, when possible, the devicePixelRatio property of window to 1
+ * in order to ensure deterministic replay
+ */
 WombatLite.prototype.initFixedRatio = function() {
   try {
     // otherwise, just set it
@@ -66,6 +80,11 @@ WombatLite.prototype.initFixedRatio = function() {
   }
 };
 
+/**
+ * Applies an override to the Date object in order to ensure that
+ * all Dates used during replay are in the datetime of replay
+ * @param {string} timestamp
+ */
 WombatLite.prototype.initDateOverride = function(timestamp) {
   if (this.$wbwindow.__wb_Date_now) return;
   var newTimestamp = parseInt(timestamp) * 1000;
@@ -124,6 +143,14 @@ WombatLite.prototype.initDateOverride = function(timestamp) {
   });
 };
 
+/**
+ * Applies an override that disables the pages ability to send OS native
+ * notifications. Also disables the ability of the replayed page to retrieve the geolocation
+ * of the view.
+ *
+ * This is done in order to ensure that no malicious abuse of these functions
+ * can happen during replay.
+ */
 WombatLite.prototype.initDisableNotifications = function() {
   if (window.Notification) {
     window.Notification.requestPermission = function requestPermission(
@@ -138,18 +165,38 @@ WombatLite.prototype.initDisableNotifications = function() {
     };
   }
 
+  var applyOverride = function(on) {
+    if (!on) return;
+    if (on.getCurrentPosition) {
+      on.getCurrentPosition = function getCurrentPosition(
+        success,
+        error,
+        options
+      ) {
+        if (error) {
+          error({ code: 2, message: 'not available' });
+        }
+      };
+    }
+    if (on.watchPosition) {
+      on.watchPosition = function watchPosition(success, error, options) {
+        if (error) {
+          error({ code: 2, message: 'not available' });
+        }
+      };
+    }
+  };
   if (window.geolocation) {
-    var disabled = function disabled(success, error, options) {
-      if (error) {
-        error({ code: 2, message: 'not available' });
-      }
-    };
-
-    window.geolocation.getCurrentPosition = disabled;
-    window.geolocation.watchPosition = disabled;
+    applyOverride(window.geolocation);
+  }
+  if (window.navigator.geolocation) {
+    applyOverride(window.navigator.geolocation);
   }
 };
 
+/**
+ * Initializes and starts the auto-fetch worker IFF wbUseAFWorker is true
+ */
 WombatLite.prototype.initAutoFetchWorker = function() {
   if (!this.$wbwindow.Worker) {
     return;
@@ -179,7 +226,11 @@ WombatLite.prototype.initAutoFetchWorker = function() {
   }
 };
 
-WombatLite.prototype.wombat_init = function() {
+/**
+ * Initialize wombat's internal state and apply all overrides
+ * @return {Object}
+ */
+WombatLite.prototype.wombatInit = function() {
   if (this.wb_info.enable_auto_fetch && this.wb_info.is_live) {
     this.initAutoFetchWorker();
   }

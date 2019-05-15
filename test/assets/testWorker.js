@@ -1,6 +1,6 @@
-self.isFetchOverriden = () => self.fetch.toString().includes('rewrite_url');
-self.isImportScriptsOverriden = () =>
-  self.importScripts.toString().includes('rewrite_url');
+self.isFetchOverridden = () =>
+  self.fetch.toString().includes('rewriteFetchApi');
+self.isImportScriptOverridden = () =>
+  self.importScripts.toString().includes('rewriteArgs');
 self.isAjaxRewritten = () =>
-  self.XMLHttpRequest.prototype.open.toString().includes('rewrite_url');
-
+  self.XMLHttpRequest.prototype.open.toString().includes('rewriteURL');

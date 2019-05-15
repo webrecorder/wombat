@@ -33,7 +33,7 @@ class TestHelper {
    */
   constructor({ server, client, browser, t, killChrome }) {
     /**
-     * @type {fastify.FastifyInstance<http2.Http2SecureServer, http2.Http2ServerRequest, http2.Http2ServerResponse>}
+     * @type {fastify.FastifyInstance}
      */
     this._server = server;
 
@@ -60,7 +60,7 @@ class TestHelper {
   }
 
   /**
-   * @return {fastify.FastifyInstance<http2.Http2SecureServer, http2.Http2ServerRequest, http2.Http2ServerResponse>}
+   * @return {fastify.FastifyInstance}
    */
   server() {
     return this._server;
@@ -81,8 +81,14 @@ class TestHelper {
   }
 
   async initWombat() {
-    await this._sandbox.evaluate(() => {
-      window._WBWombatInit(window.wbinfo);
+    await this._testPage.evaluate(() => {
+      window.overwatch.initSandbox();
+    });
+  }
+
+  async maybeInitWombat() {
+    await this._testPage.evaluate(() => {
+      window.overwatch.maybeInitSandbox();
     });
   }
 
@@ -96,6 +102,19 @@ class TestHelper {
       waitUntil: 'networkidle2'
     });
     this._sandbox = this._testPage.frames()[1];
+  }
+
+  async fullRefresh() {
+    await this.cleanup();
+    await this.initWombat();
+  }
+
+  async ensureSandbox() {
+    if (!this._sandbox.url().endsWith('https://tests.wombat.io/')) {
+      await this.fullRefresh();
+    } else {
+      await this.maybeInitWombat();
+    }
   }
 
   async stop() {
@@ -123,16 +142,13 @@ class TestHelper {
   }
 }
 
-/**
- * @type {TestHelper}
- */
 module.exports = TestHelper;
 
 /**
  * @typedef {Object} TestHelperInit
  * @property {Browser} browser
  * @property {CRIConnection} client
- * @property {fastify.FastifyInstance<http2.Http2SecureServer, http2.Http2ServerRequest, http2.Http2ServerResponse>} server
+ * @property {fastify.FastifyInstance} server
  * @property {*} t
  * @property {function(): void} killChrome
  */

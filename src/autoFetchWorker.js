@@ -1,5 +1,7 @@
 /* eslint-disable camelcase */
 
+import { autobind } from './wombatUtils';
+
 /**
  * @param {Wombat} wombat
  */
@@ -21,6 +23,23 @@ export default function AutoFetchWorker(wombat) {
   /** @type {Window} */
   this.$wbwindow = wombat.$wbwindow;
 
+  /** @type {?Worker|Object} */
+  this.worker = null;
+  autobind(this);
+  this._initWorker();
+}
+
+/**
+ * Initializes the backing worker IFF the execution context we are in is
+ * the replay tops otherwise creates a dummy worker that simply bounces the
+ * message that would have been sent to the backing worker to replay top.
+ *
+ * If creation of the worker fails, likely due to the execution context we
+ * are currently in having an null origin, we fallback to dummy worker creation.
+ * @private
+ */
+AutoFetchWorker.prototype._initWorker = function() {
+  var wombat = this.wombat;
   if (this.isTop) {
     // we are top and can will own this worker
     // setup URL for the kewl case
@@ -36,37 +55,71 @@ export default function AutoFetchWorker(wombat) {
           rwRe: wombat.wb_unrewrite_rx
         })
       );
-    this.worker = new this.$wbwindow.Worker(workerURL);
-  } else {
-    // add only the portions of the worker interface we use since we are not top and if in proxy mode start check polling
-    this.worker = {
-      postMessage: function(msg) {
-        if (!msg.wb_type) {
-          msg = { wb_type: 'aaworker', msg: msg };
-        }
-        wombat.$wbwindow.__WB_replay_top.__orig_postMessage(msg, '*');
-      },
-      terminate: function() {}
-    };
+    try {
+      this.worker = new Worker(workerURL);
+      return;
+    } catch (e) {
+      // it is likely we are in some kind of horrid iframe setup
+      // and the execution context we are currently in has a null origin
+      console.error(
+        'Failed to create auto fetch worker\n',
+        e,
+        '\nFalling back to non top behavior'
+      );
+    }
   }
-}
 
+  // add only the portions of the worker interface we use since we are not top
+  // and if in proxy mode start check polling
+  this.worker = {
+    postMessage: function(msg) {
+      if (!msg.wb_type) {
+        msg = { wb_type: 'aaworker', msg: msg };
+      }
+      wombat.$wbwindow.__WB_replay_top.__orig_postMessage(msg, '*');
+    },
+    terminate: function() {}
+  };
+};
+
+/**
+ * Extracts the media rules from the supplied CSSStyleSheet object if any
+ * are present and returns an array of the media cssText
+ * @param {CSSStyleSheet} sheet
+ * @return {Array<string>}
+ */
+AutoFetchWorker.prototype.extractMediaRulesFromSheet = function(sheet) {
+  var rules;
+  var media = [];
+  try {
+    rules = sheet.cssRules || sheet.rules;
+  } catch (e) {
+    return media;
+  }
+
+  // loop through each rule of the stylesheet
+  for (var i = 0; i < rules.length; ++i) {
+    var rule = rules[i];
+    if (rule.type === CSSRule.MEDIA_RULE) {
+      // we are a media rule so get its text
+      media.push(rule.cssText);
+    }
+  }
+  return media;
+};
+
+/**
+ * Extracts the media rules from the supplied CSSStyleSheet object if any
+ * are present after a tick of the event loop sending the results of the
+ * extraction to the backing worker
+ * @param {CSSStyleSheet|StyleSheet} sheet
+ */
 AutoFetchWorker.prototype.deferredSheetExtraction = function(sheet) {
-  var rules = sheet.cssRules || sheet.rules;
-  // if no rules this a no op
-  if (!rules || rules.length === 0) return;
   var afw = this;
   // defer things until next time the Promise.resolve Qs are cleared
   Promise.resolve().then(function() {
     // loop through each rule of the stylesheet
-    var media = [];
-    for (var i = 0; i < rules.length; ++i) {
-      var rule = rules[i];
-      if (rule.type === CSSRule.MEDIA_RULE) {
-        // we are a media rule so get its text
-        media.push(rule.cssText);
-      }
-    }
+    var media = afw.extractMediaRulesFromSheet(sheet);
     if (media.length > 0) {
       // we have some media rules to preserve
       afw.preserveMedia(media);
@@ -74,17 +127,28 @@ AutoFetchWorker.prototype.deferredSheetExtraction = function(sheet) {
   });
 };
 
+/**
+ * Terminates the backing worker. This is a no op when we are not
+ * operating in the execution context of replay top
+ */
 AutoFetchWorker.prototype.terminate = function() {
   // terminate the worker, a no op when not replay top
   this.worker.terminate();
 };
 
+/**
+ * Sends a message to backing worker. If deferred is true
+ * the message is sent after one tick of the event loop
+ * @param {Object} msg
+ * @param {boolean} [deferred]
+ */
 AutoFetchWorker.prototype.postMessage = function(msg, deferred) {
   if (deferred) {
     var afWorker = this;
-    return Promise.resolve().then(function() {
+    Promise.resolve().then(function() {
       afWorker.worker.postMessage(msg);
     });
+    return;
   }
   this.worker.postMessage(msg);
 };
@@ -108,7 +172,7 @@ AutoFetchWorker.prototype.preserveSrcset = function(srcset, mod) {
 /**
  * Send the value of the supplied elements data-srcset attribute to the
  * backing worker for preservation
- * @param {HTMLElement} elem
+ * @param {Node} elem
  */
 AutoFetchWorker.prototype.preserveDataSrcset = function(elem) {
   // send values from rewriteAttr srcset to the worker deferred
@@ -126,11 +190,21 @@ AutoFetchWorker.prototype.preserveDataSrcset = function(elem) {
   );
 };
 
+/**
+ * Sends the supplied array of cssText from media rules to the backing worker
+ * @param {Array<string>} media
+ */
 AutoFetchWorker.prototype.preserveMedia = function(media) {
   // send CSSMediaRule values to the worker
   this.postMessage({ type: 'values', media: media }, true);
 };
 
+/**
+ * Extracts the value of the srcset property if it exists from the supplied
+ * element
+ * @param {Element} elem
+ * @return {?string}
+ */
 AutoFetchWorker.prototype.getSrcset = function(elem) {
   if (this.wombat.wb_getAttribute) {
     return this.wombat.wb_getAttribute.call(elem, 'srcset');
@@ -138,16 +212,28 @@ AutoFetchWorker.prototype.getSrcset = function(elem) {
   return elem.getAttribute('srcset');
 };
 
+/**
+ * Returns the correct rewrite modifier for the supplied element
+ * @param {Element} elem
+ * @return {string}
+ */
 AutoFetchWorker.prototype.rwMod = function(elem) {
-  return elem.tagName === 'SOURCE'
-    ? elem.parentElement.tagName === 'PICTURE'
-      ? 'im_'
-      : 'oe_'
-    : elem.tagName === 'IMG'
-    ? 'im_'
-    : 'oe_';
+  switch (elem.tagName) {
+    case 'SOURCE':
+      if (elem.parentElement && elem.parentElement.tagName === 'PICTURE') {
+        return 'im_';
+      }
+      return 'oe_';
+    case 'IMG':
+      return 'im_';
+  }
+  return 'oe_';
 };
 
+/**
+ * Extracts the media rules from stylesheets and the (data-)srcset URLs from
+ * image elements the current context's document contains
+ */
 AutoFetchWorker.prototype.extractFromLocalDoc = function() {
   // get the values to be preserved from the documents stylesheets
   // and all img, video, audio elements with (data-)?srcset or data-src
@@ -155,21 +241,15 @@ AutoFetchWorker.prototype.extractFromLocalDoc = function() {
   Promise.resolve().then(function() {
     var msg = {
       type: 'values',
-      context: { docBaseURI: afw.$wbwindow.document.baseURI }
+      context: { docBaseURI: document.baseURI }
     };
     var media = [];
     var i = 0;
-    var sheets = afw.$wbwindow.document.styleSheets;
+    var sheets = document.styleSheets;
     for (; i < sheets.length; ++i) {
-      var rules = sheets[i].cssRules;
-      for (var j = 0; j < rules.length; ++j) {
-        var rule = rules[j];
-        if (rule.type === CSSRule.MEDIA_RULE) {
-          media.push(rule.cssText);
-        }
-      }
+      media = media.concat(afw.extractMediaRulesFromSheet(sheets[i]));
     }
-    var elems = afw.$wbwindow.document.querySelectorAll(afw.elemSelector);
+    var elems = document.querySelectorAll(afw.elemSelector);
     var srcset = { values: [], presplit: false };
     var src = { values: [] };
     var elem, srcv, mod;
