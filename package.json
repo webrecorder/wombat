@@ -1,61 +1,44 @@
 {
-  "name": "wombat_improvements",
-  "version": "1.0.0",
+  "name": "wombat",
+  "version": "2.53.0",
   "main": "index.js",
-  "license": "MIT",
-  "dependencies": {
-    "@types/chai": "^4.1.7",
+  "license": "GPL-3.0",
+  "devDependencies": {
     "@types/fs-extra": "^5.0.5",
-    "@types/mocha": "^5.2.6",
-    "ava": "^1.2.1",
-    "browserify": "^16.2.3",
-    "chai": "^4.2.0",
-    "chai-as-promised": "^7.1.1",
-    "chai-asserttype": "^1.0.5",
-    "chai-dom": "^1.8.1",
-    "chai-interface": "^2.0.3",
-    "chai-string": "^1.5.0",
-    "chai-url": "^1.0.4",
-    "chrome-remote-interface-extra": "^0.2.3",
-    "eslint": "^5.15.0",
-    "fastify": "^2.0.0",
+    "ava": "^1.4.1",
+    "chokidar": "^2.1.5",
+    "chrome-remote-interface-extra": "^1.0.0",
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^4.2.0",
+    "eslint-plugin-prettier": "^3.0.1",
+    "fastify": "^2.3.0",
     "fastify-favicon": "^2.0.0",
-    "fastify-graceful-shutdown": "^2.0.0",
-    "fastify-no-icon": "^2.0.0",
-    "fastify-static": "^2.3.4",
+    "fastify-graceful-shutdown": "^2.0.1",
+    "fastify-static": "^2.4.0",
     "fs-extra": "^7.0.1",
     "lodash-es": "^4.17.11",
-    "mocha": "^6.0.2",
-    "remove": "^0.1.5",
-    "rollup": "^1.4.1",
-    "rollup-plugin-babel-minify": "^7.0.0",
+    "prettier": "^1.17.0",
+    "rollup": "^1.10.1",
+    "rollup-plugin-babel-minify": "^8.0.0",
     "rollup-plugin-cleanup": "^3.1.1",
-    "rollup-plugin-commonjs": "^9.2.1",
-    "rollup-plugin-node-resolve": "^4.0.1",
+    "rollup-plugin-commonjs": "^9.3.4",
+    "rollup-plugin-node-resolve": "^4.2.3",
     "rollup-plugin-uglify": "^6.0.2",
     "rollup-plugin-uglify-es": "^0.0.1",
-    "serve-static": "^1.13.2",
-    "snazzy": "^8.0.0",
     "tls-keygen": "^3.7.0"
   },
   "scripts": {
-    "build-x": "rollup -c rollup.config.js && cp ./dist/wombat.js ./test/assets/wombat.js",
-    "build-dev": "rollup -c rollup.config.dev.js",
+    "build-prod": "rollup -c rollup.config.prod.js",
+    "build-dev": "ALL=1 rollup -c rollup.config.dev.js",
     "build-dev-watch": "rollup --watch -c rollup.config.dev.js",
-    "build-test-bundle": "rollup -c rollup.test-setup.config.js",
-    "build": "NODE_ENV=production rollup -c rollup.config.js",
-    "start-test-server": "node testServer.js",
-    "test": "ava"
+    "build-dev-watch-proxy": "PROXY=1 rollup --watch -c rollup.config.dev.js",
+    "build-test": "rollup -c rollup.config.test.js && rollup -c ./internal/rollup.testPageBundle.config.js",
+    "build-full-test": "rollup -c rollup.config.test.js",
+    "build-test-bundle": "rollup -c ./internal/rollup.testPageBundle.config.js",
+    "test": "ava --verbose"
   },
   "prettier": {
     "singleQuote": true
-  },
-  "devDependencies": {
-    "babel-plugin-transform-strict-mode": "^6.24.1",
-    "chokidar": "^2.1.2",
-    "eslint-config-prettier": "^4.1.0",
-    "eslint-plugin-prettier": "^3.0.1",
-    "prettier": "^1.16.4"
   },
   "ava": {
     "concurrency": 1,
@@ -70,5 +53,13 @@
     "sources": [
       "!src/**/*"
     ]
+  },
+  "resolutions": {
+    "*/**/graceful-fs": "~4.1.15",
+    "*/**/jsonfile": "~5.0.0",
+    "*/**/universalify": "~0.1.2"
+  },
+  "dependencies": {
+    "chrome-launcher": "^0.10.5"
   }
 }

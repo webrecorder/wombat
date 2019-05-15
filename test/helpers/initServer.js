@@ -4,15 +4,11 @@ const createServer = require('fastify');
 
 const host = '127.0.0.1';
 const port = 3030;
-const timeout = 10 * 1000;
 const gracefullShutdownTimeout = 50000;
 const shutdownOnSignals = ['SIGINT', 'SIGTERM', 'SIGHUP'];
 const assetsPath = path.join(__dirname, '..', 'assets');
 const httpsSandboxPath = path.join(assetsPath, 'sandbox.html');
-const keyCert = {
-  key: path.join(__dirname, 'key.pem'),
-  cert: path.join(__dirname, 'cert.pem')
-};
+const theyFoundItPath = path.join(assetsPath, 'it.html');
 
 function promiseResolveReject() {
   const prr = { promise: null, resolve: null, reject: null };
@@ -34,24 +30,10 @@ function promiseResolveReject() {
 }
 
 /**
- * @return {Promise<fastify.FastifyInstance<http2.Http2SecureServer, http2.Http2ServerRequest, http2.Http2ServerResponse>>}
+ * @return {Promise<fastify.FastifyInstance>}
  */
 async function initServer() {
-  const keyExists = await fs.pathExists(keyCert.key);
-  const certExists = await fs.pathExists(keyCert.cert);
-  if (!keyExists && !certExists) {
-    const { keygen } = require('tls-keygen');
-    await keygen(keyCert);
-  }
-  const serverOpts = {
-    logger: false,
-    http2: true,
-    https: {
-      allowHTTP1: true,
-      key: await fs.readFile(keyCert.key),
-      cert: await fs.readFile(keyCert.cert)
-    }
-  };
+  const serverOpts = { logger: false };
   const requestSubscribers = new Map();
   const checkReqSubscribers = (pathName, request, reply) => {
     const handler = requestSubscribers.get(pathName);
@@ -66,8 +48,34 @@ async function initServer() {
   fastify
     .get(
       '/live/20180803160549wkr_/https://tests.wombat.io/testWorker.js',
+      async (request, reply) => {
+        const init = `new WBWombat({'prefix': 'http://localhost:${port}/live/20180803160549', 'prefixMod': 'http://localhost:${port}/live/20180803160549wkr_/', 'originalURL': 'https://tests.wombat.io/testWorker.js'});`;
+        reply
+          .code(200)
+          .type('application/javascript; charset=UTF-8')
+          .send(
+            `self.importScripts('/testWorker.js');(function() { self.importScripts('/wombatWorkers.js'); ${init}})();`
+          );
+      }
+    )
+    .get(
+      '/live/20180803160549sw_/https://tests.wombat.io/testServiceWorker.js',
       (request, reply) => {
-        reply.redirect('/testWorker.js');
+        reply
+          .code(200)
+          .type('application/javascript; charset=UTF-8')
+          .header(
+            'Service-Worker-Allowed',
+            `${address}/live/20180803160549mp_/https://tests.wombat.io/`
+          )
+          .send('console.log("hi")');
+      }
+    )
+    .get(
+      '/live/20180803160549mp_/https://tests.wombat.io/it',
+      async (request, reply) => {
+        reply.type('text/html').status(200);
+        return fs.createReadStream(theyFoundItPath);
       }
     )
     .get(
@@ -95,7 +103,7 @@ async function initServer() {
       fastify.reset();
       return fastify.close();
     })
-    .decorate('testPage', `https://localhost:${port}/testPage.html`)
+    .decorate('testPage', `http://localhost:${port}/testPage.html`)
     .decorate('waitForRequest', route => {
       let prr = requestSubscribers.get(route);
       if (prr) return prr.promise;
@@ -105,7 +113,7 @@ async function initServer() {
     })
     .addHook('onRequest', (request, reply, next) => {
       checkReqSubscribers(request.raw.url, request, reply);
-      console.log(`${request.raw.method} ${request.raw.url}`);
+      // console.log(`${request.raw.method} ${request.raw.url}`);
       next();
     })
     .register(require('fastify-favicon'))
@@ -129,12 +137,7 @@ async function initServer() {
       });
     });
   });
-
   const address = await fastify.listen(port, host);
-  // console.log(
-  //   `server listening on ${address.replace('127.0.0.1', 'localhost')}`
-  // );
-
   return fastify;
 }
 

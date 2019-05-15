@@ -78,7 +78,7 @@ exports.TestedPropertyDescriptorUpdates = [
     skipSet: ['value']
   },
   {
-    objPath: 'window.HTMLElement.prototype',
+    objPath: 'window.Element.prototype',
     props: ['innerHTML', 'outerHTML'],
     expectedInterface: {
       configurable: 'boolean',
@@ -257,8 +257,18 @@ exports.TestedPropertyDescriptorUpdates = [
     }
   },
   {
-    objPath: 'window.HTMLTrackElement.prototype',
-    props: ['src'],
+    objPath: 'window.HTMLQuoteElement.prototype',
+    props: ['cite'],
+    expectedInterface: {
+      configurable: 'boolean',
+      enumerable: 'boolean',
+      get: 'function',
+      set: 'function'
+    }
+  },
+  {
+    objPath: 'window.HTMLModElement.prototype',
+    props: ['cite'],
     expectedInterface: {
       configurable: 'boolean',
       enumerable: 'boolean',
@@ -614,8 +624,10 @@ exports.URLParts = [
   'search',
   'port'
 ];
+const WB_PREFIX = `http://localhost:3030/live/20180803160549`;
+exports.WB_PREFIX = WB_PREFIX;
 
-exports.WB_PREFIX = `https://localhost:3030/live/20180803160549`;
+exports.mpURL = url => `${WB_PREFIX}mp_/${url}`;
 
 exports.fullHTML = ({ prefix, onlyBody, onlyHead, onlyHTML } = {}) => {
   const cssPrefix = prefix != null ? `${prefix}cs_/` : '';
@@ -638,45 +650,125 @@ exports.fullHTML = ({ prefix, onlyBody, onlyHead, onlyHTML } = {}) => {
 exports.TextNodeTest = {
   fnTests: ['appendData', 'insertData', 'replaceData'],
   theStyle: '.hi { background-image: url(https://funky/png.png); }',
-  theStyleRw: `.hi { background-image: url(${
-    exports.WB_PREFIX
-  }mp_/https://funky/png.png); }`,
-  makeTextNode(doc, inStyle) {
-    const results = {
-      tn: doc.createTextNode('')
-    };
-    if (inStyle) {
-      results.tnParent = doc.createElement('style');
-      results.tnParent.appendChild(results.tn);
-      results.cleanUp = () => {
-        results.tnParent.remove();
-      };
+  theStyleRw: `.hi { background-image: url(${WB_PREFIX}mp_/https://funky/png.png); }`,
+  evaluationFN(fn, theStyle, theStyleRw, inStyle) {
+    const tn = document.createTextNode('');
+    const tnParent = document.createElement(inStyle ? 'style' : 'p');
+    tnParent.appendChild(tn);
+    if (fn === 'insertData') {
+      tn[fn](0, theStyle);
+    } else if (fn === 'replaceData') {
+      tn[fn](0, 0, theStyle);
     } else {
-      results.tnParent = doc.createElement('p');
-      results.tnParent.appendChild(results.tn);
-      results.cleanUp = () => {
-        results.tnParent.remove();
-      };
+      tn[fn](theStyle);
     }
-    return results;
+    const result = tnParent.innerText === (inStyle ? theStyleRw : theStyle);
+    tnParent.remove();
+    return result;
   }
 };
 
 exports.HTMLAssign = {
-  innerOuterHTML: [
-    {
-      which: 'innerHTML',
-      unrw: '<a href="http://example.com">hi</a>',
-      rw: `<a href="${exports.WB_PREFIX}mp_/http://example.com">hi</a>`
+  innerOuterHTML: {
+    tests: [
+      {
+        which: 'innerHTML',
+        unrw: '<a href="http://example.com">hi</a>',
+        rw: `<a href="${WB_PREFIX}mp_/http://example.com">hi</a>`
+      },
+      {
+        which: 'outerHTML',
+        unrw: '<div id="oHTML"><a href="http://example.com">hi</a></div>',
+        rw: `<div id="oHTML"><a href="${WB_PREFIX}mp_/http://example.com">hi</a></div>`
+      },
+      {
+        which: 'ShadowRoot.innerHTML',
+        unrw: '<a href="http://example.com">hi</a>',
+        rw: `<a href="${WB_PREFIX}mp_/http://example.com">hi</a>`
+      }
+    ],
+    assignmentFN(which, unrw, rw) {
+      const div = document.createElement('div');
+      let results;
+      document.body.appendChild(div);
+      switch (which) {
+        case 'innerHTML':
+          div.innerHTML = unrw;
+          div._no_rewrite = true;
+          results = div.innerHTML === rw;
+          break;
+        case 'ShadowRoot.innerHTML':
+          const shadowRoot = div.attachShadow({ mode: 'open' });
+          shadowRoot.innerHTML = unrw;
+          shadowRoot._no_rewrite = true;
+          results = shadowRoot.innerHTML === rw;
+          break;
+        default:
+          div.outerHTML = unrw;
+          const elem = document.getElementById('oHTML');
+          elem._no_rewrite = true;
+          results = elem.outerHTML === rw;
+          break;
+      }
+      while (document.body.firstChild) {
+        document.body.removeChild(document.body.firstChild);
+      }
+      return results;
     },
-    {
-      which: 'outerHTML',
-      unrw: '<div id="oHTML"><a href="http://example.com">hi</a></div>',
-      rw: `<div id="oHTML"><a href="${
-        exports.WB_PREFIX
-      }mp_/http://example.com">hi</a></div>`
+    retrieval(which, unrw, rw) {
+      const div = document.createElement('div');
+      let results;
+      document.body.appendChild(div);
+      switch (which) {
+        case 'innerHTML':
+          div.innerHTML = unrw;
+          results = div.innerHTML;
+          break;
+        case 'ShadowRoot.innerHTML':
+          const shadowRoot = div.attachShadow({ mode: 'open' });
+          shadowRoot.innerHTML = unrw;
+          results = shadowRoot.innerHTML;
+          break;
+        default:
+          div.outerHTML = unrw;
+          results = document.getElementById('oHTML').outerHTML;
+          break;
+      }
+      while (document.body.firstChild) {
+        document.body.removeChild(document.body.firstChild);
+      }
+      return results;
+    },
+    assignmentToRetrieval(which, unrw, rw) {
+      const div = document.createElement('div');
+      const div2 = document.createElement('div');
+      let results;
+      document.body.appendChild(div);
+      document.body.appendChild(div2);
+      switch (which) {
+        case 'innerHTML':
+          div.innerHTML = unrw;
+          div2.innerHTML = div.innerHTML;
+          results = div2.innerHTML === unrw;
+          break;
+        case 'ShadowRoot.innerHTML':
+          const shadowRoot = div.attachShadow({ mode: 'open' });
+          shadowRoot.innerHTML = unrw;
+          div2.innerHTML = shadowRoot.innerHTML;
+          results = div2.innerHTML === unrw;
+          break;
+        default:
+          div.outerHTML = unrw;
+          div2.outerHTML = document.getElementById('oHTML').outerHTML;
+          results = document.getElementById('oHTML').outerHTML === unrw;
+          break;
+      }
+      while (document.body.firstChild) {
+        document.body.removeChild(document.body.firstChild);
+      }
+      return results;
     }
-  ]
+  }
 };
 
 exports.LinkAsTypes = {
@@ -695,22 +787,37 @@ exports.LinkAsTypes = {
 };
 
 exports.TagToMod = {
-  A: { href: 'mp_' },
-  AREA: { href: 'mp_' },
-  IMG: { src: 'im_', srcset: 'im_' },
-  IFRAME: { src: 'if_' },
-  FRAME: { src: 'if_' },
-  SCRIPT: { src: 'js_' },
-  VIDEO: { src: 'oe_', poster: 'im_' },
-  AUDIO: { src: 'oe_', poster: 'im_' },
-  SOURCE: { src: 'oe_', srcset: 'oe_' },
-  INPUT: { src: 'oe_' },
-  EMBED: { src: 'oe_' },
-  OBJECT: { data: 'oe_' },
-  BASE: { href: 'mp_' },
-  META: { content: 'mp_' },
-  FORM: { action: 'mp_' },
-  TRACK: { src: 'oe_' }
+  elements: {
+    a: { href: 'mp_' },
+    area: { href: 'mp_' },
+    audio: { src: 'oe_', poster: 'im_' },
+    base: { href: 'mp_' },
+    embed: { src: 'oe_' },
+    form: { action: 'mp_' },
+    frame: { src: 'fr_' },
+    iframe: { src: 'if_' },
+    img: { src: 'im_' },
+    input: { src: 'oe_' },
+    ins: { cite: 'mp_' },
+    meta: { content: 'mp_' },
+    object: { data: 'oe_', codebase: 'oe_' },
+    q: { cite: 'mp_' },
+    // covers both html and svg script element,
+    script: { src: 'js_' },
+    source: { src: 'oe_' },
+    track: { src: 'oe_' },
+    video: { src: 'oe_', poster: 'im_' }
+  },
+  testFNDirect(tag, attr, unRW) {
+    const elem = document.createElement(tag);
+    elem[attr] = unRW;
+    return WombatTestUtil.getElementPropertyAsIs(elem, attr);
+  },
+  testFNSetAttr(tag, attr, unRW) {
+    const elem = document.createElement(tag);
+    elem.setAttribute(attr, unRW);
+    return WombatTestUtil.getElementPropertyAsIs(elem, attr);
+  }
 };
 
 exports.ElementGetSetAttribute = [
@@ -722,7 +829,7 @@ exports.ElementGetSetAttribute = [
   {
     elem: 'img',
     props: ['src', 'srcset'],
-    unrws: ['http://example.com/whatever', 'http://example.com/whatever 1.5x']
+    unrws: ['http://example.com/whatever', 'http://example.com/whatever']
   },
   {
     elem: 'iframe',
@@ -747,7 +854,7 @@ exports.ElementGetSetAttribute = [
   {
     elem: 'source',
     props: ['src', 'srcset'],
-    unrws: ['http://example.com/whatever', 'http://example.com/whatever 1.5x']
+    unrws: ['http://example.com/whatever', 'http://example.com/whatever']
   },
   {
     elem: 'input',
@@ -795,3 +902,165 @@ exports.ElementGetSetAttribute = [
     unrws: ['http://example.com/whatever']
   }
 ];
+
+const cssAttrImageUnrw = 'url("https://example.com/ping.png")';
+const CSSAttrsToPropName = [
+  { attr: 'background', propName: 'background', unrw: cssAttrImageUnrw },
+  {
+    attr: 'backgroundImage',
+    propName: 'background-image',
+    unrw: cssAttrImageUnrw
+  },
+  { attr: 'border', propName: 'border', unrw: cssAttrImageUnrw },
+  {
+    attr: 'borderImage',
+    propName: 'border-image',
+    unrw: `${cssAttrImageUnrw} 100% / 1 / 0 stretch`
+  },
+  {
+    attr: 'borderImageSource',
+    propName: 'border-image-source',
+    unrw: cssAttrImageUnrw
+  },
+  { attr: 'cursor', propName: 'cursor', unrw: `${cssAttrImageUnrw}, pointer` },
+  { attr: 'listStyle', propName: 'list-style', unrw: cssAttrImageUnrw },
+  {
+    attr: 'listStyleImage',
+    propName: 'list-style-image',
+    unrw: cssAttrImageUnrw
+  },
+  {
+    attr: 'maskImage',
+    propName: 'mask-image',
+    unrw: `image(${cssAttrImageUnrw})`
+  }
+];
+
+const CSSRules = [
+  {
+    name: '@import "url"',
+    unrw: '@import "http://cssHeaven.com/angelic.css"'
+  },
+  {
+    name: '@import url("url")',
+    unrw: '@import url("http://cssHeaven.com/angelic.css")'
+  },
+  {
+    name: '@import url(url)',
+    unrw: '@import url(http://cssHeaven.com/angelic.css)'
+  },
+  {
+    name: '@font-face',
+    unrw: `@font-face {
+ font-family: 'TheDude';
+ src: url('https://theDude.com/Abides.woff2') format('woff2');
+}`
+  }
+].concat(
+  CSSAttrsToPropName.map(aTest =>
+    Object.assign({ name: aTest.propName }, aTest, {
+      unrw: `.clzz { ${aTest.propName}: ${aTest.unrw} }`
+    })
+  )
+);
+
+const CSSOmSkipped = new Set(['border', 'maskImage']);
+
+exports.CSS = {
+  styleAttrs: {
+    attrs: CSSAttrsToPropName,
+    unrw: 'https://example.com/ping.png',
+    testFNAttr(test) {
+      const div = document.createElement('div');
+      div.style[test.attr] = test.unrw;
+      return div.style[test.attr];
+    },
+    testFNPropName(test) {
+      const div = document.createElement('div');
+      div.style[test.propName] = test.unrw;
+      return div.style[test.propName];
+    },
+    testFNSetProp(prop, unrw) {
+      const div = document.createElement('div');
+      div.style.setProperty(prop, unrw);
+      return div.style[prop];
+    },
+    testFNCssText(aTest) {
+      const div = document.createElement('div');
+      div.style.cssText = `${aTest.propName}: ${aTest.unrw}`;
+      return div.style.cssText;
+    }
+  },
+  styleTextContent: {
+    tests: CSSRules,
+    testFN(unrw) {
+      const style = document.createElement('style');
+      style.textContent = unrw;
+      return style.textContent;
+    }
+  },
+  StyleSheetInsertRule: {
+    tests: CSSRules,
+    testFN(unrw) {
+      const style = document.createElement('style');
+      style.textContent = '.dummy {}';
+      document.body.appendChild(style);
+      style.sheet.insertRule(unrw, 0);
+      const cssText = style.sheet.rules[0].cssText;
+      style.remove();
+      return cssText;
+    }
+  },
+  CSSRuleCSSText: {
+    tests: CSSRules,
+    testFN(unrw) {
+      const style = document.createElement('style');
+      style.textContent = '.dummy {}';
+      document.body.appendChild(style);
+      style.sheet.rules[0].cssText = unrw;
+      const cssText = style.sheet.rules[0].cssText;
+      style.remove();
+      return cssText;
+    }
+  },
+  StylePropertyMap: {
+    noAppend: new Set([
+      'background',
+      'cursor',
+      'listStyle',
+      'listStyleImage',
+      'borderImage',
+      'borderImageSource'
+    ]),
+    tests: CSSAttrsToPropName.filter(it => !CSSOmSkipped.has(it.attr)),
+    testFNSet(prop, unrw) {
+      const div = document.createElement('div');
+      div.attributeStyleMap.set(prop, unrw);
+      return div.attributeStyleMap.get(prop).toString();
+    },
+    testFNAppend(prop, unrw) {
+      const div = document.createElement('div');
+      div.attributeStyleMap.append(prop, unrw);
+      return div.attributeStyleMap.get(prop).toString();
+    }
+  },
+  CSSKeywordValue: {
+    tests: CSSAttrsToPropName,
+    testFN(prop, unrw) {
+      const cssValue = new CSSKeywordValue(prop, unrw);
+      return cssValue.toString();
+    }
+  },
+  CSSStyleValue: {
+    tests: CSSAttrsToPropName,
+    skipped: new Set(['border', 'maskImage']),
+    testFNParse(prop, unrw) {
+      const result = CSSStyleValue.parse(prop, unrw);
+      return result.toString();
+    },
+    testFNParseAll(prop, unrw) {
+      const result = CSSStyleValue.parseAll(prop, unrw);
+      return result[0].toString();
+    }
+  }
+};

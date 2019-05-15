@@ -3,6 +3,7 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs-extra');
 const readline = require('readline');
+const chromeFinder = require('chrome-launcher/dist/chrome-finder');
 const criHelper = require('chrome-remote-interface-extra/lib/helper');
 
 const CHROME_PROFILE_PATH = path.join(os.tmpdir(), 'temp_chrome_profile-');
@@ -42,151 +43,31 @@ const chromeArgs = userDataDir => [
   'about:blank'
 ];
 
-/**
- * @type {RegExp}
- */
-const nlre = /\r?\n/;
-/**
- * @type {RegExp}
- */
-const desktopArgRE = /(^[^ ]+).*/;
-
-/**
- * @desc Executes the supplied command
- * @param {string} someCommand
- * @param {boolean} [rejectOnError = false]
- * @returns {Promise<string>}
- */
-function exec(someCommand, rejectOnError = false) {
-  return new Promise((resolve, reject) => {
-    cp.exec(someCommand, { encoding: 'utf8' }, (error, stdout, stderr) => {
-      if (error && rejectOnError) reject(error);
-      resolve(stdout.trim());
-    });
-  });
-}
-
-/**
- * @desc Executes the which command for the supplied executable name
- * @param {string} executable
- */
-function which(executable) {
-  return exec(`which ${executable}`);
-}
-
-/**
- * @desc Executes the ls command for the supplied path looking for .desktop files for Chrome or Chromium
- * @param {string} desktopPath
- * @returns {Promise<string[]>}
- */
-function chromeDesktops(desktopPath) {
-  // eslint-disable-next-line
-  return exec(
-    `ls ${desktopPath} | grep -E "\/.*\/(google|chrome|chromium)-.*"`
-  ).then(results => results.split(nlre));
-}
-
-/**
- * @desc Extracts the Chrome or Chromium executable path from the .desktop file
- * @param {string} desktopPath
- * @returns {Promise<string[]>}
- */
-async function desktopExePath(desktopPath) {
-  let maybeResults;
-  // eslint-disable-next-line
-  const patternPipe = `"^Exec=\/.*\/(google|chrome|chromium)-.*" ${desktopPath} | awk -F '=' '{print $2}'`;
-  try {
-    maybeResults = await exec(`grep -ER ${patternPipe}`, true);
-  } catch (e) {
-    maybeResults = await exec(`grep -Er ${patternPipe}`);
-  }
-  const seen = new Set();
-  let keep;
-  return maybeResults
-    .split(nlre)
-    .map(execPath => execPath.replace(desktopArgRE, '$1'))
-    .filter(exePath => {
-      keep = !seen.has(exePath);
-      seen.add(exePath);
-      return keep;
-    });
-}
-
-/**
- * @desc Tests (T|F) to see if the execPath is executable by this process
- * @param {string} execPath - The executable path to test
- * @returns {Promise<boolean>}
- */
-async function bingo(execPath) {
-  if (!execPath || execPath === '') return false;
-  try {
-    await fs.access(execPath, fs.constants.X_OK);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-// thanks Squidwarc
-async function findChrome() {
-  const execs = [
+const preferredExes = {
+  linux: [
     'google-chrome-unstable',
     'google-chrome-beta',
-    'google-chrome-stable',
-    'chromium-browser',
-    'chromium'
-  ];
-  let i = 0;
-  let len = execs.length;
-  let commandResults;
-  // check which exec first
-  for (; i < len; ++i) {
-    commandResults = await which(execs[i]);
-    if (await bingo(commandResults)) {
-      return commandResults;
-    }
+    'google-chrome-stable'
+  ],
+  darwin: ['Chrome Canary', 'Chrome'],
+  win32: []
+};
+
+function findChrome() {
+  const findingFn = chromeFinder[process.platform];
+  if (findingFn == null) {
+    throw new Error(
+      `Can not find chrome exe, unsupported platform - ${process.platform}`
+    );
   }
-  // which executable did not result in an exe so we must now check desktop files
-  const desktops = [
-    '/usr/share/applications/*.desktop',
-    '~/.local/share/applications/*.desktop'
-  ];
-  len = desktops.length;
-  let len2;
-  let j = 0;
-  i = 0;
-  let found = [];
-  for (; i < len; ++i) {
-    commandResults = await chromeDesktops(desktops[i]);
-    len2 = commandResults.length;
-    for (j = 0; j < len2; ++j) {
-      found = found.concat(await desktopExePath(commandResults[j]));
-    }
+  const exes = findingFn();
+  const preferred = preferredExes[process.platform] || [];
+  let exe;
+  for (let i = 0; i < preferred.length; i++) {
+    exe = exes.find(anExe => anExe.includes(preferred[i]));
+    if (exe) return exe;
   }
-  const desiredExes = [
-    { regex: /google-chrome-unstable$/, weight: 52 },
-    { regex: /google-chrome-beta$/, weight: 51 },
-    { regex: /google-chrome-stable$/, weight: 50 },
-    { regex: /google-chrome$/, weight: 49 },
-    { regex: /chrome-wrapper$/, weight: 48 },
-    { regex: /chromium-browser$/, weight: 47 },
-    { regex: /chromium$/, weight: 46 }
-  ];
-  let sortedExes = found
-    .map(exep => {
-      for (const desired of desiredExes) {
-        if (desired.regex.test(exep)) {
-          return { exep, weight: desired.weight };
-        }
-      }
-      return { exep, weight: 10 };
-    })
-    .sort((a, b) => b.weight - a.weight)
-    .map(pair => pair.exep);
-  if (sortedExes.length > 0) {
-    return sortedExes[0];
-  }
-  throw new Error('No Chrome Installations Found');
+  return exes[0];
 }
 
 /**
@@ -194,7 +75,7 @@ async function findChrome() {
  * @return {Promise<{chromeProcess: ChildProcess, killChrome: function(): void}>}
  */
 async function initChrome() {
-  const executable = await findChrome();
+  const executable = findChrome();
   const userDataDir = await fs.mkdtemp(CHROME_PROFILE_PATH);
   const chromeArguments = chromeArgs(userDataDir);
   const chromeProcess = cp.spawn(executable, chromeArguments, {
