@@ -1,0 +1,23 @@
+language: node_js
+dist: xenial
+node_js: 12.4.0
+
+addons:
+  apt:
+    update: true
+    sources:
+      - sourceline: "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"
+        key_url: https://dl-ssl.google.com/linux/linux_signing_key.pub
+    packages:
+      - google-chrome-unstable  # this is canary or dev
+
+services:
+  - xvfb
+
+install:
+  - ./bootstrap.sh
+
+script:
+  - yarn run test
+
+

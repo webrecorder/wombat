@@ -17,6 +17,5 @@ node ${ROLLUP} -c rollup.config.prod.js
 
 
 printf "\nBootstrapping tests"
-cp "../pywb/static/css/bootstrap.min.css" "${ASSETSPath}/bootstrap.min.css"
 node ${ROLLUP} -c "${INTERNAL}/rollup.testPageBundle.config.js"
 node ${ROLLUP} -c "${SELF_D}/rollup.config.test.js"
