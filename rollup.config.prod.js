@@ -20,9 +20,7 @@ You should have received a copy of the GNU General Public License
 along with pywb.  If not, see <http://www.gnu.org/licenses/>.
  */`;
 
-const outputDir = process.env.PYWB
-  ? path.join(__dirname, '..', 'pywb', 'static')
-  : path.join(__dirname, 'dist');
+const outputDir = process.env.OUTPUT_DIR || path.join(__dirname, 'dist');
 
 const addLicenceNoStrict = {
   renderChunk(code) {

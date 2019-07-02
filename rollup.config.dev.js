@@ -1,8 +1,6 @@
 import * as path from 'path';
 
-const outputDir = process.env.PYWB
-  ? path.join(__dirname, '..', 'pywb', 'static')
-  : path.join(__dirname, 'dist');
+const outputDir = process.env.OUTPUT_DIR || path.join(__dirname, 'dist');
 
 const noStrict = {
   renderChunk(code) {
