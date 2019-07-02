@@ -38,9 +38,7 @@ test('isNativeFunction: should return T/F indicating if a function is a native f
 
 for (let i = 0; i < SaveSrcSetDataSrcSet.values.length; i++) {
   const value = SaveSrcSetDataSrcSet.values[i];
-  test(`isSavedSrcSrcset: should return '${value.expected}' for '${
-    value.name
-  }'`, async t => {
+  test(`isSavedSrcSrcset: should return '${value.expected}' for '${value.name}'`, async t => {
     const { sandbox } = t.context;
     const testResult = await sandbox.evaluate(
       SaveSrcSetDataSrcSet.testFnSS,
@@ -49,9 +47,7 @@ for (let i = 0; i < SaveSrcSetDataSrcSet.values.length; i++) {
     );
     t.is(testResult, value.expected);
   });
-  test(`isSavedDataSrcSrcset: should return '${value.expected}' for '${
-    value.name
-  }' if it has data.srcset and 'false' when it does not`, async t => {
+  test(`isSavedDataSrcSrcset: should return '${value.expected}' for '${value.name}' if it has data.srcset and 'false' when it does not`, async t => {
     const { sandbox } = t.context;
     const testResult = await sandbox.evaluate(
       SaveSrcSetDataSrcSet.testFnDSS,
@@ -157,5 +153,62 @@ test('deproxyArrayHandlingArgumentsObj: should return the original argument if i
     zeroLenArray: true,
     zeroLenArguments: true,
     falsyLength: true
+  });
+});
+
+test('startsWith: should return the prefix if the supplied string starts with the prefix otherwise undefined', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const prefix = 'a';
+    return {
+      does: wombat.startsWith('abc', prefix) === prefix,
+      doesNot: wombat.startsWith('efg', prefix) === undefined,
+      nullStr: wombat.startsWith(null, prefix) === undefined,
+      empty: wombat.startsWith('', prefix) === undefined
+    };
+  });
+  t.deepEqual(result, {
+    does: true,
+    doesNot: true,
+    nullStr: true,
+    empty: true
+  });
+});
+
+test('startsWithOneOf: should return the matching prefix if the supplied string starts with one of the prefixes otherwise undefined', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const prefixes = ['b', 'a'];
+    return {
+      does: wombat.startsWithOneOf('abc', prefixes) === 'a',
+      doesNot: wombat.startsWithOneOf('efg', prefixes) === undefined,
+      nullStr: wombat.startsWithOneOf(null, prefixes) === undefined,
+      empty: wombat.startsWithOneOf('', prefixes) === undefined
+    };
+  });
+  t.deepEqual(result, {
+    does: true,
+    doesNot: true,
+    nullStr: true,
+    empty: true
+  });
+});
+
+test('endsWith: should return the matching suffix if the supplied string ends with the suffixes otherwise undefined', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const suffix = 'abc';
+    return {
+      does: wombat.endsWith('xyzabc', suffix) === suffix,
+      doesNot: wombat.endsWith('abcefg', suffix) === undefined,
+      nullStr: wombat.endsWith(null, suffix) === undefined,
+      empty: wombat.startsWith('', suffix) === undefined
+    };
+  });
+  t.deepEqual(result, {
+    does: true,
+    doesNot: true,
+    nullStr: true,
+    empty: true
   });
 });

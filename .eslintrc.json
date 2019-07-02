@@ -9,11 +9,7 @@
       "no-fallthrough": "off"
    },
    "globals": {
-      "chai": true,
-      "mocha": true,
-      "WB_wombat_location": true,
-      "expect": true,
-      "_": true
+      "WB_wombat_location": true
    },
    "parserOptions": {
       "ecmaVersion": 9,

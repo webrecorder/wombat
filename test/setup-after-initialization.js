@@ -236,14 +236,10 @@ test('exposed functions - rewrite_url: should be able to rewrite an encoded stri
       return {
         unicode:
           unicode ===
-          `${window.wbinfo.prefix}${window.wbinfo.wombat_ts}${
-            window.wbinfo.mod
-          }/${expected}`,
+          `${window.wbinfo.prefix}${window.wbinfo.wombat_ts}${window.wbinfo.mod}/${expected}`,
         hex:
           hex ===
-          `${window.wbinfo.prefix}${window.wbinfo.wombat_ts}${
-            window.wbinfo.mod
-          }/${expected}`
+          `${window.wbinfo.prefix}${window.wbinfo.wombat_ts}${window.wbinfo.mod}/${expected}`
       };
     }),
     { unicode: true, hex: true },
@@ -457,18 +453,14 @@ testedChanges.TestFunctionChanges.forEach(aTest => {
       });
     }
   } else if (aTest.fnPath) {
-    test(`${
-      aTest.fnPath
-    }: an function override should have been applied`, async t => {
+    test(`${aTest.fnPath}: an function override should have been applied`, async t => {
       const { sandbox, server } = t.context;
       const result = await sandbox.evaluate(testFN, aTest.fnPath, aTest.oPath);
       t.true(result.ne, `${aTest.fnPath} was not updated`);
       if (result.originalPersisted) {
         t.true(
           result.originalPersisted,
-          `The persisted original function for ${
-            aTest.fnPath
-          } does not match the original`
+          `The persisted original function for ${aTest.fnPath} does not match the original`
         );
       }
       function testFN(fnPath, oPath) {

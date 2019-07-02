@@ -46,13 +46,14 @@ async function initServer() {
       requestSubscribers.delete(pathName);
     }
   };
+  let address;
 
   const fastify = createServer(serverOpts);
 
   fastify
     .get(
       '/live/20180803160549wkr_/https://tests.wombat.io/testWorker.js',
-      async (request, reply) => {
+      (request, reply) => {
         const init = `new WBWombat({'prefix': 'http://localhost:${port}/live/20180803160549', 'prefixMod': 'http://localhost:${port}/live/20180803160549wkr_/', 'originalURL': 'https://tests.wombat.io/testWorker.js'});`;
         reply
           .code(200)
@@ -77,16 +78,20 @@ async function initServer() {
     )
     .get(
       '/live/20180803160549mp_/https://tests.wombat.io/it',
-      async (request, reply) => {
-        reply.type('text/html').status(200);
-        return fs.createReadStream(theyFoundItPath);
+      (request, reply) => {
+        reply
+          .type('text/html')
+          .status(200)
+          .send(fs.createReadStream(theyFoundItPath));
       }
     )
     .get(
       '/live/20180803160549mp_/https://tests.wombat.io/',
-      async (request, reply) => {
-        reply.type('text/html').status(200);
-        return fs.createReadStream(httpsSandboxPath);
+      (request, reply) => {
+        reply
+          .type('text/html')
+          .status(200)
+          .send(fs.createReadStream(httpsSandboxPath));
       }
     )
     .get(
@@ -100,9 +105,11 @@ async function initServer() {
     )
     .get(
       '/live/20180803160549mp_/https://tests.wombat.io/test',
-      async (request, reply) => {
-        reply.type('application/json; charset=utf-8').status(200);
-        return { headers: request.headers, url: request.raw.originalUrl };
+      (request, reply) => {
+        reply
+          .type('application/json; charset=utf-8')
+          .status(200)
+          .send({ headers: request.headers, url: request.raw.originalUrl });
       }
     )
     .decorate('reset', () => {
@@ -151,7 +158,7 @@ async function initServer() {
       });
     });
   });
-  const address = await fastify.listen(port, host);
+  address = await fastify.listen(port, host);
   return fastify;
 }
 

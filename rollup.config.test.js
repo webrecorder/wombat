@@ -40,6 +40,26 @@ export default [
     plugins: [noStrict]
   },
   {
+    input: 'src/autoFetchWorker.js',
+    output: {
+      name: 'autoFetchWorker',
+      file: path.join(baseTestOutput, 'autoFetchWorker.js'),
+      format: 'es',
+      sourcemap: false,
+      exports: 'none'
+    },
+    plugins: [
+      {
+        renderChunk(code) {
+          if (!code.startsWith("'use strict';")) {
+            return "'use strict';\n" + code;
+          }
+          return code;
+        }
+      }
+    ]
+  },
+  {
     input: 'src/wbWombat.js',
     output: {
       name: 'wombat',
