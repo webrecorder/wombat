@@ -687,9 +687,7 @@ for (const aTest of ElementGetSetAttribute) {
     for (let i = 0; i < aTest.props.length; i++) {
       const prop = aTest.props[i];
       const unrw = aTest.unrws[i];
-      test(`${
-        aTest.elem
-      }.${prop}: the value set using setAttribute should be rewritten`, async t => {
+      test(`${aTest.elem}.${prop}: the value set using setAttribute should be rewritten`, async t => {
         const { sandbox, server } = t.context;
         const result = await sandbox.evaluate(testFn, aTest.elem, prop, unrw);
         t.true(result);
@@ -702,9 +700,7 @@ for (const aTest of ElementGetSetAttribute) {
         }
       });
 
-      test(`${
-        aTest.elem
-      }.${prop}: the value retrieved by getAttribute should be un-rewritten`, async t => {
+      test(`${aTest.elem}.${prop}: the value retrieved by getAttribute should be un-rewritten`, async t => {
         const { sandbox, server } = t.context;
         const result = await sandbox.evaluate(testFn, aTest.elem, prop, unrw);
         t.true(result);
@@ -949,9 +945,7 @@ for (const aTest of HTMLAssign.innerOuterHTML.tests) {
     t.is(result, aTest.unrw);
   });
 
-  test(`${
-    aTest.which
-  }: assignments to the retrial of the property should work`, async t => {
+  test(`${aTest.which}: assignments to the retrial of the property should work`, async t => {
     const { sandbox, server } = t.context;
     const result = await sandbox.evaluate(
       HTMLAssign.innerOuterHTML.assignmentToRetrieval,
@@ -968,7 +962,12 @@ for (const [tag, attrMods] of Object.entries(TagToMod.elements)) {
     test(`${tag}.${attr}: rewrites of direct attribute assignment should use the "${mod}" modifier`, async t => {
       const { sandbox, server } = t.context;
       const unRW = 'https://example.com';
-      const result = await sandbox.evaluate(TagToMod.testFNDirect, tag, attr, unRW);
+      const result = await sandbox.evaluate(
+        TagToMod.testFNDirect,
+        tag,
+        attr,
+        unRW
+      );
       t.true(
         result !== unRW,
         `Assignments to ${tag}.${attr} is not being rewritten`
@@ -984,7 +983,12 @@ for (const [tag, attrMods] of Object.entries(TagToMod.elements)) {
     test(`${tag}.${attr}: rewrites of attribute assignment using setAttribute should use the "${mod}" modifier`, async t => {
       const { sandbox, server } = t.context;
       const unRW = 'https://example.com';
-      const result = await sandbox.evaluate(TagToMod.testFNSetAttr, tag, attr, unRW);
+      const result = await sandbox.evaluate(
+        TagToMod.testFNSetAttr,
+        tag,
+        attr,
+        unRW
+      );
       t.true(
         result !== unRW,
         `Assignments to ${tag}.${attr} is not being rewritten`
@@ -998,4 +1002,3 @@ for (const [tag, attrMods] of Object.entries(TagToMod.elements)) {
     });
   }
 }
-

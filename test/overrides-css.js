@@ -38,9 +38,7 @@ for (const attrToProp of CSS.styleAttrs.attrs) {
 }
 
 for (const attrToProp of CSS.styleAttrs.attrs) {
-  test(`style["${
-    attrToProp.attr
-  }"]: assignments should be rewritten`, async t => {
+  test(`style["${attrToProp.attr}"]: assignments should be rewritten`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.styleAttrs.testFNPropName,
@@ -50,9 +48,7 @@ for (const attrToProp of CSS.styleAttrs.attrs) {
   });
 
   if (attrToProp.attr !== attrToProp.propName) {
-    test(`style["${
-      attrToProp.propName
-    }"]: assignments should be rewritten`, async t => {
+    test(`style["${attrToProp.propName}"]: assignments should be rewritten`, async t => {
       const { sandbox } = t.context;
       const result = await sandbox.evaluate(
         CSS.styleAttrs.testFNPropName,
@@ -64,9 +60,7 @@ for (const attrToProp of CSS.styleAttrs.attrs) {
 }
 
 for (const attrToProp of CSS.styleAttrs.attrs) {
-  test(`style.setProperty("${
-    attrToProp.attr
-  }", "value"): value should be rewritten`, async t => {
+  test(`style.setProperty("${attrToProp.attr}", "value"): value should be rewritten`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.styleAttrs.testFNSetProp,
@@ -76,9 +70,7 @@ for (const attrToProp of CSS.styleAttrs.attrs) {
     t.notDeepEqual(result, attrToProp.unrw);
   });
   if (attrToProp.attr !== attrToProp.propName) {
-    test(`style.setProperty("${
-      attrToProp.propName
-    }", "value"): value should be rewritten`, async t => {
+    test(`style.setProperty("${attrToProp.propName}", "value"): value should be rewritten`, async t => {
       const { sandbox } = t.context;
       const result = await sandbox.evaluate(
         CSS.styleAttrs.testFNSetProp,
@@ -91,9 +83,7 @@ for (const attrToProp of CSS.styleAttrs.attrs) {
 }
 
 for (const attrToProp of CSS.styleAttrs.attrs) {
-  test(`style.cssText: assignments of '${
-    attrToProp.propName
-  }' should be rewritten`, async t => {
+  test(`style.cssText: assignments of '${attrToProp.propName}' should be rewritten`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.styleAttrs.testFNCssText,
@@ -104,9 +94,7 @@ for (const attrToProp of CSS.styleAttrs.attrs) {
 }
 
 for (const aTest of CSS.styleTextContent.tests) {
-  test(`style.textContent: assignments using an css definitions containing '${
-    aTest.name
-  }' should be rewritten`, async t => {
+  test(`style.textContent: assignments using an css definitions containing '${aTest.name}' should be rewritten`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.styleTextContent.testFN,
@@ -117,9 +105,7 @@ for (const aTest of CSS.styleTextContent.tests) {
 }
 
 for (const aTest of CSS.StyleSheetInsertRule.tests) {
-  test(`CSSStyleSheet.insertRule: inserting a new rule containing '${
-    aTest.name
-  }' should be rewritten`, async t => {
+  test(`CSSStyleSheet.insertRule: inserting a new rule containing '${aTest.name}' should be rewritten`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.StyleSheetInsertRule.testFN,
@@ -130,9 +116,7 @@ for (const aTest of CSS.StyleSheetInsertRule.tests) {
 }
 
 for (const aTest of CSS.CSSRuleCSSText.tests) {
-  test(`CSSRule.cssText: modifying an existing rule to become a new rule containing '${
-    aTest.name
-  }' should be rewritten`, async t => {
+  test(`CSSRule.cssText: modifying an existing rule to become a new rule containing '${aTest.name}' should be rewritten`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.CSSRuleCSSText.testFN,
@@ -143,9 +127,7 @@ for (const aTest of CSS.CSSRuleCSSText.tests) {
 }
 
 for (const attrToProp of CSS.StylePropertyMap.tests) {
-  test(`StylePropertyMap.set("${
-    attrToProp.attr
-  }", "value"): value should be rewritten`, async t => {
+  test(`StylePropertyMap.set("${attrToProp.attr}", "value"): value should be rewritten`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.StylePropertyMap.testFNSet,
@@ -156,9 +138,7 @@ for (const attrToProp of CSS.StylePropertyMap.tests) {
   });
 
   if (!CSS.StylePropertyMap.noAppend.has(attrToProp.attr)) {
-    test(`StylePropertyMap.append("${
-      attrToProp.attr
-    }", "value"): value should be rewritten`, async t => {
+    test(`StylePropertyMap.append("${attrToProp.attr}", "value"): value should be rewritten`, async t => {
       const { sandbox } = t.context;
       const result = await sandbox.evaluate(
         CSS.StylePropertyMap.testFNAppend,
@@ -171,9 +151,7 @@ for (const attrToProp of CSS.StylePropertyMap.tests) {
 }
 
 for (const attrToProp of CSS.CSSKeywordValue.tests) {
-  test(`new CSSKeywordValue("${
-    attrToProp.propName
-  }", "value"): value should be rewritten`, async t => {
+  test(`new CSSKeywordValue("${attrToProp.propName}", "value"): value should be rewritten`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.CSSKeywordValue.testFN,
@@ -186,9 +164,7 @@ for (const attrToProp of CSS.CSSKeywordValue.tests) {
 
 for (const attrToProp of CSS.CSSStyleValue.tests) {
   if (CSS.CSSStyleValue.skipped.has(attrToProp.attr)) continue;
-  test(`CSSStyleValue.parse("${
-    attrToProp.propName
-  }", "value"): value should be rewritten`, async t => {
+  test(`CSSStyleValue.parse("${attrToProp.propName}", "value"): value should be rewritten`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.CSSStyleValue.testFNParse,
@@ -198,9 +174,7 @@ for (const attrToProp of CSS.CSSStyleValue.tests) {
     t.notDeepEqual(result, attrToProp.unrw);
   });
 
-  test(`CSSStyleValue.parseAll("${
-    attrToProp.propName
-  }", "value"): value should be rewritten`, async t => {
+  test(`CSSStyleValue.parseAll("${attrToProp.propName}", "value"): value should be rewritten`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.CSSStyleValue.testFNParseAll,

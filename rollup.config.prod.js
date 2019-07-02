@@ -20,7 +20,9 @@ You should have received a copy of the GNU General Public License
 along with pywb.  If not, see <http://www.gnu.org/licenses/>.
  */`;
 
-const basePywbOutput = path.join(__dirname, '..', 'pywb', 'static');
+const outputDir = process.env.PYWB
+  ? path.join(__dirname, '..', 'pywb', 'static')
+  : path.join(__dirname, 'dist');
 
 const addLicenceNoStrict = {
   renderChunk(code) {
@@ -51,7 +53,7 @@ export default [
     plugins: [minify(minificationOpts), addLicenceNoStrict],
     output: {
       name: 'wombat',
-      file: path.join(basePywbOutput, 'wombat.js'),
+      file: path.join(outputDir, 'wombat.js'),
       format: 'iife'
     }
   },
@@ -60,7 +62,7 @@ export default [
     plugins: [minify(minificationOpts), addLicenceNoStrict],
     output: {
       name: 'wombatProxyMode',
-      file: path.join(basePywbOutput, 'wombatProxyMode.js'),
+      file: path.join(outputDir, 'wombatProxyMode.js'),
       format: 'iife'
     }
   },
@@ -69,7 +71,7 @@ export default [
     plugins: [minify(minificationOpts), addLicenceNoStrict],
     output: {
       name: 'wombatWorkers',
-      file: path.join(basePywbOutput, 'wombatWorkers.js'),
+      file: path.join(outputDir, 'wombatWorkers.js'),
       format: 'es',
       sourcemap: false,
       exports: 'none'
@@ -89,7 +91,7 @@ export default [
     ],
     output: {
       name: 'autoFetchWorker',
-      file: path.join(basePywbOutput, 'autoFetchWorker.js'),
+      file: path.join(outputDir, 'autoFetchWorker.js'),
       format: 'es',
       sourcemap: false,
       exports: 'none'

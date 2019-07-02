@@ -1,6 +1,8 @@
 import * as path from 'path';
 
-const basePywbOutput = path.join(__dirname, '..', 'pywb', 'static');
+const outputDir = process.env.PYWB
+  ? path.join(__dirname, '..', 'pywb', 'static')
+  : path.join(__dirname, 'dist');
 
 const noStrict = {
   renderChunk(code) {
@@ -20,7 +22,7 @@ const wombat = {
   input: 'src/wbWombat.js',
   output: {
     name: 'wombat',
-    file: path.join(basePywbOutput, 'wombat.js'),
+    file: path.join(outputDir, 'wombat.js'),
     sourcemap: false,
     format: 'iife'
   },
@@ -32,7 +34,7 @@ const wombatProxyMode = {
   input: 'src/wbWombatProxyMode.js',
   output: {
     name: 'wombat',
-    file: path.join(basePywbOutput, 'wombatProxyMode.js'),
+    file: path.join(outputDir, 'wombatProxyMode.js'),
     sourcemap: false,
     format: 'iife'
   },
@@ -44,7 +46,7 @@ const wombatWorker = {
   input: 'src/wombatWorkers.js',
   output: {
     name: 'wombatWorkers',
-    file: path.join(basePywbOutput, 'wombatWorkers.js'),
+    file: path.join(outputDir, 'wombatWorkers.js'),
     format: 'es',
     sourcemap: false,
     exports: 'none'
@@ -57,7 +59,7 @@ const wombatAutoFetchWorker = {
   input: 'src/autoFetchWorker.js',
   output: {
     name: 'autoFetchWorker',
-    file: path.join(basePywbOutput, 'autoFetchWorker.js'),
+    file: path.join(outputDir, 'autoFetchWorker.js'),
     format: 'es',
     sourcemap: false,
     exports: 'none'
