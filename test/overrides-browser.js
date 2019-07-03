@@ -53,9 +53,14 @@ test('init_top_frame: should set __WB_replay_top correctly', async t => {
 test('init_top_frame: proxy object of __WB_replay_top is top of window of proxy object', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(
-    () => window.__WB_replay_top._WB_wombat_obj_proxy === window._WB_wombat_obj_proxy.top
+    () =>
+      window.__WB_replay_top._WB_wombat_obj_proxy ===
+      window._WB_wombat_obj_proxy.top
   );
-  t.true(result, 'proxy object of __WB_replay_top should be the top of window proxy object');
+  t.true(
+    result,
+    'proxy object of __WB_replay_top should be the top of window proxy object'
+  );
 });
 
 test('init_top_frame: proxy object parent should equal proxy object top', async t => {
