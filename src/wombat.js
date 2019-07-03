@@ -5608,7 +5608,8 @@ Wombat.prototype.initTopFrame = function($wbwindow) {
     $wbwindow.__WB_top_frame = undefined;
   }
 
-  // Fix .parent only if not embeddable, otherwise leave for accessing embedding window
+  // if not top-replay frame and using auto-fetch workers, register listener
+  // messaging here
   if (!this.wb_opts.embedded && replay_top == $wbwindow) {
     if (this.wbUseAFWorker) {
       var wombat = this;
@@ -5626,6 +5627,7 @@ Wombat.prototype.initTopFrame = function($wbwindow) {
         false
       );
     }
+    //removed to rely on proxy object override to ensure 'parent' and 'top' overriden together
     //$wbwindow.__WB_orig_parent = $wbwindow.parent;
     //$wbwindow.parent = replay_top;
   }
