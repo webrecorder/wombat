@@ -5328,11 +5328,14 @@ Wombat.prototype.initWindowObjProxy = function($wbwindow) {
           case 'top':
             return wombat.$wbwindow.WB_wombat_top._WB_wombat_obj_proxy;
           case 'parent':
-            var realParent = $wbwindow.parent;
-            if (realParent === $wbwindow.WB_wombat_top) {
-              return $wbwindow.WB_wombat_top._WB_wombat_obj_proxy;
+            var parentProxy = wombat.$wbwindow.parent._WB_wombat_obj_proxy;
+            if (
+              wombat.$wbwindow === wombat.$wbwindow.WB_wombat_top ||
+              !parentProxy
+            ) {
+              return wombat.$wbwindow.WB_wombat_top._WB_wombat_obj_proxy;
             }
-            return realParent._WB_wombat_obj_proxy;
+            return parentProxy;
         }
         return wombat.defaultProxyGet($wbwindow, prop, ownProps, funCache);
       },
@@ -5592,7 +5595,7 @@ Wombat.prototype.initTopFrame = function($wbwindow) {
 
   $wbwindow.__WB_replay_top = replay_top;
 
-  var real_parent = replay_top.__WB_orig_parent || replay_top.parent;
+  var real_parent = replay_top.parent;
   // Check to ensure top frame is different window and directly accessible (later refactor to support postMessage)
   if (real_parent == $wbwindow || !this.wb_info.is_framed) {
     real_parent = undefined;
@@ -5605,7 +5608,8 @@ Wombat.prototype.initTopFrame = function($wbwindow) {
     $wbwindow.__WB_top_frame = undefined;
   }
 
-  // Fix .parent only if not embeddable, otherwise leave for accessing embedding window
+  // if not top-replay frame and using auto-fetch workers, register listener
+  // messaging here
   if (!this.wb_opts.embedded && replay_top == $wbwindow) {
     if (this.wbUseAFWorker) {
       var wombat = this;
@@ -5623,8 +5627,9 @@ Wombat.prototype.initTopFrame = function($wbwindow) {
         false
       );
     }
-    $wbwindow.__WB_orig_parent = $wbwindow.parent;
-    $wbwindow.parent = replay_top;
+    //removed to rely on proxy object override to ensure 'parent' and 'top' overriden together
+    //$wbwindow.__WB_orig_parent = $wbwindow.parent;
+    //$wbwindow.parent = replay_top;
   }
 };
 
