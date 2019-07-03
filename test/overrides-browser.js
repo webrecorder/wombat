@@ -50,20 +50,20 @@ test('init_top_frame: should set __WB_replay_top correctly', async t => {
   t.true(result, 'The replay top should equal to frames window object');
 });
 
-test('init_top_frame: should set __WB_orig_parent correctly', async t => {
+test('init_top_frame: proxy object top is _WB_replay_top', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(
-    () => window.__WB_orig_parent === window.top
+    () => window._WB_replay_top === window._WB_wombat_obj_proxy.top
   );
-  t.true(result, '__WB_orig_parent should equal the actual top');
+  t.true(result, 'proxy object top should be equal to _WB_replay_top');
 });
 
-test('init_top_frame: should set parent to itself (__WB_replay_top)', async t => {
+test('init_top_frame: proxy object parent should equal proxy object top', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(
-    () => window.parent === window.__WB_replay_top
+    () => window._WB_wombat_obj_proxy.parent === window._WB_wombat_obj_proxy.top
   );
-  t.true(result, 'window.parent should equal to itself (__WB_replay_top)');
+  t.true(result, 'proxy parent should equal to proxy top');
 });
 
 test('WombatLocation: should be added to window as WB_wombat_location', async t => {
