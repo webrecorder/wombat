@@ -5328,14 +5328,15 @@ Wombat.prototype.initWindowObjProxy = function($wbwindow) {
           case 'top':
             return wombat.$wbwindow.WB_wombat_top._WB_wombat_obj_proxy;
           case 'parent':
-            var parentProxy = wombat.$wbwindow.parent._WB_wombat_obj_proxy;
-            if (
-              wombat.$wbwindow === wombat.$wbwindow.WB_wombat_top ||
-              !parentProxy
-            ) {
+            if (wombat.$wbwindow === wombat.$wbwindow.WB_wombat_top) {
               return wombat.$wbwindow.WB_wombat_top._WB_wombat_obj_proxy;
             }
-            return parentProxy;
+            try {
+              var parentProxy = wombat.$wbwindow.parent._WB_wombat_obj_proxy;
+              if (parentProxy) return parentProxy;
+            } catch (e) {}
+
+            return wombat.$wbwindow.WB_wombat_top._WB_wombat_obj_proxy;
         }
         return wombat.defaultProxyGet($wbwindow, prop, ownProps, funCache);
       },
