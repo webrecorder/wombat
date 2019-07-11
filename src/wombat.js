@@ -5328,14 +5328,17 @@ Wombat.prototype.initWindowObjProxy = function($wbwindow) {
           case 'top':
             return wombat.$wbwindow.WB_wombat_top._WB_wombat_obj_proxy;
           case 'parent':
+            // if at replay top, return the top object proxy
             if (wombat.$wbwindow === wombat.$wbwindow.WB_wombat_top) {
               return wombat.$wbwindow.WB_wombat_top._WB_wombat_obj_proxy;
             }
+            // attempt to get the object proxy from parent, may throw if cross-origin
             try {
               var parentProxy = wombat.$wbwindow.parent._WB_wombat_obj_proxy;
               if (parentProxy) return parentProxy;
             } catch (e) {}
 
+            // default to replay-top object proxy if all else fails
             return wombat.$wbwindow.WB_wombat_top._WB_wombat_obj_proxy;
         }
         return wombat.defaultProxyGet($wbwindow, prop, ownProps, funCache);
