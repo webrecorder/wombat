@@ -1295,6 +1295,8 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
       return obj._WB_wombat_obj_proxy;
     case '__WB_pmw':
       return obj[prop];
+    case 'WB_wombat_eval':
+      return obj[prop];
     case 'constructor':
       // allow tests such as self.constructor === Window to work
       // you can't create a new instance of window using its constructor
@@ -2710,8 +2712,7 @@ Wombat.prototype.rewriteHTMLAssign = function(thisObj, oSetter, newValue) {
  */
 Wombat.prototype.rewriteEvalArg = function(rawEvalOrWrapper, evalArg) {
   var toBeEvald =
-    this.isString(evalArg) &&
-    evalArg.indexOf('_____WB$wombat$assign$function_____') === -1
+    this.isString(evalArg) && !this.skipWrapScriptTextBasedOnText(evalArg)
       ? this.wrapScriptTextJsProxy(evalArg)
       : evalArg;
   return rawEvalOrWrapper(toBeEvald);
@@ -3121,6 +3122,28 @@ Wombat.prototype.overrideFramesAccess = function($wbwindow) {
   this.defGetterProp($wbwindow, 'frames', getter);
   this.defGetterProp($wbwindow.Window.prototype, 'frames', getter);
 };
+
+
+Wombat.prototype.overrideSWAccess = function($wbwindow) {
+  if (!$wbwindow.navigator.serviceWorker || !$wbwindow.navigator.serviceWorker.controller) {
+    return;
+  }
+
+  $wbwindow._WB_wombat_sw = $wbwindow.navigator.serviceWorker;
+
+
+  var overrideSW = {
+                  "controller": null,
+                  "ready": Promise.resolve({"unregister": function() {} }),
+                  "register": function() { return Promise.reject(); },
+                  "addEventListener": function() {},
+                  "removeEventListener": function() {},
+                 }
+
+  this.defGetterProp($wbwindow.navigator, "serviceWorker", function() { return overrideSW; });
+}
+
+
 
 /**
  * Overrides the supplied method in order to ensure that the `this` argument
@@ -5854,6 +5877,8 @@ Wombat.prototype.wombatInit = function() {
   this.initTimeoutIntervalOverrides();
 
   this.overrideFramesAccess(this.$wbwindow);
+
+  this.overrideSWAccess(this.$wbwindow);
 
   // setAttribute
   this.initElementGetSetAttributeOverride();
