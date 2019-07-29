@@ -5821,6 +5821,9 @@ Wombat.prototype.wombatInit = function() {
     this.$wbwindow
   );
 
+  this.overrideFuncThisProxyToObj(this.$wbwindow, 'clearTimeout');
+  this.overrideFuncThisProxyToObj(this.$wbwindow, 'clearInterval');
+
   this.initTimeoutIntervalOverrides();
 
   this.overrideFramesAccess(this.$wbwindow);
