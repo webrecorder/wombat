@@ -132,6 +132,29 @@ AutoFetcher.prototype.justFetch = function(urls) {
   this.worker.postMessage({ type: 'fetch-all', values: urls });
 };
 
+
+/**
+ * Sends the supplied url with extra options to indicate
+ * that this is a page to backing worker
+ * @param {Array<string>} url
+ */
+AutoFetcher.prototype.fetchAsPage = function(url, title) {
+  if (!url) {
+    return;
+  }
+
+  var pageHeader = title ? title.trim() : "true";
+  var fetchData = {
+    "url": url,
+    "options": {
+      "headers": {"X-Wombat-History-Page": pageHeader}
+    }
+  };
+
+  this.justFetch([fetchData]);
+};
+
+
 /**
  * Sends a message to backing worker. If deferred is true
  * the message is sent after one tick of the event loop

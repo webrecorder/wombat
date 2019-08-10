@@ -249,17 +249,21 @@ WombatLite.prototype.overrideHistoryFunc = function(funcName) {
   if (!orig_func) return undefined;
 
   this.$wbwindow.history['_orig_' + funcName] = orig_func;
-  var wombatLite = this;
+  var wombat = this;
 
   var rewrittenFunc = function histNewFunc(stateObj, title, url) {
     orig_func.call(this, stateObj, title, url);
 
-    if (wombatLite.$wbwindow.fetch) {
-      wombatLite.$wbwindow.fetch(url, {"headers": {"X-Wombat-History-Page-Title": title.trim() || url}});
+    if (!url) {
+      return;
     }
 
-    for (var i = 0; i < wombatLite.historyCB.length; i++) {
-      wombatLite.historyCB[i](url, title, funcName, stateObj);
+    if (wombat.WBAutoFetchWorker) {
+      wombat.WBAutoFetchWorker.fetchAsPage(url);
+    }
+
+    for (var i = 0; i < wombat.historyCB.length; i++) {
+      wombat.historyCB[i](url, title, funcName, stateObj);
     }
   };
 
