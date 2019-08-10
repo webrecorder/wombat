@@ -2904,6 +2904,10 @@ Wombat.prototype.overrideHistoryFunc = function(funcName) {
 
     orig_func.call(this, stateObj, title, rewritten_url);
 
+    if (wombat.$wbwindow.fetch) {
+      wombat.$wbwindow.fetch(rewritten_url, {"headers": {"X-Wombat-History-Page-Title": title.trim() || url}});
+    }
+
     wombat.sendHistoryUpdate(resolvedURL, title);
   };
 

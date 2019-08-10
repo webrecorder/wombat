@@ -13,6 +13,7 @@ export default function WombatLite($wbwindow, wbinfo) {
   this.wb_info.top_host = this.wb_info.top_host || '*';
   this.wb_info.wombat_opts = this.wb_info.wombat_opts || {};
   this.WBAutoFetchWorker = null;
+  this.historyCB = [];
 }
 
 /**
@@ -227,6 +228,51 @@ WombatLite.prototype.initAutoFetchWorker = function() {
   }
 };
 
+WombatLite.prototype.initHistoryOverrides = function() {
+  this.overrideHistoryFunc('pushState');
+  this.overrideHistoryFunc('replaceState');
+  var wombatLite = this;
+  this.$wbwindow.addEventListener('popstate', function(event) {
+    for (var i = 0; i < wombatLite.historyCB.length; i++) {
+      wombatLite.historyCB[i](wombatLite.$wbwindow.location.href,
+                              wombatLite.$wbwindow.document.title,
+                              "popstate",
+                              event.state);
+    }
+  });
+};
+
+
+WombatLite.prototype.overrideHistoryFunc = function(funcName) {
+  if (!this.$wbwindow.history) return undefined;
+  var orig_func = this.$wbwindow.history[funcName];
+  if (!orig_func) return undefined;
+
+  this.$wbwindow.history['_orig_' + funcName] = orig_func;
+  var wombatLite = this;
+
+  var rewrittenFunc = function histNewFunc(stateObj, title, url) {
+    orig_func.call(this, stateObj, title, url);
+
+    if (wombatLite.$wbwindow.fetch) {
+      wombatLite.$wbwindow.fetch(url, {"headers": {"X-Wombat-History-Page-Title": title.trim() || url}});
+    }
+
+    for (var i = 0; i < wombatLite.historyCB.length; i++) {
+      wombatLite.historyCB[i](url, title, funcName, stateObj);
+    }
+  };
+
+  this.$wbwindow.history[funcName] = rewrittenFunc;
+  if (this.$wbwindow.History && this.$wbwindow.History.prototype) {
+    this.$wbwindow.History.prototype[funcName] = rewrittenFunc;
+  }
+
+  return rewrittenFunc;
+};
+
+
+
 /**
  * Initialize wombat's internal state and apply all overrides
  * @return {Object}
@@ -235,6 +281,10 @@ WombatLite.prototype.wombatInit = function() {
   if (this.wb_info.enable_auto_fetch && this.wb_info.is_live) {
     this.initAutoFetchWorker();
   }
+
+  // history callback overrides
+  this.initHistoryOverrides();
+
   // proxy mode overrides
   // Random
   this.initSeededRandom(this.wb_info.wombat_sec);
@@ -250,5 +300,5 @@ WombatLite.prototype.wombatInit = function() {
 
   // disable notifications
   this.initDisableNotifications();
-  return { actual: false };
+  return { actual: false, historyCB: this.historyCB };
 };
