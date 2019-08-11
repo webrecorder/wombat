@@ -270,7 +270,7 @@ WombatLite.prototype.overrideHistoryFunc = function(funcName) {
           title = wombat.$wbwindow.document.title;
         }
 
-        wombat.WBAutoFetchWorker.fetchAsPage(rewritten_url, resolvedURL, title);
+        wombat.WBAutoFetchWorker.fetchAsPage(wombat.$wbwindow.location.href, title);
 
         for (var i = 0; i < wombat.historyCB.length; i++) {
           wombat.historyCB[i](url, title, funcName, stateObj);
