@@ -2904,8 +2904,16 @@ Wombat.prototype.overrideHistoryFunc = function(funcName) {
 
     orig_func.call(this, stateObj, title, rewritten_url);
 
+    var origTitle = wombat.$wbwindow.document.title;
+
     if (wombat.WBAutoFetchWorker) {
-      wombat.WBAutoFetchWorker.fetchAsPage(rewritten_url);
+      wombat.$wbwindow.setTimeout(function() {
+        if (!title && wombat.$wbwindow.document.title !== origTitle) {
+          title = wombat.$wbwindow.document.title;
+        }
+
+        wombat.WBAutoFetchWorker.fetchAsPage(rewritten_url, resolvedURL, title);
+      }, 100);
     }
 
     wombat.sendHistoryUpdate(resolvedURL, title);

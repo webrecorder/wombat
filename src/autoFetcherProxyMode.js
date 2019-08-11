@@ -118,6 +118,39 @@ AutoFetcherProxyMode.prototype.justFetch = function(urls) {
 };
 
 /**
+ * Sends the supplied url with extra options to indicate
+ * that this is a page to backing worker
+ * @param {Array<string>} url
+ */
+AutoFetcherProxyMode.prototype.fetchAsPage = function(url, title) {
+  if (!url) {
+    return;
+  }
+
+  // in case this is called before worker is inited (eg. from history)
+  // just skip (for now)
+  if (!this.worker) {
+    console.log('skipping page add for: ' + url + ', no worker');
+    return;
+  }
+
+  var headers = {"X-Wombat-History-Page": url}
+  if (title) {
+    title = encodeURIComponent(title.trim());
+    if (title) {
+      headers['X-Wombat-History-Title'] = title;
+    }
+  }
+
+  var fetchData = {
+    "url": url,
+    "options": {"headers": headers}
+  };
+
+  this.justFetch([fetchData]);
+};
+
+/**
  * Sends the supplied msg to the backing worker
  * @param {Object} msg
  */
@@ -175,8 +208,12 @@ AutoFetcherProxyMode.prototype.handleMutatedElem = function(elem, accum) {
     case 'source':
       return this.handleDomElement(elem, baseURI, accum);
     case 'style':
-    case 'link':
       return this.handleMutatedStyleElem(elem, accum);
+    case 'link':
+      if (elem.rel === "stylesheet" || (elem.rel === "preload" && elem.as === "style")) {
+        return this.handleMutatedStyleElem(elem, accum);
+      }
+      break;
   }
   return this.extractSrcSrcsetFrom(elem, baseURI, accum);
 };

@@ -138,17 +138,22 @@ AutoFetcher.prototype.justFetch = function(urls) {
  * that this is a page to backing worker
  * @param {Array<string>} url
  */
-AutoFetcher.prototype.fetchAsPage = function(url, title) {
+AutoFetcher.prototype.fetchAsPage = function(url, originalUrl, title) {
   if (!url) {
     return;
   }
 
-  var pageHeader = title ? title.trim() : "true";
+  var headers = {"X-Wombat-History-Page": originalUrl}
+  if (title) {
+    title = encodeURIComponent(title.trim());
+    if (title) {
+      headers['X-Wombat-History-Title'] = title;
+    }
+  }
+
   var fetchData = {
     "url": url,
-    "options": {
-      "headers": {"X-Wombat-History-Page": pageHeader}
-    }
+    "options": {"headers": headers}
   };
 
   this.justFetch([fetchData]);

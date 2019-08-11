@@ -229,6 +229,10 @@ WombatLite.prototype.initAutoFetchWorker = function() {
 };
 
 WombatLite.prototype.initHistoryOverrides = function() {
+  if (this.$wbwindow.self !== this.$wbwindow.top) {
+    return;
+  }
+
   this.overrideHistoryFunc('pushState');
   this.overrideHistoryFunc('replaceState');
   var wombatLite = this;
@@ -258,12 +262,20 @@ WombatLite.prototype.overrideHistoryFunc = function(funcName) {
       return;
     }
 
-    if (wombat.WBAutoFetchWorker) {
-      wombat.WBAutoFetchWorker.fetchAsPage(url);
-    }
+    var origTitle = wombat.$wbwindow.document.title;
 
-    for (var i = 0; i < wombat.historyCB.length; i++) {
-      wombat.historyCB[i](url, title, funcName, stateObj);
+    if (wombat.WBAutoFetchWorker) {
+      wombat.$wbwindow.setTimeout(function() {
+        if (!title && wombat.$wbwindow.document.title !== origTitle) {
+          title = wombat.$wbwindow.document.title;
+        }
+
+        wombat.WBAutoFetchWorker.fetchAsPage(rewritten_url, resolvedURL, title);
+
+        for (var i = 0; i < wombat.historyCB.length; i++) {
+          wombat.historyCB[i](url, title, funcName, stateObj);
+        }
+      }, 100);
     }
   };
 
