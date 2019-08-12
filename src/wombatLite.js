@@ -276,8 +276,8 @@ WombatLite.prototype.overrideHistoryFunc = function(funcName) {
           title
         );
 
-        if (wombatLite.historyCB) {
-          wombatLite.historyCB(
+        if (wombat.historyCB) {
+          wombat.historyCB(
             wombat.$wbwindow.location.href,
             title,
             funcName,
@@ -323,11 +323,11 @@ WombatLite.prototype.wombatInit = function() {
 
   // disable notifications
   this.initDisableNotifications();
-  var wombatLight = this;
+  var wombatLite = this;
   return {
     actual: false,
     setHistoryCB: function(cb) {
-      wombatLight.historyCB = cb;
+      wombatLite.historyCB = cb;
     }
   };
 };
