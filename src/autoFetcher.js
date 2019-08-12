@@ -133,6 +133,34 @@ AutoFetcher.prototype.justFetch = function(urls) {
 };
 
 /**
+ * Sends the supplied url with extra options to indicate
+ * that this is a page to backing worker
+ * @param {string} url
+ * @param {string} originalUrl
+ * @param {string} [title]
+ */
+AutoFetcher.prototype.fetchAsPage = function(url, originalUrl, title) {
+  if (!url) {
+    return;
+  }
+
+  var headers = { 'X-Wombat-History-Page': originalUrl };
+  if (title) {
+    var encodedTitle = encodeURIComponent(title.trim());
+    if (title) {
+      headers['X-Wombat-History-Title'] = encodedTitle;
+    }
+  }
+
+  var fetchData = {
+    url: url,
+    options: { headers: headers }
+  };
+
+  this.justFetch([fetchData]);
+};
+
+/**
  * Sends a message to backing worker. If deferred is true
  * the message is sent after one tick of the event loop
  * @param {Object} msg

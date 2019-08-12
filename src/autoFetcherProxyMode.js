@@ -12,6 +12,10 @@ export default function AutoFetcherProxyMode(wombat, config) {
   /** @type {Wombat} */
   this.wombat = wombat;
 
+  /** @type {list} */
+  // messages queued while worker being fetched
+  this.msgQ = [];
+
   /** @type {?MutationObserver} */
   this.mutationObz = null;
   /** @type {?HTMLStyleElement} */
@@ -89,6 +93,10 @@ AutoFetcherProxyMode.prototype._init = function(config, first) {
  * Initializes the mutation observer
  */
 AutoFetcherProxyMode.prototype.startChecking = function() {
+  while (this.worker && this.msgQ.length) {
+    this.postMessage(this.msgQ.shift());
+  }
+
   this.extractFromLocalDoc();
   this.mutationObz = new MutationObserver(this.mutationCB);
   this.mutationObz.observe(document.documentElement, {
@@ -106,15 +114,44 @@ AutoFetcherProxyMode.prototype.startChecking = function() {
  * Terminate the worker, a no op when not replay top
  */
 AutoFetcherProxyMode.prototype.terminate = function() {
-  this.worker.terminate();
+  if (this.worker) {
+    this.worker.terminate();
+  }
 };
 
 /**
  * Sends the supplied array of URLs to the backing worker
- * @param {Array<string>} urls
+ * @param {Array<string>|Array<Object>} urls
  */
 AutoFetcherProxyMode.prototype.justFetch = function(urls) {
-  this.worker.postMessage({ type: 'fetch-all', values: urls });
+  this.postMessage({ type: 'fetch-all', values: urls });
+};
+
+/**
+ * Sends the supplied url with extra options to indicate
+ * that this is a page to backing worker
+ * @param {string} url
+ * @param {string} [title]
+ */
+AutoFetcherProxyMode.prototype.fetchAsPage = function(url, title) {
+  if (!url) {
+    return;
+  }
+
+  var headers = { 'X-Wombat-History-Page': url };
+  if (title) {
+    var encodedTitle = encodeURIComponent(title.trim());
+    if (title) {
+      headers['X-Wombat-History-Title'] = encodedTitle;
+    }
+  }
+
+  var fetchData = {
+    url: url,
+    options: { headers: headers }
+  };
+
+  this.justFetch([fetchData]);
 };
 
 /**
@@ -122,7 +159,11 @@ AutoFetcherProxyMode.prototype.justFetch = function(urls) {
  * @param {Object} msg
  */
 AutoFetcherProxyMode.prototype.postMessage = function(msg) {
-  this.worker.postMessage(msg);
+  if (this.worker) {
+    this.worker.postMessage(msg);
+  } else {
+    this.msgQ.push(msg);
+  }
 };
 
 /**
@@ -175,8 +216,15 @@ AutoFetcherProxyMode.prototype.handleMutatedElem = function(elem, accum) {
     case 'source':
       return this.handleDomElement(elem, baseURI, accum);
     case 'style':
-    case 'link':
       return this.handleMutatedStyleElem(elem, accum);
+    case 'link':
+      if (
+        elem.rel === 'stylesheet' ||
+        (elem.rel === 'preload' && elem.as === 'style')
+      ) {
+        return this.handleMutatedStyleElem(elem, accum);
+      }
+      break;
   }
   return this.extractSrcSrcsetFrom(elem, baseURI, accum);
 };

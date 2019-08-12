@@ -13,6 +13,7 @@ export default function WombatLite($wbwindow, wbinfo) {
   this.wb_info.top_host = this.wb_info.top_host || '*';
   this.wb_info.wombat_opts = this.wb_info.wombat_opts || {};
   this.WBAutoFetchWorker = null;
+  this.historyCB = null;
 }
 
 /**
@@ -227,6 +228,74 @@ WombatLite.prototype.initAutoFetchWorker = function() {
   }
 };
 
+WombatLite.prototype.initHistoryOverrides = function() {
+  if (this.$wbwindow.self !== this.$wbwindow.top) {
+    return;
+  }
+
+  this.overrideHistoryFunc('pushState');
+  this.overrideHistoryFunc('replaceState');
+  var wombatLite = this;
+  this.$wbwindow.addEventListener('popstate', function(event) {
+    if (wombatLite.historyCB) {
+      wombatLite.historyCB(
+        wombatLite.$wbwindow.location.href,
+        wombatLite.$wbwindow.document.title,
+        'popstate',
+        event.state
+      );
+    }
+  });
+};
+
+WombatLite.prototype.overrideHistoryFunc = function(funcName) {
+  if (!this.$wbwindow.history) return undefined;
+  var orig_func = this.$wbwindow.history[funcName];
+  if (!orig_func) return undefined;
+
+  this.$wbwindow.history['_orig_' + funcName] = orig_func;
+  var wombat = this;
+
+  var rewrittenFunc = function histNewFunc(stateObj, title, url) {
+    orig_func.call(this, stateObj, title, url);
+
+    if (!url) {
+      return;
+    }
+
+    var origTitle = wombat.$wbwindow.document.title;
+
+    if (wombat.WBAutoFetchWorker) {
+      wombat.$wbwindow.setTimeout(function() {
+        if (!title && wombat.$wbwindow.document.title !== origTitle) {
+          title = wombat.$wbwindow.document.title;
+        }
+
+        wombat.WBAutoFetchWorker.fetchAsPage(
+          wombat.$wbwindow.location.href,
+          title
+        );
+
+        if (wombat.historyCB) {
+          wombat.historyCB(
+            wombat.$wbwindow.location.href,
+            title,
+            funcName,
+            stateObj
+          );
+        }
+      }, 100);
+    }
+  };
+
+  this.$wbwindow.history[funcName] = rewrittenFunc;
+  if (this.$wbwindow.History && this.$wbwindow.History.prototype) {
+    this.$wbwindow.History.prototype[funcName] = rewrittenFunc;
+  }
+
+  return rewrittenFunc;
+};
+
 /**
  * Initialize wombat's internal state and apply all overrides
  * @return {Object}
@@ -235,6 +304,10 @@ WombatLite.prototype.wombatInit = function() {
   if (this.wb_info.enable_auto_fetch && this.wb_info.is_live) {
     this.initAutoFetchWorker();
   }
+
+  // history callback overrides
+  this.initHistoryOverrides();
+
   // proxy mode overrides
   // Random
   this.initSeededRandom(this.wb_info.wombat_sec);
@@ -250,5 +323,11 @@ WombatLite.prototype.wombatInit = function() {
 
   // disable notifications
   this.initDisableNotifications();
-  return { actual: false };
+  var wombatLite = this;
+  return {
+    actual: false,
+    setHistoryCB: function(cb) {
+      wombatLite.historyCB = cb;
+    }
+  };
 };
