@@ -12,6 +12,10 @@ export default function AutoFetcherProxyMode(wombat, config) {
   /** @type {Wombat} */
   this.wombat = wombat;
 
+  /** @type {list} */
+  // messages queued while worker being fetched
+  this.msgQ = [];
+
   /** @type {?MutationObserver} */
   this.mutationObz = null;
   /** @type {?HTMLStyleElement} */
@@ -89,6 +93,10 @@ AutoFetcherProxyMode.prototype._init = function(config, first) {
  * Initializes the mutation observer
  */
 AutoFetcherProxyMode.prototype.startChecking = function() {
+  while (this.worker && this.msgQ.length) {
+    this.postMessage(this.msgQ.shift());
+  }
+
   this.extractFromLocalDoc();
   this.mutationObz = new MutationObserver(this.mutationCB);
   this.mutationObz.observe(document.documentElement, {
@@ -106,7 +114,9 @@ AutoFetcherProxyMode.prototype.startChecking = function() {
  * Terminate the worker, a no op when not replay top
  */
 AutoFetcherProxyMode.prototype.terminate = function() {
-  this.worker.terminate();
+  if (this.worker) {
+    this.worker.terminate();
+  }
 };
 
 /**
@@ -114,7 +124,7 @@ AutoFetcherProxyMode.prototype.terminate = function() {
  * @param {Array<string>} urls
  */
 AutoFetcherProxyMode.prototype.justFetch = function(urls) {
-  this.worker.postMessage({ type: 'fetch-all', values: urls });
+  this.postMessage({ type: 'fetch-all', values: urls });
 };
 
 /**
@@ -124,13 +134,6 @@ AutoFetcherProxyMode.prototype.justFetch = function(urls) {
  */
 AutoFetcherProxyMode.prototype.fetchAsPage = function(url, title) {
   if (!url) {
-    return;
-  }
-
-  // in case this is called before worker is inited (eg. from history)
-  // just skip (for now)
-  if (!this.worker) {
-    console.log('skipping page add for: ' + url + ', no worker');
     return;
   }
 
@@ -155,7 +158,11 @@ AutoFetcherProxyMode.prototype.fetchAsPage = function(url, title) {
  * @param {Object} msg
  */
 AutoFetcherProxyMode.prototype.postMessage = function(msg) {
-  this.worker.postMessage(msg);
+  if (this.worker) {
+    this.worker.postMessage(msg);
+  } else {
+    this.msgQ.push(msg);
+  }
 };
 
 /**
