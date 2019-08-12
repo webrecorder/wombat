@@ -121,7 +121,7 @@ AutoFetcherProxyMode.prototype.terminate = function() {
 
 /**
  * Sends the supplied array of URLs to the backing worker
- * @param {Array<string>} urls
+ * @param {Array<string>|Array<Object>} urls
  */
 AutoFetcherProxyMode.prototype.justFetch = function(urls) {
   this.postMessage({ type: 'fetch-all', values: urls });
@@ -130,24 +130,25 @@ AutoFetcherProxyMode.prototype.justFetch = function(urls) {
 /**
  * Sends the supplied url with extra options to indicate
  * that this is a page to backing worker
- * @param {Array<string>} url
+ * @param {string} url
+ * @param {string} [title]
  */
 AutoFetcherProxyMode.prototype.fetchAsPage = function(url, title) {
   if (!url) {
     return;
   }
 
-  var headers = {"X-Wombat-History-Page": url}
+  var headers = { 'X-Wombat-History-Page': url };
   if (title) {
-    title = encodeURIComponent(title.trim());
+    var encodedTitle = encodeURIComponent(title.trim());
     if (title) {
-      headers['X-Wombat-History-Title'] = title;
+      headers['X-Wombat-History-Title'] = encodedTitle;
     }
   }
 
   var fetchData = {
-    "url": url,
-    "options": {"headers": headers}
+    url: url,
+    options: { headers: headers }
   };
 
   this.justFetch([fetchData]);
@@ -217,7 +218,10 @@ AutoFetcherProxyMode.prototype.handleMutatedElem = function(elem, accum) {
     case 'style':
       return this.handleMutatedStyleElem(elem, accum);
     case 'link':
-      if (elem.rel === "stylesheet" || (elem.rel === "preload" && elem.as === "style")) {
+      if (
+        elem.rel === 'stylesheet' ||
+        (elem.rel === 'preload' && elem.as === 'style')
+      ) {
         return this.handleMutatedStyleElem(elem, accum);
       }
       break;

@@ -13,7 +13,7 @@ export default function WombatLite($wbwindow, wbinfo) {
   this.wb_info.top_host = this.wb_info.top_host || '*';
   this.wb_info.wombat_opts = this.wb_info.wombat_opts || {};
   this.WBAutoFetchWorker = null;
-  this.historyCB = [];
+  this.historyCB = null;
 }
 
 /**
@@ -237,15 +237,16 @@ WombatLite.prototype.initHistoryOverrides = function() {
   this.overrideHistoryFunc('replaceState');
   var wombatLite = this;
   this.$wbwindow.addEventListener('popstate', function(event) {
-    for (var i = 0; i < wombatLite.historyCB.length; i++) {
-      wombatLite.historyCB[i](wombatLite.$wbwindow.location.href,
-                              wombatLite.$wbwindow.document.title,
-                              "popstate",
-                              event.state);
+    if (wombatLite.historyCB) {
+      wombatLite.historyCB(
+        wombatLite.$wbwindow.location.href,
+        wombatLite.$wbwindow.document.title,
+        'popstate',
+        event.state
+      );
     }
   });
 };
-
 
 WombatLite.prototype.overrideHistoryFunc = function(funcName) {
   if (!this.$wbwindow.history) return undefined;
@@ -270,10 +271,18 @@ WombatLite.prototype.overrideHistoryFunc = function(funcName) {
           title = wombat.$wbwindow.document.title;
         }
 
-        wombat.WBAutoFetchWorker.fetchAsPage(wombat.$wbwindow.location.href, title);
+        wombat.WBAutoFetchWorker.fetchAsPage(
+          wombat.$wbwindow.location.href,
+          title
+        );
 
-        for (var i = 0; i < wombat.historyCB.length; i++) {
-          wombat.historyCB[i](url, title, funcName, stateObj);
+        if (wombatLite.historyCB) {
+          wombatLite.historyCB(
+            wombat.$wbwindow.location.href,
+            title,
+            funcName,
+            stateObj
+          );
         }
       }, 100);
     }
@@ -286,8 +295,6 @@ WombatLite.prototype.overrideHistoryFunc = function(funcName) {
 
   return rewrittenFunc;
 };
-
-
 
 /**
  * Initialize wombat's internal state and apply all overrides
@@ -316,5 +323,11 @@ WombatLite.prototype.wombatInit = function() {
 
   // disable notifications
   this.initDisableNotifications();
-  return { actual: false, historyCB: this.historyCB };
+  var wombatLight = this;
+  return {
+    actual: false,
+    setHistoryCB: function(cb) {
+      wombatLight.historyCB = cb;
+    }
+  };
 };

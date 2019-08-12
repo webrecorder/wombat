@@ -132,33 +132,33 @@ AutoFetcher.prototype.justFetch = function(urls) {
   this.worker.postMessage({ type: 'fetch-all', values: urls });
 };
 
-
 /**
  * Sends the supplied url with extra options to indicate
  * that this is a page to backing worker
- * @param {Array<string>} url
+ * @param {string} url
+ * @param {string} originalUrl
+ * @param {string} [title]
  */
 AutoFetcher.prototype.fetchAsPage = function(url, originalUrl, title) {
   if (!url) {
     return;
   }
 
-  var headers = {"X-Wombat-History-Page": originalUrl}
+  var headers = { 'X-Wombat-History-Page': originalUrl };
   if (title) {
-    title = encodeURIComponent(title.trim());
+    var encodedTitle = encodeURIComponent(title.trim());
     if (title) {
-      headers['X-Wombat-History-Title'] = title;
+      headers['X-Wombat-History-Title'] = encodedTitle;
     }
   }
 
   var fetchData = {
-    "url": url,
-    "options": {"headers": headers}
+    url: url,
+    options: { headers: headers }
   };
 
   this.justFetch([fetchData]);
 };
-
 
 /**
  * Sends a message to backing worker. If deferred is true
