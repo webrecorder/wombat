@@ -275,16 +275,16 @@ WombatLite.prototype.overrideHistoryFunc = function(funcName) {
           wombat.$wbwindow.location.href,
           title
         );
-
-        if (wombat.historyCB) {
-          wombat.historyCB(
-            wombat.$wbwindow.location.href,
-            title,
-            funcName,
-            stateObj
-          );
-        }
       }, 100);
+
+      if (wombat.historyCB) {
+        wombat.historyCB(
+          wombat.$wbwindow.location.href,
+          title,
+          funcName,
+          stateObj
+        );
+      }
     }
   };
 
