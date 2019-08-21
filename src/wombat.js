@@ -1161,14 +1161,18 @@ Wombat.prototype.sendTopMessage = function(message, skipTopCheck, win) {
  * @param {?string} title
  */
 Wombat.prototype.sendHistoryUpdate = function(url, title, win) {
-  this.sendTopMessage({
-    url: url,
-    ts: this.wb_info.timestamp,
-    request_ts: this.wb_info.request_ts,
-    is_live: this.wb_info.is_live,
-    title: title,
-    wb_type: 'replace-url'
-  }, false, win);
+  this.sendTopMessage(
+    {
+      url: url,
+      ts: this.wb_info.timestamp,
+      request_ts: this.wb_info.request_ts,
+      is_live: this.wb_info.is_live,
+      title: title,
+      wb_type: 'replace-url'
+    },
+    false,
+    win
+  );
 };
 
 /**
@@ -2926,9 +2930,9 @@ Wombat.prototype.overrideHistoryFunc = function(funcName) {
   };
 
   this.$wbwindow.history[funcName] = rewrittenFunc;
-  //if (this.$wbwindow.History && this.$wbwindow.History.prototype) {
-  //  this.$wbwindow.History.prototype[funcName] = rewrittenFunc;
-  //}
+  if (this.$wbwindow.History && this.$wbwindow.History.prototype) {
+    this.$wbwindow.History.prototype[funcName] = rewrittenFunc;
+  }
 
   return rewrittenFunc;
 };
@@ -5842,7 +5846,10 @@ Wombat.prototype.wombatInit = function() {
   this.overrideFuncThisProxyToObj(this.$wbwindow, 'clearTimeout');
   this.overrideFuncThisProxyToObj(this.$wbwindow, 'clearInterval');
 
-  this.overrideFuncThisProxyToObj(this.$wbwindow.EventTarget.prototype, 'dispatchEvent');
+  this.overrideFuncThisProxyToObj(
+    this.$wbwindow.EventTarget.prototype,
+    'dispatchEvent'
+  );
 
   this.initTimeoutIntervalOverrides();
 
