@@ -1146,12 +1146,13 @@ Wombat.prototype.getAllOwnProps = function(obj) {
  * @param {*} message
  * @param {boolean} [skipTopCheck]
  */
-Wombat.prototype.sendTopMessage = function(message, skipTopCheck) {
-  if (!this.$wbwindow.__WB_top_frame) return;
-  if (!skipTopCheck && this.$wbwindow != this.$wbwindow.__WB_replay_top) {
+Wombat.prototype.sendTopMessage = function(message, skipTopCheck, win) {
+  win = win || this.$wbwindow;
+  if (!win.__WB_top_frame) return;
+  if (!skipTopCheck && win != win.__WB_replay_top) {
     return;
   }
-  this.$wbwindow.__WB_top_frame.postMessage(message, this.wb_info.top_host);
+  win.__WB_top_frame.postMessage(message, this.wb_info.top_host);
 };
 
 /**
@@ -1159,15 +1160,19 @@ Wombat.prototype.sendTopMessage = function(message, skipTopCheck) {
  * @param {?string} url
  * @param {?string} title
  */
-Wombat.prototype.sendHistoryUpdate = function(url, title) {
-  this.sendTopMessage({
-    url: url,
-    ts: this.wb_info.timestamp,
-    request_ts: this.wb_info.request_ts,
-    is_live: this.wb_info.is_live,
-    title: title,
-    wb_type: 'replace-url'
-  });
+Wombat.prototype.sendHistoryUpdate = function(url, title, win) {
+  this.sendTopMessage(
+    {
+      url: url,
+      ts: this.wb_info.timestamp,
+      request_ts: this.wb_info.request_ts,
+      is_live: this.wb_info.is_live,
+      title: title,
+      wb_type: 'replace-url'
+    },
+    false,
+    win
+  );
 };
 
 /**
@@ -2877,15 +2882,20 @@ Wombat.prototype.overrideHistoryFunc = function(funcName) {
   if (!orig_func) return undefined;
 
   this.$wbwindow.history['_orig_' + funcName] = orig_func;
+
+  this.$wbwindow.history.___wb_ownWindow = this.$wbwindow;
+
   var wombat = this;
 
   var rewrittenFunc = function histNewFunc(stateObj, title, url) {
-    var wombatLocation = wombat.$wbwindow.WB_wombat_location;
+    // in case functions rebound to different history obj!
+    var historyWin = this.___wb_ownWindow || wombat.$wbwindow;
+
+    var wombatLocation = historyWin.WB_wombat_location;
     var rewritten_url;
     var resolvedURL;
-
     if (url) {
-      var parser = wombat.$wbwindow.document.createElement('a');
+      var parser = historyWin.document.createElement('a');
       parser.href = url;
       resolvedURL = parser.href;
 
@@ -2904,19 +2914,19 @@ Wombat.prototype.overrideHistoryFunc = function(funcName) {
 
     orig_func.call(this, stateObj, title, rewritten_url);
 
-    var origTitle = wombat.$wbwindow.document.title;
+    var origTitle = historyWin.document.title;
 
     if (wombat.WBAutoFetchWorker) {
-      wombat.$wbwindow.setTimeout(function() {
-        if (!title && wombat.$wbwindow.document.title !== origTitle) {
-          title = wombat.$wbwindow.document.title;
+      historyWin.setTimeout(function() {
+        if (!title && historyWin.document.title !== origTitle) {
+          title = historyWin.document.title;
         }
 
         wombat.WBAutoFetchWorker.fetchAsPage(rewritten_url, resolvedURL, title);
       }, 100);
     }
 
-    wombat.sendHistoryUpdate(resolvedURL, title);
+    wombat.sendHistoryUpdate(resolvedURL, title, historyWin);
   };
 
   this.$wbwindow.history[funcName] = rewrittenFunc;
@@ -5835,6 +5845,11 @@ Wombat.prototype.wombatInit = function() {
 
   this.overrideFuncThisProxyToObj(this.$wbwindow, 'clearTimeout');
   this.overrideFuncThisProxyToObj(this.$wbwindow, 'clearInterval');
+
+  this.overrideFuncThisProxyToObj(
+    this.$wbwindow.EventTarget.prototype,
+    'dispatchEvent'
+  );
 
   this.initTimeoutIntervalOverrides();
 
