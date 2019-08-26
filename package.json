@@ -5,22 +5,22 @@
   "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "@types/fs-extra": "^8.0.0",
-    "ava": "^2.1.0",
-    "chokidar": "^3.0.1",
+    "ava": "^2.3.0",
+    "chokidar": "^3.0.2",
     "chrome-remote-interface-extra": "^1.1.1",
-    "eslint": "^6.0.1",
-    "eslint-config-prettier": "^6.0.0",
+    "eslint": "^6.2.2",
+    "eslint-config-prettier": "^6.1.0",
     "eslint-plugin-prettier": "^3.1.0",
-    "fastify": "^2.6.0",
+    "fastify": "^2.7.1",
     "fastify-favicon": "^2.0.0",
     "fastify-static": "^2.5.0",
     "fs-extra": "^8.1.0",
     "just-launch-chrome": "^1.0.0",
-    "lodash-es": "^4.17.11",
+    "lodash-es": "^4.17.15",
     "prettier": "^1.18.2",
-    "rollup": "^1.16.4",
+    "rollup": "^1.20.2",
     "rollup-plugin-babel-minify": "^9.0.0",
-    "rollup-plugin-commonjs": "^10.0.1",
+    "rollup-plugin-commonjs": "^10.0.2",
     "rollup-plugin-node-resolve": "^5.2.0"
   },
   "scripts": {
@@ -56,8 +56,8 @@
     ]
   },
   "resolutions": {
-    "*/**/graceful-fs": "~4.1.15",
-    "*/**/fs-extra": "~8.0.1"
+    "*/**/graceful-fs": "~4.2.2",
+    "*/**/fs-extra": "~8.1.0"
   },
   "dependencies": {}
 }
