@@ -151,7 +151,7 @@ AutoFetcherProxyMode.prototype.fetchAsPage = function(url, title) {
 
   var fetchData = {
     url: url,
-    options: { headers: headers }
+    options: { headers: headers, cache: 'no-store', mode: 'no-cors' }
   };
 
   this.justFetch([fetchData]);
