@@ -43,6 +43,9 @@ AutoFetcherProxyMode.prototype._init = function(config, first) {
   if (document.readyState === 'complete') {
     this.styleTag = document.createElement('style');
     this.styleTag.id = '$wrStyleParser$';
+    // for some reason this seems to help in not getting fetch errors
+    // from the CORS stylesheets from link tags
+    this.styleTag.disabled = true;
     document.head.appendChild(this.styleTag);
     if (config.isTop) {
       // Cannot directly load our worker from the proxy origin into the current origin
@@ -302,8 +305,12 @@ AutoFetcherProxyMode.prototype.fetchCSSAndExtract = function(cssURL) {
   return fetch(url)
     .then(function(res) {
       return res.text().then(function(text) {
+        // set the text content of our style tag in order to get the
+        // css parsed and then clear it in attempt to avoid fetch errors if any
         afwpm.styleTag.textContent = text;
-        return afwpm.extractMediaRules(afwpm.styleTag.sheet, cssURL);
+        var results = afwpm.extractMediaRules(afwpm.styleTag.sheet, cssURL);
+        afwpm.styleTag.textContent = '';
+        return results;
       });
     })
     .catch(function(error) {
