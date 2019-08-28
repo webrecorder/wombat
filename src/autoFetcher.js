@@ -154,7 +154,7 @@ AutoFetcher.prototype.fetchAsPage = function(url, originalUrl, title) {
 
   var fetchData = {
     url: url,
-    options: { headers: headers, cache: 'no-store', mode: 'no-cors' }
+    options: { headers: headers, cache: 'no-store' }
   };
 
   this.justFetch([fetchData]);
