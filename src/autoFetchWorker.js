@@ -20,7 +20,11 @@ var config = {
   prefix: null,
   prefixMod: null,
   relative: null,
-  rwRe: null
+  rwRe: null,
+  defaultFetchOptions: {
+    cache: 'force-cache',
+    mode: null
+  }
 };
 
 if (!config.havePromise) {
@@ -80,6 +84,7 @@ if (location.search.indexOf('init') !== -1) {
   })();
 } else {
   config.proxyMode = true;
+  config.defaultFetchOptions.mode = 'no-cors';
 }
 
 self.onmessage = function(event) {
@@ -104,29 +109,24 @@ function fetchDoneOrErrored() {
 /**
  * Fetches the supplied URL and increments the {@link runningFetches} variable
  * to represent an inflight request.
- * If the url to be fetched is an object then its a fetch-as-page.
+ * If the url to be fetched is an object then its a fetch-as-page and the
+ * fetch is configured using its supplied options and url properties.
  *
- * The fetch is made using force-cache with a header X-Wombat-Auto-Fetch 1
- * by default
+ * Otherwise, the fetch is made using cache mode force-cache and if we
+ * are operating in proxy mode the fetch mode no-cors is used.
  * @param {string|Object} toBeFetched - The URL to be fetched
  */
 function fetchURL(toBeFetched) {
   runningFetches += 1;
 
   var url;
-  var options = { cache: 'force-cache' };
+  var options = config.defaultFetchOptions;
 
   if (typeof toBeFetched === 'object') {
     url = toBeFetched.url;
-    options = Object.assign(options, toBeFetched.options);
+    options = toBeFetched.options;
   } else {
     url = toBeFetched;
-  }
-
-  if (options.headers) {
-    options.headers['X-Wombat-Auto-Fetch'] = 1;
-  } else {
-    options.headers = { 'X-Wombat-Auto-Fetch': 1 };
   }
 
   fetch(url, options)
