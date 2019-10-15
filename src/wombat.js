@@ -3851,6 +3851,10 @@ Wombat.prototype.initDateOverride = function(timestamp) {
 
   this.$wbwindow.Date.__WB_timediff = timediff;
 
+  this.$wbwindow.Date.getTimezoneOffset = function() {
+    return 0;
+  }
+
   Object.defineProperty(this.$wbwindow.Date.prototype, 'constructor', {
     value: this.$wbwindow.Date
   });
