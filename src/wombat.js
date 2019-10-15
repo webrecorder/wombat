@@ -43,6 +43,7 @@ function Wombat($wbwindow, wbinfo) {
     '#',
     'about:',
     'data:',
+    'blob:',
     'mailto:',
     'javascript:',
     '{',
@@ -921,6 +922,9 @@ Wombat.prototype.extractOriginalURL = function(rewrittenUrl) {
   if (index < 0) {
     index = url.indexOf('///', start);
   }
+  if (index < 0) {
+    index = url.indexOf('/blob:', start);
+  }
 
   // extract original url from wburl
   if (index >= 0) {
@@ -936,7 +940,7 @@ Wombat.prototype.extractOriginalURL = function(rewrittenUrl) {
 
     if (
       url !== rwURLString &&
-      !this.startsWithOneOf(url, this.VALID_PREFIXES)
+      !this.startsWithOneOf(url, this.VALID_PREFIXES) && !this.startsWith(url, 'blob:')
     ) {
       url = this.wb_orig_scheme + url;
     }
