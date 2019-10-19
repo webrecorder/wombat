@@ -2858,6 +2858,36 @@ Wombat.prototype.overridePropExtract = function(proto, prop, cond) {
   }
 };
 
+
+/**
+ * Overrides referer -- if top-replay frame, referrer should be "", otherwise extractOriginURL
+ * @param {Object} proto
+ * @param {string} prop
+ * @param {*} [cond]
+ */
+Wombat.prototype.overrideReferrer = function($document) {
+  var orig_getter = this.getOrigGetter($document, "referrer");
+  var wombat = this;
+  if (orig_getter) {
+    var new_getter = function overridePropExtractNewGetter() {
+      var obj = wombat.proxyToObj(this);
+
+      var $win = this.defaultView;
+
+      // if top replay-frame, referrer should always be ""
+      if ($win === $win.__WB_replay_top) {
+        return "";
+      }
+
+      var res = orig_getter.call(obj);
+
+      return wombat.extractOriginalURL(res);
+    };
+    this.defGetterProp($document, "referrer", new_getter);
+  }
+};
+
+
 /**
  * Applies an attribute getter override IFF an original getter exists that
  * ensures that the results of retrieving the attributes value is not a
@@ -4411,7 +4441,8 @@ Wombat.prototype.initDocOverrides = function($document) {
   if (!Object.defineProperty) return;
 
   // referrer
-  this.overridePropExtract($document, 'referrer');
+  //this.overridePropExtract($document, 'referrer');
+  this.overrideReferrer($document);
 
   // origin
   this.defGetterProp($document, 'origin', function origin() {
