@@ -984,11 +984,20 @@ Wombat.prototype.makeParser = function(maybeRewrittenURL, doc) {
     }
   }
 
+  return this._makeURLParser(originalURL, docElem);
+
+};
+
+Wombat.prototype._makeURLParser = function(url, docElem) {
+  try {
+    return new this.$wbwindow.URL(url, docElem.baseURI);
+  } catch (e) {}
+
   var p = docElem.createElement('a');
   p._no_rewrite = true;
-  p.href = originalURL;
+  p.href = url;
   return p;
-};
+}
 
 /**
  * Defines a new getter and optional setter for the property on the supplied
@@ -1367,7 +1376,7 @@ Wombat.prototype.setLoc = function(loc, originalURL) {
   loc._hostname = parser.hostname;
 
   if (parser.origin) {
-    loc._origin = parser.origin;
+    loc._origin = parser.host ? parser.origin : "null";
   } else {
     loc._origin =
       parser.protocol +
@@ -2930,8 +2939,7 @@ Wombat.prototype.overrideHistoryFunc = function(funcName) {
     var rewritten_url;
     var resolvedURL;
     if (url) {
-      var parser = historyWin.document.createElement('a');
-      parser.href = url;
+      var parser = wombat._makeURLParser(url, historyWin.document);
       resolvedURL = parser.href;
 
       rewritten_url = wombat.rewriteUrl(resolvedURL);
