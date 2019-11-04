@@ -43,6 +43,7 @@ function Wombat($wbwindow, wbinfo) {
     '#',
     'about:',
     'data:',
+    'blob:',
     'mailto:',
     'javascript:',
     '{',
@@ -921,6 +922,9 @@ Wombat.prototype.extractOriginalURL = function(rewrittenUrl) {
   if (index < 0) {
     index = url.indexOf('///', start);
   }
+  if (index < 0) {
+    index = url.indexOf('/blob:', start);
+  }
 
   // extract original url from wburl
   if (index >= 0) {
@@ -936,7 +940,7 @@ Wombat.prototype.extractOriginalURL = function(rewrittenUrl) {
 
     if (
       url !== rwURLString &&
-      !this.startsWithOneOf(url, this.VALID_PREFIXES)
+      !this.startsWithOneOf(url, this.VALID_PREFIXES) && !this.startsWith(url, 'blob:')
     ) {
       url = this.wb_orig_scheme + url;
     }
@@ -980,11 +984,20 @@ Wombat.prototype.makeParser = function(maybeRewrittenURL, doc) {
     }
   }
 
+  return this._makeURLParser(originalURL, docElem);
+
+};
+
+Wombat.prototype._makeURLParser = function(url, docElem) {
+  try {
+    return new this.$wbwindow.URL(url, docElem.baseURI);
+  } catch (e) {}
+
   var p = docElem.createElement('a');
   p._no_rewrite = true;
-  p.href = originalURL;
+  p.href = url;
   return p;
-};
+}
 
 /**
  * Defines a new getter and optional setter for the property on the supplied
@@ -1295,6 +1308,8 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
       return obj._WB_wombat_obj_proxy;
     case '__WB_pmw':
       return obj[prop];
+    case 'WB_wombat_eval':
+      return obj[prop];
     case 'constructor':
       // allow tests such as self.constructor === Window to work
       // you can't create a new instance of window using its constructor
@@ -1361,7 +1376,7 @@ Wombat.prototype.setLoc = function(loc, originalURL) {
   loc._hostname = parser.hostname;
 
   if (parser.origin) {
-    loc._origin = parser.origin;
+    loc._origin = parser.host ? parser.origin : "null";
   } else {
     loc._origin =
       parser.protocol +
@@ -2710,8 +2725,7 @@ Wombat.prototype.rewriteHTMLAssign = function(thisObj, oSetter, newValue) {
  */
 Wombat.prototype.rewriteEvalArg = function(rawEvalOrWrapper, evalArg) {
   var toBeEvald =
-    this.isString(evalArg) &&
-    evalArg.indexOf('_____WB$wombat$assign$function_____') === -1
+    this.isString(evalArg) && !this.skipWrapScriptTextBasedOnText(evalArg)
       ? this.wrapScriptTextJsProxy(evalArg)
       : evalArg;
   return rawEvalOrWrapper(toBeEvald);
@@ -2853,6 +2867,36 @@ Wombat.prototype.overridePropExtract = function(proto, prop, cond) {
   }
 };
 
+
+/**
+ * Overrides referer -- if top-replay frame, referrer should be "", otherwise extractOriginURL
+ * @param {Object} proto
+ * @param {string} prop
+ * @param {*} [cond]
+ */
+Wombat.prototype.overrideReferrer = function($document) {
+  var orig_getter = this.getOrigGetter($document, "referrer");
+  var wombat = this;
+  if (orig_getter) {
+    var new_getter = function overridePropExtractNewGetter() {
+      var obj = wombat.proxyToObj(this);
+
+      var $win = this.defaultView;
+
+      // if top replay-frame, referrer should always be ""
+      if ($win === $win.__WB_replay_top) {
+        return "";
+      }
+
+      var res = orig_getter.call(obj);
+
+      return wombat.extractOriginalURL(res);
+    };
+    this.defGetterProp($document, "referrer", new_getter);
+  }
+};
+
+
 /**
  * Applies an attribute getter override IFF an original getter exists that
  * ensures that the results of retrieving the attributes value is not a
@@ -2895,8 +2939,7 @@ Wombat.prototype.overrideHistoryFunc = function(funcName) {
     var rewritten_url;
     var resolvedURL;
     if (url) {
-      var parser = historyWin.document.createElement('a');
-      parser.href = url;
+      var parser = wombat._makeURLParser(url, historyWin.document);
       resolvedURL = parser.href;
 
       rewritten_url = wombat.rewriteUrl(resolvedURL);
@@ -3121,6 +3164,28 @@ Wombat.prototype.overrideFramesAccess = function($wbwindow) {
   this.defGetterProp($wbwindow, 'frames', getter);
   this.defGetterProp($wbwindow.Window.prototype, 'frames', getter);
 };
+
+
+Wombat.prototype.overrideSWAccess = function($wbwindow) {
+  if (!$wbwindow.navigator.serviceWorker || !$wbwindow.navigator.serviceWorker.controller) {
+    return;
+  }
+
+  $wbwindow._WB_wombat_sw = $wbwindow.navigator.serviceWorker;
+
+
+  var overrideSW = {
+                  "controller": null,
+                  "ready": Promise.resolve({"unregister": function() {} }),
+                  "register": function() { return Promise.reject(); },
+                  "addEventListener": function() {},
+                  "removeEventListener": function() {},
+                 }
+
+  this.defGetterProp($wbwindow.navigator, "serviceWorker", function() { return overrideSW; });
+}
+
+
 
 /**
  * Overrides the supplied method in order to ensure that the `this` argument
@@ -3824,6 +3889,22 @@ Wombat.prototype.initDateOverride = function(timestamp) {
 
   this.$wbwindow.Date.__WB_timediff = timediff;
 
+  this.$wbwindow.Date.prototype.getTimezoneOffset = function() {
+    return 0;
+  }
+
+  var orig_toString = this.$wbwindow.Date.prototype.toString;
+  this.$wbwindow.Date.prototype.toString = function() {
+    var string = orig_toString.call(this).split(" GMT")[0];
+    return string + " GMT+0000 (Coordinated Universal Time)";
+  }
+
+  var orig_toTimeString = this.$wbwindow.Date.prototype.toTimeString;
+  this.$wbwindow.Date.prototype.toTimeString = function() {
+    var string = orig_toTimeString.call(this).split(" GMT")[0];
+    return string + " GMT+0000 (Coordinated Universal Time)";
+  }
+
   Object.defineProperty(this.$wbwindow.Date.prototype, 'constructor', {
     value: this.$wbwindow.Date
   });
@@ -4368,7 +4449,8 @@ Wombat.prototype.initDocOverrides = function($document) {
   if (!Object.defineProperty) return;
 
   // referrer
-  this.overridePropExtract($document, 'referrer');
+  //this.overridePropExtract($document, 'referrer');
+  this.overrideReferrer($document);
 
   // origin
   this.defGetterProp($document, 'origin', function origin() {
@@ -5854,6 +5936,8 @@ Wombat.prototype.wombatInit = function() {
   this.initTimeoutIntervalOverrides();
 
   this.overrideFramesAccess(this.$wbwindow);
+
+  this.overrideSWAccess(this.$wbwindow);
 
   // setAttribute
   this.initElementGetSetAttributeOverride();
