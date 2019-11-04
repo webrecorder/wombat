@@ -4850,7 +4850,7 @@ Wombat.prototype.initProtoPmOrigin = function(win) {
 };
 
 /**
- * Wrap this object and returns proxy object, if any
+ * Add proxy object globals, assign func and 'this' wrapper, to global Object.prototype
  *
  */
 
@@ -5857,6 +5857,7 @@ Wombat.prototype.wombatInit = function() {
     this.initMessageEventOverride(this.$wbwindow);
   }
 
+  // proxy assign and this check globals
   this.initCheckThisAssignGlobals(this.$wbwindow);
 
   this.initUIEventsOverrides();
