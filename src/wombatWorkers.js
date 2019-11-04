@@ -78,6 +78,11 @@ WBWombat.prototype.ensureURL = function(url, resolveAgainst) {
   if (this.isRelURL(newURL)) {
     return this.maybeResolveURL(newURL, resolveAgainst);
   }
+
+  // if url starts with current origin, but not properly rewritten, rewrite against current baseUr
+  if (newURL.indexOf(self.location.origin) === 0) {
+    return this.maybeResolveURL(newURL.slice(self.location.origin.length), resolveAgainst);
+  }
   return newURL;
 };
 

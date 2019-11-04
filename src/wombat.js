@@ -50,6 +50,9 @@ function Wombat($wbwindow, wbinfo) {
     '*'
   ];
 
+  this.WB_CHECK_THIS_FUNC = '_____WB$wombat$check$this$function_____';
+  this.WB_ASSIGN_FUNC = '_____WB$wombat$assign$function_____';
+
   /** @type {function(qualifiedName: string, value: string): void} */
   this.wb_setAttribute = $wbwindow.Element.prototype.setAttribute;
 
@@ -639,7 +642,7 @@ Wombat.prototype.skipWrapScriptBasedOnType = function(scriptType) {
 Wombat.prototype.skipWrapScriptTextBasedOnText = function(text) {
   if (
     !text ||
-    text.indexOf('_____WB$wombat$assign$function_____') >= 0 ||
+    text.indexOf(this.WB_ASSIGN_FUNC) >= 0 ||
     text.indexOf('<') === 0
   ) {
     return true;
@@ -769,11 +772,7 @@ Wombat.prototype.retrieveWBOSRC = function(elem) {
  */
 Wombat.prototype.wrapScriptTextJsProxy = function(scriptText) {
   return (
-    'var _____WB$wombat$assign$function_____ = function(name) {return (self._wb_wombat && ' +
-    'self._wb_wombat.local_init &&self._wb_wombat.local_init(name)) || self[name]; };\n' +
-    'var _____WB$wombat$check$this$function_____ = function(thisObj) {' +
-    'if (thisObj && thisObj._WB_wombat_obj_proxy) return thisObj._WB_wombat_obj_proxy;' +
-    'return thisObj; }\nif (!self.__WB_pmw) { self.__WB_pmw = function(obj) { ' +
+    'if (!self.__WB_pmw) { self.__WB_pmw = function(obj) { ' +
     'this.__WB_source = obj; return this; } }\n{\n' +
     'let window = _____WB$wombat$assign$function_____("window");\n' +
     'let self = _____WB$wombat$assign$function_____("self");\n' +
@@ -1307,8 +1306,9 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
     case '_WB_wombat_obj_proxy':
       return obj._WB_wombat_obj_proxy;
     case '__WB_pmw':
-      return obj[prop];
     case 'WB_wombat_eval':
+    case this.WB_ASSIGN_FUNC:
+    case this.WB_CHECK_THIS_FUNC:
       return obj[prop];
     case 'constructor':
       // allow tests such as self.constructor === Window to work
@@ -1501,33 +1501,6 @@ Wombat.prototype.styleReplacer = function(match, n1, n2, n3, offset, string) {
   return n1 + this.rewriteUrl(n2) + n3;
 };
 
-/**
- * Simple helper function for ensuring that the server side rewriting
- * injected functions are present in the supplied window.
- *
- * They could be absent due to how certain pages use iframes
- * @param {?Window} win
- */
-Wombat.prototype.ensureServerSideInjectsExistOnWindow = function(win) {
-  if (!win) return;
-  if (typeof win._____WB$wombat$check$this$function_____ !== 'function') {
-    win._____WB$wombat$check$this$function_____ = function(thisObj) {
-      if (thisObj && thisObj._WB_wombat_obj_proxy)
-        return thisObj._WB_wombat_obj_proxy;
-      return thisObj;
-    };
-  }
-  if (typeof win._____WB$wombat$assign$function_____ !== 'function') {
-    win._____WB$wombat$assign$function_____ = function(name) {
-      return (
-        (self._wb_wombat &&
-          self._wb_wombat.local_init &&
-          self._wb_wombat.local_init(name)) ||
-        self[name]
-      );
-    };
-  }
-};
 
 /**
  * Due to the fact that we override specific DOM constructors, e.g. Worker,
@@ -4611,7 +4584,6 @@ Wombat.prototype.initIframeWombat = function(iframe) {
  * @param {string} [src]
  */
 Wombat.prototype.initNewWindowWombat = function(win, src) {
-  this.ensureServerSideInjectsExistOnWindow(win);
   if (!win || win._wb_wombat) return;
   if (
     !src ||
@@ -4632,6 +4604,7 @@ Wombat.prototype.initNewWindowWombat = function(win, src) {
     this.initProtoPmOrigin(win);
     this.initPostMessageOverride(win);
     this.initMessageEventOverride(win);
+    this.initCheckThisAssignGlobals(win);
   }
 };
 
@@ -4875,6 +4848,37 @@ Wombat.prototype.initProtoPmOrigin = function(win) {
     }
   };
 };
+
+/**
+ * Add proxy object globals, assign func and 'this' wrapper, to global Object.prototype
+ *
+ */
+
+Wombat.prototype.initCheckThisAssignGlobals = function(win) {
+  try {
+    win.Object.defineProperty(win.Object.prototype, this.WB_CHECK_THIS_FUNC, {
+      configutable: false,
+      enumerable: false,
+      value: function(thisObj) {
+        return (thisObj && thisObj._WB_wombat_obj_proxy ? thisObj._WB_wombat_obj_proxy : thisObj);
+      },
+    });
+
+    win.Object.defineProperty(win.Object.prototype, this.WB_ASSIGN_FUNC, {
+      configutable: false,
+      enumerable: false,
+      value: function(name) {
+        return (self._wb_wombat &&
+            self._wb_wombat.local_init &&
+            self._wb_wombat.local_init(name)) ||
+          self[name];
+      },
+    });
+
+  } catch(e) {
+    console.warn(e);
+  }
+}
 
 /**
  * Adds listeners for `message` and `hashchange` to window of the browser context wombat is in
@@ -5852,6 +5856,9 @@ Wombat.prototype.wombatInit = function() {
     this.initPostMessageOverride(this.$wbwindow);
     this.initMessageEventOverride(this.$wbwindow);
   }
+
+  // proxy assign and this check globals
+  this.initCheckThisAssignGlobals(this.$wbwindow);
 
   this.initUIEventsOverrides();
 
