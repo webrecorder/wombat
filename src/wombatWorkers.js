@@ -78,6 +78,9 @@ WBWombat.prototype.ensureURL = function(url, resolveAgainst) {
   if (this.isRelURL(newURL)) {
     return this.maybeResolveURL(newURL, resolveAgainst);
   }
+  if (newURL.startsWith(self.location.origin)) {
+    return this.maybeResolveURL(newURL.slice(self.location.origin.length), resolveAgainst);
+  }
   return newURL;
 };
 
