@@ -4604,7 +4604,7 @@ Wombat.prototype.initNewWindowWombat = function(win, src) {
     this.initProtoPmOrigin(win);
     this.initPostMessageOverride(win);
     this.initMessageEventOverride(win);
-    this.initCheckThisAssignGlobals(win);
+    this.initCheckThisFunc(win);
   }
 };
 
@@ -4854,30 +4854,18 @@ Wombat.prototype.initProtoPmOrigin = function(win) {
  *
  */
 
-Wombat.prototype.initCheckThisAssignGlobals = function(win) {
+Wombat.prototype.initCheckThisFunc = function(win) {
   try {
-    win.Object.defineProperty(win.Object.prototype, this.WB_CHECK_THIS_FUNC, {
-      configutable: false,
-      enumerable: false,
-      value: function(thisObj) {
-        return (thisObj && thisObj._WB_wombat_obj_proxy ? thisObj._WB_wombat_obj_proxy : thisObj);
-      },
-    });
-
-    win.Object.defineProperty(win.Object.prototype, this.WB_ASSIGN_FUNC, {
-      configutable: false,
-      enumerable: false,
-      value: function(name) {
-        return (self._wb_wombat &&
-            self._wb_wombat.local_init &&
-            self._wb_wombat.local_init(name)) ||
-          self[name];
-      },
-    });
-
-  } catch(e) {
-    console.warn(e);
-  }
+    if (!win.Object.prototype[this.WB_CHECK_THIS_FUNC]) {
+      win.Object.defineProperty(win.Object.prototype, this.WB_CHECK_THIS_FUNC, {
+        configutable: false,
+        enumerable: false,
+        value: function(thisObj) {
+          return (thisObj && thisObj._WB_wombat_obj_proxy ? thisObj._WB_wombat_obj_proxy : thisObj);
+        },
+      });
+    }
+  } catch(e) {}
 }
 
 /**
@@ -5857,8 +5845,8 @@ Wombat.prototype.wombatInit = function() {
     this.initMessageEventOverride(this.$wbwindow);
   }
 
-  // proxy assign and this check globals
-  this.initCheckThisAssignGlobals(this.$wbwindow);
+  // proxy check this func
+  this.initCheckThisFunc(this.$wbwindow);
 
   this.initUIEventsOverrides();
 
