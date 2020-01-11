@@ -71,7 +71,7 @@ async function initServer() {
           .type('application/javascript; charset=UTF-8')
           .header(
             'Service-Worker-Allowed',
-            `${address}/live/20180803160549mp_/https://tests.wombat.io/`
+            `http://localhost:${port}/live/20180803160549mp_/https://tests.wombat.io/`
           )
           .send('console.log("hi")');
       }
