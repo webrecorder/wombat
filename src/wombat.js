@@ -2292,7 +2292,7 @@ Wombat.prototype.rewriteHtml = function(string, checkEndTag) {
         var end_tag = '</' + first_elem.tagName.toLowerCase() + '>';
         if (
           this.endsWith(new_html, end_tag) &&
-          !this.endsWith(rwString, end_tag)
+          !this.endsWith(rwString.toLowerCase(), end_tag)
         ) {
           new_html = new_html.substring(0, new_html.length - end_tag.length);
         }
@@ -2346,7 +2346,7 @@ Wombat.prototype.rewriteHtmlFull = function(string, checkEndTag) {
           var end_tag = '</' + inner_doc.all[3].tagName.toLowerCase() + '>';
           if (
             this.endsWith(new_html, end_tag) &&
-            !this.endsWith(string, end_tag)
+            !this.endsWith(string.toLowerCase(), end_tag)
           ) {
             new_html = new_html.substring(0, new_html.length - end_tag.length);
           }
