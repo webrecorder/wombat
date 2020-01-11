@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs-extra');
 const createServer = require('fastify');
 
-const host = '127.0.0.1';
+const host = 'localhost';
 const port = 3030;
 const gracefullShutdownTimeout = 50000;
 const shutdownOnSignals = ['SIGINT', 'SIGTERM', 'SIGHUP'];
