@@ -4869,6 +4869,43 @@ Wombat.prototype.initCheckThisFunc = function(win) {
 }
 
 /**
+ * Override Object.getOwnPropertyNames() to filter out special wombat-added properties
+ *
+ */
+
+Wombat.prototype.overrideGetOwnPropertyNames = function(win) {
+  var orig_getOwnPropertyNames = win.Object.getOwnPropertyNames;
+
+  var removeProps = [
+    this.WB_CHECK_THIS_FUNC,
+    "WB_wombat_location",
+    "__WB_pmw",
+    "WB_wombat_top",
+    "WB_wombat_eval",
+    "WB_wombat_runEval"
+  ];
+
+  try {
+    win.Object.defineProperty(win.Object, "getOwnPropertyNames", {
+      value: function(object) {
+        var props = orig_getOwnPropertyNames(object);
+
+        for (var i = 0; i < removeProps.length; i++) {
+          var foundInx = props.indexOf(removeProps[i]);
+          if (foundInx >= 0) {
+            props.splice(foundInx, 1);
+          }
+        }
+
+        return props;
+      }
+    });
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+/**
  * Adds listeners for `message` and `hashchange` to window of the browser context wombat is in
  * in order to ensure that actual top (archive top frame containing the replay iframe)
  * browser history is updated IFF the history manipulation happens in the replay top
@@ -5847,6 +5884,10 @@ Wombat.prototype.wombatInit = function() {
 
   // proxy check this func
   this.initCheckThisFunc(this.$wbwindow);
+
+  // override getOwnPropertyNames
+  this.overrideGetOwnPropertyNames(this.$wbwindow);
+
 
   this.initUIEventsOverrides();
 
