@@ -5290,7 +5290,11 @@ Wombat.prototype.initBeaconOverride = function() {
   var orig_sendBeacon = this.$wbwindow.navigator.sendBeacon;
   var wombat = this;
   this.$wbwindow.navigator.sendBeacon = function sendBeacon(url, data) {
-    return orig_sendBeacon.call(this, wombat.rewriteUrl(url), data);
+    try {
+      return orig_sendBeacon.call(this, wombat.rewriteUrl(url), data);
+    } catch(e) {
+      return true;
+    }
   };
 };
 
@@ -5441,6 +5445,71 @@ Wombat.prototype.initStorageOverride = function() {
   this.$wbwindow.Storage = Storage;
   ThrowExceptions.yes = true;
 };
+
+
+Wombat.prototype.initCachesOverride = function() {
+  if (!this.$wbwindow.CacheStorage) {
+    return;
+  }
+
+  // disable access to extension apis
+  this.$wbwindow.chrome = undefined;
+
+  var proto = this.$wbwindow.CacheStorage.prototype;
+
+  var prefix = "wb-" + this.wb_orig_origin + "-";
+
+  var orig_open = proto.open;
+  proto.open = function(cacheName) {
+    return orig_open.call(this, prefix + cacheName);
+  }
+
+  var orig_has = proto.has;
+  proto.has = function(cacheName) {
+    return orig_has.call(this, prefix + cacheName);
+  }
+
+  var orig_delete = proto.delete;
+  proto.delete = function(cacheName) {
+    return orig_delete.call(this, prefix + cacheName);
+  }
+
+  var orig_keys = proto.keys;
+  proto.keys = function() {
+    var func = this;
+    return new Promise(function (resolve, reject) {
+      orig_keys.call(func).then(function(keyList) {
+        var keys = [];
+        for (var i = 0; i < keyList.length; i++) {
+          if (keyList[i].indexOf(prefix) === 0) {
+            keys.push(keyList[i].substring(prefix.length));
+          }
+        }
+        resolve(keys);
+      }).catch(function(err) { reject(err); });
+    });
+  }
+
+  var orig_match = proto.match;
+  proto.match = function match(request, opts) {
+    var caches = this;
+
+    return this.keys().then(function(cacheNames) {
+      var match;
+
+      return cacheNames.reduce(function(chain, cacheName) {
+        return chain.then(function() {
+          return match || caches.open(cacheName).then(function(cache) {
+            return cache.match(request, opts);
+          }).then(function(response) {
+            match = response;
+            return match;
+          });
+        });
+      }, Promise.resolve());
+    });
+  };
+}
 
 /**
  * Initializes the wombat window JS Proxy object IFF JS Proxies are available.
@@ -5866,6 +5935,13 @@ Wombat.prototype.wombatInit = function() {
   // wombat init
   this._internalInit();
 
+  if (this.wb_info.presetCookie) {
+    var splitCookies = this.wb_info.presetCookie.split(";");
+    for (var i = 0; i < splitCookies.length; i++) {
+      this.$wbwindow.document.cookie = splitCookies[i].trim();
+    }
+  }
+
   // History
   this.initHistoryOverrides();
 
@@ -6025,6 +6101,9 @@ Wombat.prototype.wombatInit = function() {
 
   // custom storage
   this.initStorageOverride();
+
+  // wrap caches to ensure only host sandboxed caches are available
+  this.initCachesOverride();
 
   // add window and document obj proxies, if available
   this.initWindowObjProxy(this.$wbwindow);
