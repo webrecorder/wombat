@@ -5447,6 +5447,42 @@ Wombat.prototype.initStorageOverride = function() {
 };
 
 
+Wombat.prototype.initIndexedDBOverride = function() {
+  if (!this.$wbwindow.IDBFactory) {
+    return;
+  }
+
+  var proto = this.$wbwindow.IDBFactory.prototype;
+
+  var prefix = "wb-" + this.wb_orig_origin + "-";
+
+  var orig_open = proto.open;
+  proto.open = function(dbName, version) {
+    return orig_open.call(this, prefix + dbName, version);
+  }
+
+  var orig_delete = proto.deleteDatabase;
+  proto.delete = function(dbName) {
+    return orig_delete.call(this, prefix + dbName, options);
+  }
+
+  var orig_databases = proto.databases;
+  proto.databases = function() {
+    var func = this;
+    return new Promise(function (resolve, reject) {
+      orig_databases.call(func).then(function(dbList) {
+        var keys = [];
+        for (var i = 0; i < dbList.length; i++) {
+          if (dbList[i].name.indexOf(prefix) === 0) {
+            keys.push({name: dbList[i].name.substring(prefix.length), version: dbList[i].version});
+          }
+        }
+        resolve(keys);
+      }).catch(function(err) { reject(err); });
+    });
+  }
+}
+
 Wombat.prototype.initCachesOverride = function() {
   if (!this.$wbwindow.CacheStorage) {
     return;
@@ -6104,6 +6140,9 @@ Wombat.prototype.wombatInit = function() {
 
   // wrap caches to ensure only host sandboxed caches are available
   this.initCachesOverride();
+
+  // wraps indexeddb access to ensure only host sandboxed dbs are available
+  this.initIndexedDBOverride();
 
   // add window and document obj proxies, if available
   this.initWindowObjProxy(this.$wbwindow);
