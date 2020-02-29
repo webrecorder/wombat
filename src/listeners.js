@@ -22,6 +22,19 @@ export function wrapSameOriginEventListener(origListener, win) {
  * @return {Function}
  */
 export function wrapEventListener(origListener, obj, wombat) {
+  var origListenerFunc;
+
+  // if a function, just use that
+  if (typeof(origListener) === "function") {
+    origListenerFunc = origListener;
+  // if an EventHandler object, use its handleEvent() bound method
+  } else if (typeof(origListener) === "object") {
+    origListenerFunc = origListener.handleEvent.bind(origListener);
+  // else do nothing!
+  } else {
+    origListenerFunc = function() {}
+  }
+
   return function wrappedEventListener(event) {
     var ne;
 
@@ -71,6 +84,6 @@ export function wrapEventListener(origListener, obj, wombat) {
       ne = event;
     }
 
-    return origListener(ne);
+    return origListenerFunc(ne);
   };
 }
