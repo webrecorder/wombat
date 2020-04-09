@@ -49,6 +49,9 @@ function Wombat($wbwindow, wbinfo) {
     '{',
     '*'
   ];
+  if ('ignore_prefixes' in wbinfo) {
+    this.IGNORE_PREFIXES = this.IGNORE_PREFIXES.concat(wbinfo.ignore_prefixes);
+  }
 
   this.WB_CHECK_THIS_FUNC = '_____WB$wombat$check$this$function_____';
   this.WB_ASSIGN_FUNC = '_____WB$wombat$assign$function_____';
