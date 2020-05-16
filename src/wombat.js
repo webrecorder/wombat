@@ -547,7 +547,10 @@ Wombat.prototype.deproxyArrayHandlingArgumentsObj = function(
     ? new Array(maybeArgumentsObj.length)
     : maybeArgumentsObj;
   for (var i = 0; i < maybeArgumentsObj.length; ++i) {
-    args[i] = this.proxyToObj(maybeArgumentsObj[i]);
+    const res = this.proxyToObj(maybeArgumentsObj[i]);
+    if (res !== args[i]) {
+      args[i] = res;
+    }
   }
   return args;
 };
@@ -1586,6 +1589,7 @@ Wombat.prototype.rewriteNodeFuncArgs = function(
   }
   var created = originalFn.call(fnThis, newNode, oldNode);
   if (created && created.tagName === 'IFRAME') {
+    created.allow = "autoplay 'self'; fullscreen 'self'";
     this.initIframeWombat(created);
   }
   return created;
@@ -2664,7 +2668,7 @@ Wombat.prototype.rewriteSetTimeoutInterval = function(
 Wombat.prototype.rewriteHTMLAssign = function(thisObj, oSetter, newValue) {
   var res = newValue;
   var tagName = thisObj.tagName;
-  if (!thisObj._no_rewrite) {
+  if (!thisObj._no_rewrite && !(thisObj instanceof this.$wbwindow.HTMLTemplateElement)) {
     if (tagName === 'STYLE') {
       res = this.rewriteStyle(newValue);
     } else {
