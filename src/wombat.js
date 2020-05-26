@@ -1536,22 +1536,22 @@ Wombat.prototype.domConstructorErrorChecker = function(
   numRequiredArgs
 ) {
   var needArgs = typeof numRequiredArgs === 'number' ? numRequiredArgs : 1;
-  var erorMsg;
+  var errorMsg;
   if (thisObj instanceof Window) {
-    erorMsg =
+    errorMsg =
       "Failed to construct '" +
       what +
       "': Please use the 'new' operator, this DOM object constructor cannot be called as a function.";
   } else if (args && args.length < needArgs) {
-    erorMsg =
+    errorMsg =
       "Failed to construct '" +
       what +
       "': " +
       needArgs +
       ' argument required, but only 0 present.';
   }
-  if (erorMsg) {
-    throw new TypeError(erorMsg);
+  if (errorMsg) {
+    throw new TypeError(errorMsg);
   }
 };
 

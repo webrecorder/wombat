@@ -362,7 +362,7 @@ WBWombat.prototype.initClientApisOverride = function() {
 };
 
 /**
- * Applies overrides to the CachStorage and Cache interfaces in order
+ * Applies overrides to the CacheStorage and Cache interfaces in order
  * to rewrite the URLs they operate on
  * @see https://w3c.github.io/ServiceWorker/#cachestorage
  * @see https://w3c.github.io/ServiceWorker/#cache-interface
