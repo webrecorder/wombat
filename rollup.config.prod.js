@@ -2,23 +2,26 @@ import * as path from 'path';
 import minify from 'rollup-plugin-babel-minify';
 
 const license = `/*
-Copyright(c) 2013-2018 Rhizome and Contributors. Released under the GNU General Public License.
+Wombat.js client-side rewriting engine for web archive replay
+Copyright (C) 2014-2020 Webrecorder Software, Rhizome, and Contributors. Released under the GNU Affero General Public License.
 
-This file is part of pywb, https://github.com/webrecorder/pywb
+This file is part of wombat.js, see https://github.com/webrecorder/wombat.js for the full source
+Wombat.js is part of the Webrecorder project (https://github.com/webrecorder)
 
-pywb is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-pywb is distributed in the hope that it will be useful,
+This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with pywb.  If not, see <http://www.gnu.org/licenses/>.
- */`;
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */`
+
 
 const outputDir = process.env.OUTPUT_DIR || path.join(__dirname, 'dist');
 

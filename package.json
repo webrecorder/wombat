@@ -3,6 +3,8 @@
   "version": "3.0.0",
   "main": "index.js",
   "license": "AGPL-3.0-or-later",
+  "author": "Ilya Kreymer, Webrecorder Software",
+  "contributors": ["Ilya Kreymer <ikreymer@gmail.com>", "John Berlin <n0tan3rd@gmail.com>"],
   "devDependencies": {
     "@types/fs-extra": "^8.0.0",
     "ava": "^2.3.0",
