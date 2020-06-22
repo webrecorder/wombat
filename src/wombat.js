@@ -2139,6 +2139,22 @@ Wombat.prototype.rewriteElem = function(elem) {
         }
         break;
       case 'OBJECT':
+        if (elem.parentElement && elem.getAttribute('type') === "application/pdf") {
+          var iframe = this.$wbwindow.document.createElement("IFRAME");
+          for (var i = 0; i < elem.attributes.length; i++) {
+            var attr = elem.attributes[i];
+            var name = attr.name;
+            if (name === "data") {
+              name = "src";
+            }
+            this.wb_setAttribute.call(iframe, name, attr.value);
+          }
+
+          elem.parentElement.replaceChild(iframe, elem);
+          changed = true;
+          break;
+        }
+
         changed = this.rewriteAttr(elem, 'data', true);
         changed = this.rewriteAttr(elem, 'style') || changed;
         break;
