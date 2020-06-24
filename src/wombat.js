@@ -2139,7 +2139,7 @@ Wombat.prototype.rewriteElem = function(elem) {
         }
         break;
       case 'OBJECT':
-        if (elem.parentElement && elem.getAttribute('type') === "application/pdf") {
+        if (this.wb_info.isSW && elem.parentElement && elem.getAttribute('type') === "application/pdf") {
           var iframe = this.$wbwindow.document.createElement("IFRAME");
           for (var i = 0; i < elem.attributes.length; i++) {
             var attr = elem.attributes[i];
@@ -2164,6 +2164,16 @@ Wombat.prototype.rewriteElem = function(elem) {
         changed = this.rewriteAttr(elem, 'style') || changed;
         break;
       case 'IFRAME':
+        changed = this.rewriteFrameSrc(elem, 'src');
+        if (this.wb_info.isSW && !changed) {
+          var srcdoc = elem.getAttribute("srcdoc");
+          if (srcdoc) {
+            elem.removeAttribute("srcdoc");
+            elem.src = this.wb_info.prefix + this.wb_info.timestamp + "id_/srcdoc:" + btoa(encodeURIComponent(srcdoc));
+          }
+        }
+        changed = this.rewriteAttr(elem, 'style') || changed;
+        break;
       case 'FRAME':
         changed = this.rewriteFrameSrc(elem, 'src');
         changed = this.rewriteAttr(elem, 'style') || changed;
