@@ -1698,6 +1698,10 @@ Wombat.prototype.rewriteUrl_ = function(originalURL, useRel, mod, doc) {
   // just in case _wombat reference made it into url!
   url = url.replace('WB_wombat_', '');
 
+  if (mod === "if_" && this.wb_info.isSW && this.startsWith(url, "blob:")) {
+    return this.wb_info.prefix + this.wb_info.timestamp + "if_/" + url;
+  }
+
   // ignore anchors, about, data
   if (this.startsWithOneOf(url.toLowerCase(), this.IGNORE_PREFIXES)) {
     return url;
@@ -3918,6 +3922,35 @@ Wombat.prototype.initDateOverride = function(timestamp) {
   });
 };
 
+
+Wombat.prototype.initBlobOverride = function() {
+  // don't use for SW replay as blob: iframes won't have access to SW
+  if (!this.$wbwindow.Blob || this.wb_info.isSW) {
+    return;
+  }
+
+  var orig_blob = this.$wbwindow.Blob;
+
+  var wombat = this;
+
+  this.$wbwindow.Blob = (function(Blob_) {
+    return function Blob(array, options) {
+
+      if (options && options.type === "application/xhtml+xml" || options.type === "text/html") {
+        // for now, just handle single string case
+        if (array.length === 1 && typeof(array[0]) === "string" && wombat.startsWith(array[0], "<!DOCTYPE html>")) {
+          array[0] = wombat.rewriteHtml(array[0]);
+          options.type = "text/html";
+        }
+      }
+
+      return new Blob_(array, options);
+    }
+  })(this.$wbwindow.Blob);
+
+  this.$wbwindow.Blob.prototype = orig_blob.prototype;
+}
+ 
 /**
  * Applies an override to the document.title property in order to ensure
  * that actual top (archive top frame containing the replay iframe) receives
@@ -6163,6 +6196,9 @@ Wombat.prototype.wombatInit = function() {
 
   // Date
   this.initDateOverride(this.wb_info.wombat_sec);
+
+  // Blob
+  this.initBlobOverride();
 
   // open
   this.initOpenOverride();
