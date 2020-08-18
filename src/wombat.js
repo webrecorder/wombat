@@ -1318,6 +1318,10 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
     case this.WB_ASSIGN_FUNC:
     case this.WB_CHECK_THIS_FUNC:
       return obj[prop];
+
+    case 'origin':
+      return obj.WB_wombat_location.origin;
+
     case 'constructor':
       // allow tests such as self.constructor === Window to work
       // you can't create a new instance of window using its constructor
@@ -3272,12 +3276,11 @@ Wombat.prototype.overrideFunctionApply = function($wbwindow) {
   $wbwindow.Function.prototype.__WB_orig_apply = orig_apply;
   var wombat = this;
   $wbwindow.Function.prototype.apply = function apply(obj, args) {
-    var deproxiedObj = wombat.proxyToObj(obj);
-    var newArgs = args;
     if (wombat.isNativeFunction(this)) {
-      newArgs = wombat.deproxyArrayHandlingArgumentsObj(args);
+      obj = wombat.proxyToObj(obj);
+      args = wombat.deproxyArrayHandlingArgumentsObj(args);
     }
-    return this.__WB_orig_apply(deproxiedObj, newArgs);
+    return this.__WB_orig_apply(obj, args);
   };
   this.wb_funToString.apply = orig_apply;
 };
@@ -5557,7 +5560,9 @@ Wombat.prototype.initCachesOverride = function() {
   }
 
   // disable access to extension apis
-  this.$wbwindow.chrome = undefined;
+  if (this.$wbwindow.chrome) {
+    this.$wbwindow.chrome = {};
+  }
 
   var proto = this.$wbwindow.CacheStorage.prototype;
 
@@ -5646,6 +5651,7 @@ Wombat.prototype.initWindowObjProxy = function($wbwindow) {
 
             // default to replay-top object proxy if all else fails
             return wombat.$wbwindow.WB_wombat_top._WB_wombat_obj_proxy;
+
         }
         return wombat.defaultProxyGet($wbwindow, prop, ownProps, funCache);
       },
