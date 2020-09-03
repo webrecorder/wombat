@@ -1435,6 +1435,10 @@ Wombat.prototype.makeGetLocProp = function(prop, origGetter) {
       return wombat.extractOriginalURL(curr_orig_href);
     }
 
+    if (prop === 'ancestorOrigins') {
+      return [];
+    }
+
     if (this._orig_href !== curr_orig_href) {
       wombat.setLoc(this, curr_orig_href);
     }
@@ -3284,6 +3288,27 @@ Wombat.prototype.overrideFunctionApply = function($wbwindow) {
   };
   this.wb_funToString.apply = orig_apply;
 };
+
+
+/**
+ * Override Function.prototype.bind to deproxy the param target
+ * in case of native functions
+ *
+ */
+Wombat.prototype.overrideFunctionBind = function($wbwindow) {
+  if ($wbwindow.Function.prototype.__WB_orig_bind) {
+    return;
+  }
+  var orig_bind = $wbwindow.Function.prototype.bind;
+  $wbwindow.Function.prototype.__WB_orig_bind = orig_bind;
+  var wombat = this;
+  $wbwindow.Function.prototype.bind = function bind(obj) {
+    return this.__WB_orig_bind.apply(this, arguments);
+  };
+};
+
+
+
 
 /**
  * Overrides the getter and setter functions for the `srcset` property
@@ -6056,6 +6081,7 @@ Wombat.prototype.wombatInit = function() {
   this.initHistoryOverrides();
 
   this.overrideFunctionApply(this.$wbwindow);
+  this.overrideFunctionBind(this.$wbwindow);
 
   // Doc Title
   this.initDocTitleOverride();
