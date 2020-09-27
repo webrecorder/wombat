@@ -2188,7 +2188,7 @@ Wombat.prototype.rewriteElem = function(elem) {
           } else {
             var src = elem.getAttribute("src");
             if (!src || src === "about:blank") {
-              elem.src = this.wb_info.prefix + this.wb_info.timestamp + "mp_/" + about:blank";
+              elem.src = this.wb_info.prefix + this.wb_info.timestamp + "mp_/about:blank";
             }
           }
         }
