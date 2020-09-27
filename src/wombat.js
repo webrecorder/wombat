@@ -932,6 +932,9 @@ Wombat.prototype.extractOriginalURL = function(rewrittenUrl) {
   if (index < 0) {
     index = url.indexOf('/blob:', start);
   }
+  if (index < 0) {
+    index = url.indexOf('/about:blank', start);
+  }
 
   // extract original url from wburl
   if (index >= 0) {
@@ -2182,6 +2185,11 @@ Wombat.prototype.rewriteElem = function(elem) {
           if (srcdoc) {
             elem.removeAttribute("srcdoc");
             elem.src = this.wb_info.prefix + this.wb_info.timestamp + "id_/srcdoc:" + btoa(encodeURIComponent(srcdoc));
+          } else {
+            var src = elem.getAttribute("src");
+            if (!src || src === "about:blank") {
+              elem.src = this.wb_info.prefix + this.wb_info.timestamp + "mp_/about:blank";
+            }
           }
         }
         changed = this.rewriteAttr(elem, 'style') || changed;
