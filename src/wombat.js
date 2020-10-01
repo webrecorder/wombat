@@ -2188,6 +2188,9 @@ Wombat.prototype.rewriteElem = function(elem) {
           } else {
             var src = elem.getAttribute("src");
             if (!src || src === "about:blank") {
+              if (!src) {
+                elem.__WB_blank = true;
+              }
               elem.src = this.wb_info.prefix + this.wb_info.timestamp + "mp_/about:blank";
             }
           }
@@ -2867,7 +2870,10 @@ Wombat.prototype.overrideAttr = function(obj, attr, mod) {
     } else if (wombat.wb_getAttribute) {
       res = wombat.wb_getAttribute.call(this, attr);
     }
-    return wombat.extractOriginalURL(res);
+    res = wombat.extractOriginalURL(res);
+    if (this.__WB_blank && res === "about:blank") {
+      return "";
+    }
   };
 
   this.defProp(obj, attr, setter, getter);
