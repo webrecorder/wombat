@@ -2882,6 +2882,7 @@ Wombat.prototype.overrideAttr = function(obj, attr, mod) {
     if (this.__WB_blank && res === "about:blank") {
       return "";
     }
+    return res;
   };
 
   this.defProp(obj, attr, setter, getter);
