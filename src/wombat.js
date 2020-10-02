@@ -256,6 +256,9 @@ function Wombat($wbwindow, wbinfo) {
   this.FullHTMLRegex = /^\s*<(?:html|head|body|!doctype html)/i;
 
   /** @type {RegExp} */
+  this.IsTagRegex = /^\s*</;
+
+  /** @type {RegExp} */
   this.DotPostMessageRe = /(.postMessage\s*\()/;
 
   /** @type {RegExp} */
@@ -2720,13 +2723,16 @@ Wombat.prototype.rewriteHTMLAssign = function(thisObj, oSetter, newValue) {
   if (!thisObj._no_rewrite && !(thisObj instanceof this.$wbwindow.HTMLTemplateElement)) {
     if (tagName === 'STYLE') {
       res = this.rewriteStyle(newValue);
-    } else {
-      res = this.rewriteHtml(newValue);
-      if (tagName === 'SCRIPT' && res === newValue) {
-        // script tags are used to hold HTML for later use
-        // so we let the rewriteHtml function go first
-        // however in this case inner or outer html was
-        // used to populate a script tag with some JS
+    } else if (tagName === "SCRIPT") {
+      // script tags are used to hold HTML for later use
+      // check if this contains tags or a script
+
+      if (newValue && this.IsTagRegex.test(newValue)) {
+        res = this.rewriteHtml(newValue);
+      }
+
+      // likely actual JS, not tags
+      if (res === newValue) {
         if (
           !this.skipWrapScriptBasedOnType(thisObj.type) &&
           !this.skipWrapScriptTextBasedOnText(newValue)
@@ -2734,6 +2740,8 @@ Wombat.prototype.rewriteHTMLAssign = function(thisObj, oSetter, newValue) {
           res = this.wrapScriptTextJsProxy(res);
         }
       }
+    } else {
+      res = this.rewriteHtml(newValue);
     }
   }
   oSetter.call(thisObj, res);
