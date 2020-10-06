@@ -61,6 +61,13 @@ WombatLocation.prototype.replace = function replace(url) {
   if (orig === this.href) {
     return orig;
   }
+  // Fix relative URLs like "/example.html"
+  if (new_url.length > 1 && new_url.charAt(0) === '/' &&
+      new_url.charAt(1) !== '/' &&
+      new_url.indexOf(this.wombat.wb_info.prefix) !== 0) {
+    new_url = this.wombat.wb_info.prefix + this.wombat.wb_info.timestamp + "/" +
+      this.wombat.resolveRelUrl(new_url, this.ownerDocument);
+  }
   return this._orig_loc.replace(new_url);
 };
 
@@ -74,6 +81,13 @@ WombatLocation.prototype.assign = function assign(url) {
   var orig = this.wombat.extractOriginalURL(new_url);
   if (orig === this.href) {
     return orig;
+  }
+  // Fix relative URLs like "/example.html"
+  if (new_url.length > 1 && new_url.charAt(0) === '/' &&
+      new_url.charAt(1) !== '/' &&
+      new_url.indexOf(this.wombat.wb_info.prefix) !== 0) {
+    new_url = this.wombat.wb_info.prefix + this.wombat.wb_info.timestamp + "/" +
+      this.wombat.resolveRelUrl(new_url, this.ownerDocument);
   }
   return this._orig_loc.assign(new_url);
 };
