@@ -296,7 +296,8 @@ function Wombat($wbwindow, wbinfo) {
     // or function is hence Objects native toString
     objToString: Object.prototype.toString,
     wbSheetMediaQChecker: null,
-    XHRopen: null
+    XHRopen: null,
+    XHRsend: null
   };
   /**
    * @type {{yesNo: boolean, added: boolean}}
@@ -2526,7 +2527,7 @@ Wombat.prototype.rewriteWorker = function(workerUrl) {
     var x = new XMLHttpRequest();
     // use sync ajax request to get the contents, remove postMessage() rewriting
     this.utilFns.XHRopen.call(x, 'GET', workerUrl, false);
-    x.send();
+    this.utilFns.XHRsend.call(x);
     workerCode = x.responseText
       .replace(this.workerBlobRe, '')
       // resolving blobs hit our sever side rewriting so we gotta
@@ -4159,6 +4160,7 @@ Wombat.prototype.initHTTPOverrides = function() {
     if (this.$wbwindow.XMLHttpRequest.prototype.open) {
       var origXMLHttpOpen = this.$wbwindow.XMLHttpRequest.prototype.open;
       this.utilFns.XHRopen = origXMLHttpOpen;
+      this.utilFns.XHRsend = this.$wbwindow.XMLHttpRequest.prototype.send;
       this.$wbwindow.XMLHttpRequest.prototype.open = function open(
         method,
         url,
@@ -4188,6 +4190,8 @@ Wombat.prototype.initHTTPOverrides = function() {
     var origOpen = this.$wbwindow.XMLHttpRequest.prototype.open;
     var origSetRequestHeader = this.$wbwindow.XMLHttpRequest.prototype.setRequestHeader;
     var origSend = this.$wbwindow.XMLHttpRequest.prototype.send;
+    this.utilFns.XHRopen = origOpen;
+    this.utilFns.XHRsend = origSend;
 
     this.$wbwindow.XMLHttpRequest.prototype.open = function() {
       this.__WB_xhr_open_arguments = arguments;
