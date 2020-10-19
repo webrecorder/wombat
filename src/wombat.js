@@ -4207,7 +4207,7 @@ Wombat.prototype.initHTTPOverrides = function() {
       if (init_opts.credentials === undefined) {
         try {
           init_opts.credentials = 'include';
-        } catch() {}
+        } catch(e) {}
       }
 
       return orig_fetch.call(wombat.proxyToObj(this), rwInput, init_opts);
