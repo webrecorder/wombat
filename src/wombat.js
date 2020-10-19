@@ -4194,15 +4194,21 @@ Wombat.prototype.initHTTPOverrides = function() {
       } else if (inputType === 'object' && input.url) {
         var new_url = wombat.rewriteUrl(input.url);
         if (new_url !== input.url) {
-          rwInput = new Request(new_url, input);
+          rwInput = new Request(new_url, init_opts);
         }
       } else if (inputType === 'object' && input.href) {
         // it is likely that input is either window.location or window.URL
         rwInput = wombat.rewriteUrl(input.href);
       }
 
-      init_opts = init_opts || {};
-      init_opts['credentials'] = 'include';
+      if (!init_opts) {
+        init_opts = {};
+      }
+      if (init_opts.credentials === undefined) {
+        try {
+          init_opts.credentials = 'include';
+        } catch(e) {}
+      }
 
       return orig_fetch.call(wombat.proxyToObj(this), rwInput, init_opts);
     };
