@@ -4624,7 +4624,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
       // https://html.spec.whatwg.org/multipage/dynamic-markup-insertion.html#dom-document-open-window
       var rwUrl = wombat.rewriteUrl(arguments[0], false, 'mp_');
       res = orig_doc_open.call(thisObj, rwUrl, arguments[1], arguments[2]);
-      wombat.initNewWindowWombat(res, rwUrl);
+      wombat.initNewWindowWombat(res, arguments[0]);
     } else {
       res = orig_doc_open.call(thisObj);
       wombat.initNewWindowWombat(thisObj.defaultView);
@@ -4696,8 +4696,8 @@ Wombat.prototype.initIframeWombat = function(iframe) {
     return;
   }
 
-  // var src = iframe.src;
-  var src = this.wb_getAttribute.call(iframe, 'src');
+  var src = iframe.src;
+  //var src = this.wb_getAttribute.call(iframe, 'src');
 
   this.initNewWindowWombat(win, src);
 };
@@ -4706,15 +4706,14 @@ Wombat.prototype.initIframeWombat = function(iframe) {
  * Initializes wombat in the supplied window IFF the src URL of the window is
  * not the empty string, about:blank, or a "javascript:" URL
  * @param {Window} win
- * @param {string} [src]
+ * @param {string} [src] unrewritten url
  */
 Wombat.prototype.initNewWindowWombat = function(win, src) {
   if (!win || win._wb_wombat) return;
   if (
     !src ||
     src === '' ||
-    this.startsWith(src, 'about:') ||
-    src.indexOf('javascript:') >= 0
+    this.startsWithOneOf(src, ["about:blank", "javascript:"])
   ) {
     // win._WBWombat = wombat_internal(win);
     // win._wb_wombat = new win._WBWombat(wb_info);
@@ -5304,7 +5303,7 @@ Wombat.prototype.initOpenOverride = function() {
       strWindowName,
       strWindowFeatures
     );
-    wombat.initNewWindowWombat(res, rwStrUrl);
+    wombat.initNewWindowWombat(res, strUrl);
     return res;
   };
 
