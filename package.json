@@ -1,5 +1,5 @@
 {
-  "name": "wombat",
+  "name": "@webrecorder/wombat",
   "version": "3.0.0",
   "main": "index.js",
   "license": "AGPL-3.0-or-later",
