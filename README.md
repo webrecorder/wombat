@@ -34,9 +34,9 @@ The Wombat client-side URL rewriting system is comprised of three files
   - `wombatWorkers.js`
 
 These files are located in the static directory of pywb and are
-generated as apart of the libraries build step.
+generated as part of the library's build step.
 
-The library can be found in the `wombat` directory located int the root
+The library can be found in the `wombat` directory located in the root
 of the projects repository (i.e. `pywb/wombat`).
 
 **Note**: We do not go into details of each file included in a bundle as
