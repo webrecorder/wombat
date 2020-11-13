@@ -4910,7 +4910,7 @@ Wombat.prototype.initWombatLoc = function(win) {
     var setter = function(value) {
       var loc =
         this._WB_wombat_location ||
-        (this.defaultView && this.defaultView._WB_wombat_location) ||
+        (this.defaultView && this.defaultView._WB_wombat_location)
 
       if (loc) {
         loc.href = value;
