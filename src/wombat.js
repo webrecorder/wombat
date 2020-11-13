@@ -4904,19 +4904,21 @@ Wombat.prototype.initWombatLoc = function(win) {
   // Location
   var wombat_location = new WombatLocation(win.location, this);
 
+  var wombat = this;
+
   if (Object.defineProperty) {
-    var setter = function location(value) {
+    var setter = function(value) {
       var loc =
         this._WB_wombat_location ||
-        (this.defaultView && this.defaultView._WB_wombat_location) ||
-        this.location;
+        (this.defaultView && this.defaultView._WB_wombat_location)
 
       if (loc) {
         loc.href = value;
       }
+      win.location = wombat.rewriteUrl(value);
     };
 
-    var getter = function location() {
+    var getter = function() {
       return (
         this._WB_wombat_location ||
         (this.defaultView && this.defaultView._WB_wombat_location) ||
