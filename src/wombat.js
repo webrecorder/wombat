@@ -296,7 +296,8 @@ function Wombat($wbwindow, wbinfo) {
     // or function is hence Objects native toString
     objToString: Object.prototype.toString,
     wbSheetMediaQChecker: null,
-    XHRopen: null
+    XHRopen: null,
+    XHRsend: null
   };
   /**
    * @type {{yesNo: boolean, added: boolean}}
@@ -2526,7 +2527,7 @@ Wombat.prototype.rewriteWorker = function(workerUrl) {
     var x = new XMLHttpRequest();
     // use sync ajax request to get the contents, remove postMessage() rewriting
     this.utilFns.XHRopen.call(x, 'GET', workerUrl, false);
-    x.send();
+    this.utilFns.XHRsend.call(x);
     workerCode = x.responseText
       .replace(this.workerBlobRe, '')
       // resolving blobs hit our sever side rewriting so we gotta
@@ -4154,13 +4155,12 @@ Wombat.prototype.initHistoryOverrides = function() {
  */
 Wombat.prototype.initHTTPOverrides = function() {
   var wombat = this;
-  if (
-    this.$wbwindow.XMLHttpRequest &&
-    this.$wbwindow.XMLHttpRequest.prototype
-  ) {
+
+  if (!this.wb_info.isSW) {
     if (this.$wbwindow.XMLHttpRequest.prototype.open) {
       var origXMLHttpOpen = this.$wbwindow.XMLHttpRequest.prototype.open;
       this.utilFns.XHRopen = origXMLHttpOpen;
+      this.utilFns.XHRsend = this.$wbwindow.XMLHttpRequest.prototype.send;
       this.$wbwindow.XMLHttpRequest.prototype.open = function open(
         method,
         url,
@@ -4177,11 +4177,63 @@ Wombat.prototype.initHTTPOverrides = function() {
         }
       };
     }
+  }
+
     // responseURL override
-    this.overridePropExtract(
-      this.$wbwindow.XMLHttpRequest.prototype,
-      'responseURL'
-    );
+  this.overridePropExtract(
+    this.$wbwindow.XMLHttpRequest.prototype,
+    'responseURL'
+  );
+
+
+  if (this.wb_info.isSW) {
+    var origOpen = this.$wbwindow.XMLHttpRequest.prototype.open;
+    var origSetRequestHeader = this.$wbwindow.XMLHttpRequest.prototype.setRequestHeader;
+    var origSend = this.$wbwindow.XMLHttpRequest.prototype.send;
+    this.utilFns.XHRopen = origOpen;
+    this.utilFns.XHRsend = origSend;
+
+    this.$wbwindow.XMLHttpRequest.prototype.open = function() {
+      this.__WB_xhr_open_arguments = arguments;
+      this.__WB_xhr_headers = new Headers();
+    }
+
+    this.$wbwindow.XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
+      this.__WB_xhr_headers.set(name, value);
+    }
+
+    var wombat = this;
+
+    this.$wbwindow.XMLHttpRequest.prototype.send = function(value) {
+      if (this.__WB_xhr_open_arguments[0] === "POST") {
+        if ((typeof(value) === "string" && this.__WB_xhr_headers.get("Content-Type") === "application/x-www-form-urlencoded")
+          || value instanceof URLSearchParams) {
+          this.__WB_xhr_open_arguments[0] = "GET";
+          this.__WB_xhr_open_arguments[1] += (this.__WB_xhr_open_arguments[1].indexOf("?") > 0 ? "&" : "?") + value.toString();
+          value = null;
+        }
+      }
+
+      if (this.__WB_xhr_open_arguments.length > 2) {
+        this.__WB_xhr_open_arguments[2] = true;
+      }
+
+      if (!this._no_rewrite) {
+        this.__WB_xhr_open_arguments[1] = wombat.rewriteUrl(this.__WB_xhr_open_arguments[1]);
+      }
+
+      origOpen.apply(this, this.__WB_xhr_open_arguments);
+
+      if (!wombat.startsWith(this.__WB_xhr_open_arguments[1], 'data:')) {
+        for (const [name, value] of this.__WB_xhr_headers.entries()) {
+          origSetRequestHeader.call(this, name, value);
+        }
+
+        origSetRequestHeader.call(this, 'X-Pywb-Requested-With', 'XMLHttpRequest');
+      }
+
+      origSend.call(this, value);
+    }
   }
 
   if (this.$wbwindow.fetch) {
@@ -4709,12 +4761,27 @@ Wombat.prototype.initIframeWombat = function(iframe) {
  * @param {string} [src] unrewritten url
  */
 Wombat.prototype.initNewWindowWombat = function(win, src) {
+  var fullWombat = false;
+
   if (!win || win._wb_wombat) return;
+
   if (
     !src ||
     src === '' ||
     this.startsWithOneOf(src, ["about:blank", "javascript:"])
   ) {
+    fullWombat = true;
+  }
+
+
+  if (this.wb_info.isSW) {
+    var origURL = this.extractOriginalURL(src);
+    if (origURL === "about:blank" || origURL.startsWith("srcdoc:") || origURL.startsWith("blob:")) {
+      fullWombat = true;
+    }
+  }
+
+  if (fullWombat) {
     // win._WBWombat = wombat_internal(win);
     // win._wb_wombat = new win._WBWombat(wb_info);
     var wombat = new Wombat(win, this.wb_info);
