@@ -714,6 +714,24 @@ for (const aTest of ElementGetSetAttribute) {
   }
 }
 
+test('Element.getAttribute: should return null for attributes that are not set', async t => {
+  const attrs = [
+    // Attributes which normally contain URLs when they exist.
+    'href',
+    'src',
+    'xlink:href',
+
+    // Custom attributes.
+    'custom-attr'
+  ];
+  const { sandbox, server } = t.context;
+  const result = await sandbox.evaluate(attrs => {
+    const div = document.createElement('div');
+    return attrs.map(attr => div.getAttribute(attr));
+  }, attrs);
+  t.deepEqual(result, attrs.map(() => null));
+});
+
 test('Node.ownerDocument: should return the document Proxy object when accessed', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(
