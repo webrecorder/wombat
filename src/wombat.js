@@ -4411,6 +4411,9 @@ Wombat.prototype.initElementGetSetAttributeOverride = function() {
     this.wb_getAttribute = orig_getAttribute;
     ElementProto.getAttribute = function getAttribute(name) {
       var result = orig_getAttribute.call(this, name);
+      if (result === null) {
+        return result;
+      }
       var lowerName = name;
       if (name) {
         lowerName = name.toLowerCase();
