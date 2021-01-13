@@ -1,0 +1,8 @@
+# Test bundles produced by `yarn build-test` and `yarn build-full-test`.
+
+autoFetchWorker.js
+testPageBundle.js
+wombat.js
+wombatDirect.js
+wombatProxyMode.js
+wombatWorkers.js
