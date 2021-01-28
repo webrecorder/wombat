@@ -332,6 +332,7 @@ Wombat.prototype._internalInit = function() {
   } else {
     this.wb_rel_prefix = this.wb_replay_prefix;
   }
+  this.wb_prefixes = [this.wb_abs_prefix, this.wb_rel_prefix];
 
   // make the protocol and host optional now
   var rx =
@@ -4460,7 +4461,7 @@ Wombat.prototype.initElementGetSetAttributeOverride = function() {
         return wombat.extractOriginalURL(result);
       } else if (
         wombat.startsWith(lowerName, 'data-') &&
-        wombat.startsWithOneOf(result, wombat.VALID_PREFIXES)
+        wombat.startsWithOneOf(result, wombat.wb_prefixes)
       ) {
         return wombat.extractOriginalURL(result);
       }
