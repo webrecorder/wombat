@@ -3304,11 +3304,20 @@ Wombat.prototype.overrideFunctionApply = function($wbwindow) {
   $wbwindow.Function.prototype.__WB_orig_apply = orig_apply;
   var wombat = this;
   $wbwindow.Function.prototype.apply = function apply(obj, args) {
-    if (wombat.isNativeFunction(this)) {
-      obj = wombat.proxyToObj(obj);
-      args = wombat.deproxyArrayHandlingArgumentsObj(args);
+    // Native function detection is not fully reliable
+    // Attempt to call w/o it, retry if an exception occurs
+
+    try {
+      return this.__WB_orig_apply(obj, args);
+    } catch (e) {
+      if ((e instanceof TypeError) && wombat.isNativeFunction(this)) {
+        obj = wombat.proxyToObj(obj);
+        args = wombat.deproxyArrayHandlingArgumentsObj(args);
+        return this.__WB_orig_apply(obj, args);
+      } else {
+        throw e;
+      }
     }
-    return this.__WB_orig_apply(obj, args);
   };
   this.wb_funToString.apply = orig_apply;
 };
@@ -4027,7 +4036,7 @@ Wombat.prototype.initDocTitleOverride = function() {
  * @see https://drafts.csswg.org/css-font-loading/#FontFace-interface
  */
 Wombat.prototype.initFontFaceOverride = function() {
-  if (!this.$wbwindow.FontFace || this.$wbwindow.FontFace.__wboverriden__) {
+  if (!this.$wbwindow.FontFace) {
     return;
   }
   var wombat = this;
@@ -4051,7 +4060,6 @@ Wombat.prototype.initFontFaceOverride = function() {
   Object.defineProperty(this.$wbwindow.FontFace.prototype, 'constructor', {
     value: this.$wbwindow.FontFace
   });
-  this.$wbwindow.FontFace.__wboverriden__ = true;
   addToStringTagToClass(this.$wbwindow.FontFace, 'FontFace');
 };
 
@@ -4204,12 +4212,40 @@ Wombat.prototype.initHTTPOverrides = function() {
 
     var wombat = this;
 
+    function jsonToQueryString(json) {
+      if (typeof(json) === "string") {
+        try {
+          json = JSON.parse(json);
+        } catch(e) {
+          json = {};
+        }
+      }
+
+      var q = new URLSearchParams();
+
+      try {
+        JSON.stringify(json, function(k, v) {
+          if (!["object", "function"].includes(typeof(v))) {
+            q.set(k, v);
+          }
+          return v;
+        });
+      } catch (e) {}
+
+      return "__wb_post=1&" + q.toString();
+    }
+
     this.$wbwindow.XMLHttpRequest.prototype.send = function(value) {
       if (this.__WB_xhr_open_arguments[0] === "POST") {
-        if ((typeof(value) === "string" && this.__WB_xhr_headers.get("Content-Type") === "application/x-www-form-urlencoded")
-          || value instanceof URLSearchParams) {
+        var contentType = this.__WB_xhr_headers.get("Content-Type");
+        if ((typeof(value) === "string") && contentType === "application/x-www-form-urlencoded"
+            || value instanceof URLSearchParams) {
           this.__WB_xhr_open_arguments[0] = "GET";
           this.__WB_xhr_open_arguments[1] += (this.__WB_xhr_open_arguments[1].indexOf("?") > 0 ? "&" : "?") + value.toString();
+          value = null;
+        } else if (contentType === "application/json") {
+          this.__WB_xhr_open_arguments[0] = "GET";
+          this.__WB_xhr_open_arguments[1] += (this.__WB_xhr_open_arguments[1].indexOf("?") > 0 ? "&" : "?") + jsonToQueryString(value);
           value = null;
         }
       }
@@ -4777,7 +4813,7 @@ Wombat.prototype.initNewWindowWombat = function(win, src) {
   }
 
 
-  if (this.wb_info.isSW) {
+  if (!fullWombat && this.wb_info.isSW) {
     var origURL = this.extractOriginalURL(src);
     if (origURL === "about:blank" || origURL.startsWith("srcdoc:") || origURL.startsWith("blob:")) {
       fullWombat = true;
