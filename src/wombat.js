@@ -18,9 +18,6 @@ function Wombat($wbwindow, wbinfo) {
   if (!(this instanceof Wombat)) return new Wombat($wbwindow, wbinfo);
 
   /** @type {boolean} */
-  this.actual = false;
-
-  /** @type {boolean} */
   this.debug_rw = false;
 
   /** @type {Window} */
@@ -432,7 +429,15 @@ Wombat.prototype.getPageUnderModifier = function() {
  */
 Wombat.prototype.isNativeFunction = function(funToTest) {
   if (!funToTest || typeof funToTest !== 'function') return false;
-  return this.wb_funToString.call(funToTest).indexOf('[native code]') >= 0;
+  var str = this.wb_funToString.call(funToTest);
+
+  if (str.indexOf('[native code]') == -1) {
+    return false;
+  }
+  if (funToTest.__WB_is_native_func__ !== undefined) {
+    return !!funToTest.__WB_is_native_func__;
+  }
+  return true;
 };
 
 /**
@@ -3305,21 +3310,15 @@ Wombat.prototype.overrideFunctionApply = function($wbwindow) {
   $wbwindow.Function.prototype.__WB_orig_apply = orig_apply;
   var wombat = this;
   $wbwindow.Function.prototype.apply = function apply(obj, args) {
-    // Native function detection is not fully reliable
-    // Attempt to call w/o it, retry if an exception occurs
-
-    try {
-      return this.__WB_orig_apply(obj, args);
-    } catch (e) {
-      if ((e instanceof TypeError) && wombat.isNativeFunction(this)) {
-        obj = wombat.proxyToObj(obj);
-        args = wombat.deproxyArrayHandlingArgumentsObj(args);
-        return this.__WB_orig_apply(obj, args);
-      } else {
-        throw e;
-      }
+    // if native function, de-proxy
+    if (wombat.isNativeFunction(this)) {
+      obj = wombat.proxyToObj(obj);
+      args = wombat.deproxyArrayHandlingArgumentsObj(args);
     }
+
+    return this.__WB_orig_apply(obj, args);
   };
+
   this.wb_funToString.apply = orig_apply;
 };
 
@@ -3337,7 +3336,10 @@ Wombat.prototype.overrideFunctionBind = function($wbwindow) {
   $wbwindow.Function.prototype.__WB_orig_bind = orig_bind;
   var wombat = this;
   $wbwindow.Function.prototype.bind = function bind(obj) {
-    return this.__WB_orig_bind.apply(this, arguments);
+    var isNative = wombat.isNativeFunction(this);
+    var result = this.__WB_orig_bind.apply(this, arguments);
+    result.__WB_is_native_func__ = isNative;
+    return result;
   };
 };
 
@@ -4092,13 +4094,15 @@ Wombat.prototype.initFixedRatio = function() {
  */
 Wombat.prototype.initPaths = function(wbinfo) {
   wbinfo.wombat_opts = wbinfo.wombat_opts || {};
-  this.wb_info = wbinfo;
+  //this.wb_info = wbinfo;
+  Object.assign(this.wb_info, wbinfo);
   this.wb_opts = wbinfo.wombat_opts;
   this.wb_replay_prefix = wbinfo.prefix;
   this.wb_is_proxy = wbinfo.proxy_magic || !this.wb_replay_prefix;
   this.wb_info.top_host = this.wb_info.top_host || '*';
   this.wb_curr_host =
     this.$wbwindow.location.protocol + '//' + this.$wbwindow.location.host;
+  this.wb_info.wombat_opts = this.wb_info.wombat_opts || {};
   this.wb_orig_scheme = wbinfo.wombat_scheme + '://';
   this.wb_orig_origin = this.wb_orig_scheme + wbinfo.wombat_host;
   this.wb_abs_prefix = this.wb_replay_prefix;
@@ -4108,6 +4112,7 @@ Wombat.prototype.initPaths = function(wbinfo) {
     this.wb_capture_date_part = '';
   }
   this.initBadPrefixes(this.wb_replay_prefix);
+  this.initCookiePreset();
 };
 
 /**
@@ -4146,6 +4151,18 @@ Wombat.prototype.initHistoryOverrides = function() {
     );
   });
 };
+
+/**
+ * If cookie preset if passed in via wb_info, set parse and set cookies on the document
+ */
+Wombat.prototype.initCookiePreset = function() {
+  if (this.wb_info.presetCookie) {
+    var splitCookies = this.wb_info.presetCookie.split(";");
+    for (var i = 0; i < splitCookies.length; i++) {
+      this.$wbwindow.document.cookie = splitCookies[i].trim();
+    }
+  }
+}
 
 /**
  * Applies overrides to the XMLHttpRequest.open and XMLHttpRequest.responseURL
@@ -4236,6 +4253,26 @@ Wombat.prototype.initHTTPOverrides = function() {
       return "__wb_post=1&" + q.toString();
     }
 
+    function mfdToQueryString(mfd, contentType) {
+      var params = new URLSearchParams();
+
+      try {
+        var boundary = contentType.split("boundary=")[1];
+
+        var parts = mfd.split(new RegExp("-*" + boundary + "-*", "mi"));
+
+        for (var i = 0; i < parts.length; i++) {
+          var m = parts[i].trim().match(/name="([^"]+)"\r\n\r\n(.*)/mi);
+          if (m) {
+            params.set(m[1], m[2]);
+          }
+        }
+
+      } catch (e) {}
+
+      return params.toString();
+    }
+
     this.$wbwindow.XMLHttpRequest.prototype.send = function(value) {
       if (this.__WB_xhr_open_arguments[0] === "POST") {
         var contentType = this.__WB_xhr_headers.get("Content-Type");
@@ -4248,6 +4285,9 @@ Wombat.prototype.initHTTPOverrides = function() {
           this.__WB_xhr_open_arguments[0] = "GET";
           this.__WB_xhr_open_arguments[1] += (this.__WB_xhr_open_arguments[1].indexOf("?") > 0 ? "&" : "?") + jsonToQueryString(value);
           value = null;
+        } else if (wombat.startsWith(contentType, "multipart/form-data")) {
+          this.__WB_xhr_open_arguments[0] = "GET";
+          this.__WB_xhr_open_arguments[1] += (this.__WB_xhr_open_arguments[1].indexOf("?") > 0 ? "&" : "?") + mfdToQueryString(value, contentType);
         }
       }
 
@@ -4824,7 +4864,9 @@ Wombat.prototype.initNewWindowWombat = function(win, src) {
   if (fullWombat) {
     // win._WBWombat = wombat_internal(win);
     // win._wb_wombat = new win._WBWombat(wb_info);
-    var wombat = new Wombat(win, this.wb_info);
+    var newInfo = {};
+    Object.assign(newInfo, this.wb_info);
+    var wombat = new Wombat(win, newInfo);
     win._wb_wombat = wombat.wombatInit();
   } else {
     // These should get overriden when content is loaded, but just in case...
@@ -6207,12 +6249,7 @@ Wombat.prototype.wombatInit = function() {
   // wombat init
   this._internalInit();
 
-  if (this.wb_info.presetCookie) {
-    var splitCookies = this.wb_info.presetCookie.split(";");
-    for (var i = 0; i < splitCookies.length; i++) {
-      this.$wbwindow.document.cookie = splitCookies[i].trim();
-    }
-  }
+  this.initCookiePreset();
 
   // History
   this.initHistoryOverrides();
