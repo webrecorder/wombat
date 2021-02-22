@@ -4281,7 +4281,7 @@ Wombat.prototype.initHTTPOverrides = function() {
           this.__WB_xhr_open_arguments[0] = "GET";
           this.__WB_xhr_open_arguments[1] += (this.__WB_xhr_open_arguments[1].indexOf("?") > 0 ? "&" : "?") + value.toString();
           value = null;
-        } else if (contentType === "application/json") {
+        } else if (contentType === "application/json" || contentType === "text/plain") {
           this.__WB_xhr_open_arguments[0] = "GET";
           this.__WB_xhr_open_arguments[1] += (this.__WB_xhr_open_arguments[1].indexOf("?") > 0 ? "&" : "?") + jsonToQueryString(value);
           value = null;
