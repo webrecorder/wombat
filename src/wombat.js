@@ -1862,9 +1862,9 @@ Wombat.prototype.rewriteUrl_ = function(originalURL, useRel, mod, doc) {
 
   // May or may not be a hostname, call function to determine
   // If it is, add the prefix and make sure port is removed
-  if (this.isHostUrl(url) && !this.startsWith(url, originalLoc.host + '/')) {
-    return this.getFinalUrl(useRel, mod, this.wb_orig_scheme + url);
-  }
+  //if (this.isHostUrl(url) && !this.startsWith(url, originalLoc.host + '/')) {
+  //  return this.getFinalUrl(useRel, mod, this.wb_orig_scheme + url);
+  //}
 
   return url;
 };
@@ -4275,7 +4275,8 @@ Wombat.prototype.initHTTPOverrides = function() {
 
     this.$wbwindow.XMLHttpRequest.prototype.send = function(value) {
       if (this.__WB_xhr_open_arguments[0] === "POST") {
-        var contentType = this.__WB_xhr_headers.get("Content-Type");
+        var contentType = this.__WB_xhr_headers.get("Content-Type") || "";
+        contentType = contentType.split(";")[0];
         if ((typeof(value) === "string") && contentType === "application/x-www-form-urlencoded"
             || value instanceof URLSearchParams) {
           this.__WB_xhr_open_arguments[0] = "GET";
@@ -6057,6 +6058,11 @@ Wombat.prototype.initTopFrameNotify = function(wbinfo) {
         href: wombat.wb_getAttribute.call(hicon, 'href')
       });
     }
+
+    icons.push({
+      rel: "icon",
+      href: wombat.rewriteUrl("/favicon.ico"),
+    });
 
     var message = {
       icons: icons,
