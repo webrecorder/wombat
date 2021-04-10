@@ -1,5 +1,5 @@
-const { launch } = require('just-launch-chrome');
-const Browser = require('chrome-remote-interface-extra/lib/browser/Browser');
+const { launch } = require('chrome-launcher');
+const { CRIExtra, Browser } = require('chrome-remote-interface-extra')
 
 const winPos = !process.env.NO_MOVE_WINDOW ? '--window-position=2000,0' : '';
 
@@ -31,7 +31,6 @@ const chromeArgs = [
   '--mute-audio',
   '--autoplay-policy=no-user-gesture-required',
   winPos,
-  'about:blank'
 ];
 
 /**
@@ -39,14 +38,15 @@ const chromeArgs = [
  * @return {Promise<Browser>}
  */
 async function initChrome() {
-  const { browserWSEndpoint, closeBrowser, chromeProcess } = await launch({
-    args: chromeArgs
+  const chrome = await launch({
+    chromeFlags: chromeArgs
   });
-  const browser = await Browser.connect(browserWSEndpoint, {
+  const client = await CRIExtra({ host: 'localhost', port: chrome.port });
+  const browser = await Browser.create(client, {
     ignoreHTTPSErrors: true,
     additionalDomains: { workers: true },
-    process: chromeProcess,
-    closeCallback: closeBrowser
+    process: chrome.process,
+    closeCallback: () => chrome.kill(),
   });
   await browser.waitForTarget(t => t.type() === 'page');
   return browser;
