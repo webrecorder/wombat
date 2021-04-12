@@ -1484,10 +1484,10 @@ Wombat.prototype.makeSetLocProp = function(prop, origSetter, origGetter) {
 
     var rel = false;
 
-    // Special case for href="." assignment
+    // Special case for assigning href to a relative path
     if (prop === 'href' && typeof value === 'string') {
       if (value) {
-        if (value[0] === '.') {
+        if (value[0] === '.' || value[0] === '#') {
           value = wombat.resolveRelUrl(value, this.ownerDocument);
         } else if (
           value[0] === '/' &&

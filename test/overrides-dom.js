@@ -38,6 +38,30 @@ test.after.always(async t => {
   await helper.stop();
 });
 
+test('links should not be broken by wombat', async t => {
+  const { sandbox, server } = t.context;
+  const actual = await sandbox.evaluate(
+    () => {
+      const a = document.createElement('a');
+      a.href = '/foo'; // note: browsers "magic" this property into an absolute URL on set.
+      return a.href
+    },
+  );
+  t.is(actual, 'https://tests.wombat.io/foo')
+});
+
+test('anchor links should not be broken by wombat', async t => {
+  const { sandbox, server } = t.context;
+  const actual = await sandbox.evaluate(
+    () => {
+      const a = document.createElement('a');
+      a.href = '#anchor'; // note: browsers "magic" this property into an absolute URL on set.
+      return a.href
+    },
+  );
+  t.is(actual, 'https://tests.wombat.io/#anchor')
+});
+
 test('document.title: should send the "title" message to the top frame when document.title is changed', async t => {
   const { sandbox, testPage } = t.context;
   await sandbox.evaluate(() => (document.title = 'abc'));
