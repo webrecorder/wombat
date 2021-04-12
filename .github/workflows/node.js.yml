@@ -1,0 +1,36 @@
+name: CI Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # separate linting from testing so that a failure in one doesn't prevent the other
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Lint
+      uses: actions/setup-node@v2
+      with:
+        node-version: 14.x
+    - run: yarn install
+    - run: yarn run lint
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build & Test
+      uses: actions/setup-node@v2
+      with:
+        node-version: 14.x
+    - run: yarn install
+    - run: yarn run build-full-test
+    # set up a virtual display for chrome (since the tests don't currently run it in headless mode)
+    # then run the tests
+    - run: |
+        export DISPLAY=:99
+        sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+        yarn test
