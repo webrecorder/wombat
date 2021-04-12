@@ -2106,7 +2106,7 @@ Wombat.prototype.rewriteSVGElem = function(elem) {
 };
 
 /**
- * Rewrites the supplied element returning T/F indicating if a rewrite occured
+ * Rewrites the supplied element returning T/F indicating if a rewrite occurred
  * @param {Element|Node} elem - The element to be rewritten
  * @return {boolean}
  */
@@ -2474,7 +2474,7 @@ Wombat.prototype.rewriteCookie = function(cookie) {
         wb_type: 'cookie'
       };
 
-      // norify of cookie setting to allow server-side tracking
+      // notify of cookie setting to allow server-side tracking
       wombat.sendTopMessage(message, true);
 
       // if no subdomain, eg. "localhost", just remove domain altogether
