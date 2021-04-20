@@ -1,12 +1,19 @@
 {
-   "extends": ["plugin:prettier/recommended"],
    "env": {
       "browser": true,
       "node": true
    },
    "rules": {
       "camelcase": "off",
-      "no-fallthrough": "off"
+      "no-fallthrough": "off",
+      "quotes": [
+          "warn",
+          "single"
+      ],
+      "semi": [
+          "warn",
+          "always"
+      ]
    },
    "globals": {
       "WB_wombat_location": true
