@@ -1751,8 +1751,8 @@ Wombat.prototype.rewriteUrl_ = function(originalURL, useRel, mod, doc) {
 
   var originalLoc = this.$wbwindow.location;
   if (
-    this.startsWith(check_url, this.wb_replay_prefix) ||
-    this.startsWith(check_url, originalLoc.origin + this.wb_replay_prefix)
+    this.startsWith(check_url, this.wb_abs_prefix) ||
+    this.startsWith(check_url, this.wb_rel_prefix)
   ) {
     return url;
   }
@@ -4070,10 +4070,10 @@ Wombat.prototype.initFontFaceOverride = function() {
  * Forces, when possible, the devicePixelRatio property of window to 1
  * in order to ensure deterministic replay
  */
-Wombat.prototype.initFixedRatio = function() {
+Wombat.prototype.initFixedRatio = function(val) {
   try {
     // otherwise, just set it
-    this.$wbwindow.devicePixelRatio = 1;
+    this.$wbwindow.devicePixelRatio = val;
   } catch (e) {}
 
   // prevent changing, if possible
@@ -4081,7 +4081,7 @@ Wombat.prototype.initFixedRatio = function() {
     try {
       // fixed pix ratio
       Object.defineProperty(this.$wbwindow, 'devicePixelRatio', {
-        value: 1,
+        value: value,
         writable: false
       });
     } catch (e) {}
@@ -4274,7 +4274,7 @@ Wombat.prototype.initHTTPOverrides = function() {
     }
 
     this.$wbwindow.XMLHttpRequest.prototype.send = function(value) {
-      if (this.__WB_xhr_open_arguments[0] === "POST") {
+      if (this.__WB_xhr_open_arguments[0] === "POST" || this.__WB_xhr_open_arguments[0] === "PUT") {
         var contentType = this.__WB_xhr_headers.get("Content-Type") || "";
         contentType = contentType.split(";")[0];
         if ((typeof(value) === "string") && contentType === "application/x-www-form-urlencoded"
@@ -6404,7 +6404,7 @@ Wombat.prototype.wombatInit = function() {
   this.initCryptoRandom();
 
   // set fixed pixel ratio
-  this.initFixedRatio();
+  this.initFixedRatio(this.wb_info.pixel_ratio || 1);
 
   // Date
   this.initDateOverride(this.wb_info.wombat_sec);
