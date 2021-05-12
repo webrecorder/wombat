@@ -2512,6 +2512,7 @@ Wombat.prototype.rewriteCookie = function(cookie) {
  */
 Wombat.prototype.rewriteWorker = function(workerUrl) {
   if (!workerUrl) return workerUrl;
+  workerUrl = workerUrl.toString();
   var isBlob = workerUrl.indexOf('blob:') === 0;
   var isJS = workerUrl.indexOf('javascript:') === 0;
   if (!isBlob && !isJS) {
