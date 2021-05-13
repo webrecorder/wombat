@@ -1336,10 +1336,9 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
       return obj.WB_wombat_location.origin;
 
     case 'constructor':
-      // allow tests such as self.constructor === Window to work
-      // you can't create a new instance of window using its constructor
-      if (obj.constructor === Window) return obj.constructor;
-      break;
+      // allow tests that check constructor name/equality to work
+      // you can't create a new instance of window, document or location using the constructors
+      return obj.constructor;
   }
   var retVal = obj[prop];
 
