@@ -229,6 +229,9 @@ function Wombat($wbwindow, wbinfo) {
   this.IMPORT_REGEX = /(@import\s*[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
 
   /** @type {RegExp} */
+  this.IMPORT_JS_REGEX = /^(import\s*\(['"]+)([^'"]+)(["'])$/i;
+
+  /** @type {RegExp} */
   this.no_wombatRe = /WB_wombat_/g;
 
   /** @type {RegExp} */
@@ -2773,9 +2776,19 @@ Wombat.prototype.rewriteEvalArg = function(rawEvalOrWrapper, evalArg) {
   var toBeEvald =
     this.isString(evalArg) && !this.skipWrapScriptTextBasedOnText(evalArg)
       ? this.wrapScriptTextJsProxy(evalArg)
-      : evalArg;
+      : this.otherEvalRewrite(evalArg);
   return rawEvalOrWrapper(toBeEvald);
 };
+
+/**
+ * Apply other eval specific rewriting
+ * Currently just rewrite import('')
+ *
+ */
+
+Wombat.prototype.otherEvalRewrite = function(value) {
+  return value.replace(this.IMPORT_JS_REGEX, this.styleReplacer);
+}
 
 /**
  * Applies an Event property getter override for the supplied property
