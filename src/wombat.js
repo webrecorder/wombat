@@ -229,7 +229,7 @@ function Wombat($wbwindow, wbinfo) {
   this.IMPORT_REGEX = /(@import\s*[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
 
   /** @type {RegExp} */
-  this.IMPORT_JS_REGEX = /^(import\s*\(['"]+)([^'"]+)(["'])$/i;
+  this.IMPORT_JS_REGEX = /^(import\s*\(['"]+)([^'"]+)(["'])/i;
 
   /** @type {RegExp} */
   this.no_wombatRe = /WB_wombat_/g;
