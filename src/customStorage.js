@@ -16,18 +16,27 @@ import {
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Storage
  * @see https://html.spec.whatwg.org/multipage/webstorage.html#the-storage-interface
  */
-export default function Storage(wombat, proxying) {
+export default function Storage(wombat, proxying, initData) {
   if (ThrowExceptions.yes) {
     // there is no constructor exposed for this interface however there is an
     // interface object exposed, thus we must throw an TypeError if userland
     // attempts to create us
     throw new TypeError('Illegal constructor');
   }
+
+  var value = {};
+
+  if (initData && initData.length) {
+    for (var i = 0; i < initData.length; i++) {
+      value[initData[i][0]] = initData[i][1].toString();
+    }
+  }
+
   // hide our values from enumeration, spreed, et al
   Object.defineProperties(this, {
     data: {
       enumerable: false,
-      value: {}
+      value: value,
     },
     wombat: {
       enumerable: false,

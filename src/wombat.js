@@ -5730,6 +5730,17 @@ Wombat.prototype.initStorageOverride = function() {
   var pLocal = 'localStorage';
   var pSession = 'sessionStorage';
   ThrowExceptions.yes = false;
+
+  var initStorage = {};
+
+  if (this.wb_info.storage) {
+    try {
+      initStorage = JSON.parse(atob(this.wb_info.storage));
+    } catch (e) {
+      console.warn("Error parsing storage, storages not loaded");
+    }
+  }
+
   if (this.$wbwindow.Proxy) {
     var storageProxyHandler = function() {
       return {
@@ -5748,16 +5759,16 @@ Wombat.prototype.initStorageOverride = function() {
       };
     };
     local = new this.$wbwindow.Proxy(
-      new Storage(this, pLocal),
+      new Storage(this, pLocal, initStorage.local),
       storageProxyHandler()
     );
     session = new this.$wbwindow.Proxy(
-      new Storage(this, pSession),
+      new Storage(this, pSession, initStorage.session),
       storageProxyHandler()
     );
   } else {
-    local = new Storage(this, pLocal);
-    session = new Storage(this, pSession);
+    local = new Storage(this, pLocal, initStorage.local);
+    session = new Storage(this, pSession, initStorage.session);
   }
 
   this.defGetterProp(this.$wbwindow, pLocal, function localStorage() {
