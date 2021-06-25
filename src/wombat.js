@@ -4027,6 +4027,40 @@ Wombat.prototype.initBlobOverride = function() {
 
   this.$wbwindow.Blob.prototype = orig_blob.prototype;
 }
+
+Wombat.prototype.initWSOverride = function() {
+  if (!this.$wbwindow.WebSocket || !this.$wbwindow.WebSocket.prototype) {
+    return;
+  }
+
+  this.$wbwindow.WebSocket = (function(WebSocket_) {
+    function WebSocket(url, protocols) {
+      this.addEventListener = function() {};
+      this.removeEventListener = function() {};
+      this.close = function() {};
+      this.send = function(data) {
+        console.log("ws send", data);
+      };
+
+      this.protocol = protocols && protocols.length ? protocols[0] : "";
+      this.url = url;
+      this.readyState = 0;
+    }
+
+    WebSocket.CONNECTING = 0;
+    WebSocket.OPEN = 1;
+    WebSocket.CLOSING = 2;
+    WebSocket.CLOSED = 3;
+
+    return WebSocket;
+  })(this.$wbwindow.WebSocket);
+
+  Object.defineProperty(this.$wbwindow.WebSocket.prototype, 'constructor', {
+    value: this.$wbwindow.WebSocket
+  });
+
+  addToStringTagToClass(this.$wbwindow.WebSocket, 'WebSocket');
+}
  
 /**
  * Applies an override to the document.title property in order to ensure
@@ -4083,10 +4117,10 @@ Wombat.prototype.initFontFaceOverride = function() {
  * Forces, when possible, the devicePixelRatio property of window to 1
  * in order to ensure deterministic replay
  */
-Wombat.prototype.initFixedRatio = function(val) {
+Wombat.prototype.initFixedRatio = function(value) {
   try {
     // otherwise, just set it
-    this.$wbwindow.devicePixelRatio = val;
+    this.$wbwindow.devicePixelRatio = value;
   } catch (e) {}
 
   // prevent changing, if possible
@@ -4461,25 +4495,6 @@ Wombat.prototype.initHTTPOverrides = function() {
       value: this.$wbwindow.EventSource
     });
     addToStringTagToClass(this.$wbwindow.EventSource, 'EventSource');
-  }
-
-  if (this.$wbwindow.WebSocket && this.$wbwindow.WebSocket.prototype) {
-    var origWebSocket = this.$wbwindow.WebSocket;
-    this.$wbwindow.WebSocket = (function(WebSocket_) {
-      return function WebSocket(url, configuration) {
-        wombat.domConstructorErrorChecker(this, 'WebSocket', arguments);
-        var rwURL = url;
-        if (url != null) {
-          rwURL = wombat.rewriteWSURL(url);
-        }
-        return new WebSocket_(rwURL, configuration);
-      };
-    })(this.$wbwindow.WebSocket);
-    this.$wbwindow.WebSocket.prototype = origWebSocket.prototype;
-    Object.defineProperty(this.$wbwindow.WebSocket.prototype, 'constructor', {
-      value: this.$wbwindow.WebSocket
-    });
-    addToStringTagToClass(this.$wbwindow.WebSocket, 'WebSocket');
   }
 };
 
@@ -6472,6 +6487,9 @@ Wombat.prototype.wombatInit = function() {
 
   // Blob
   this.initBlobOverride();
+
+  // WebSocket
+  this.initWSOverride();
 
   // open
   this.initOpenOverride();
