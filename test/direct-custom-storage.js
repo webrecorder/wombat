@@ -358,3 +358,21 @@ test('Storage - length: should return the correct value', async t => {
   });
   t.is(testResult, 2);
 });
+
+test('Storage - assorted length: should return the correct length of various setters', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key1 = 'a1';
+    const key2 = 'a2';
+    const key3 = 'a3';
+    const value1 = 'b1';
+    const value2 = 'b2';
+    const value3 = 'b3';
+    storage.setItem(key1, value1);
+    storage[key2] = value2;
+    storage.a3 = value3;
+    return storage.length;
+  });
+  t.is(testResult, 3);
+});
