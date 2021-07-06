@@ -145,6 +145,66 @@ test('Storage - setItem: the item set should be mapped and an storage event fire
   });
 });
 
+test('Storage - dot accessor set: the item set using dot notation accessor should be mapped and a storage event fired', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage.a = value;
+    const events = window.fakeWombat.storage_listeners.sEvents;
+    const event = events[0];
+    return {
+      stored: storage.data[key] === value,
+      numEvents: events.length,
+      key: event.key === key,
+      newValue: event.newValue === value,
+      oldValue: event.oldValue === null,
+      storageArea: event.storageArea === storage,
+      url: event.url === 'bogus url'
+    };
+  });
+  t.deepEqual(testResult, {
+    stored: true,
+    numEvents: 1,
+    key: true,
+    newValue: true,
+    oldValue: true,
+    storageArea: true,
+    url: true
+  });
+});
+
+test('Storage - bracket accessor set: the item set using bracket notation accessor should be mapped and a storage event fired', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage[key] = value;
+    const events = window.fakeWombat.storage_listeners.sEvents;
+    const event = events[0];
+    return {
+      stored: storage.data[key] === value,
+      numEvents: events.length,
+      key: event.key === key,
+      newValue: event.newValue === value,
+      oldValue: event.oldValue === null,
+      storageArea: event.storageArea === storage,
+      url: event.url === 'bogus url'
+    };
+  });
+  t.deepEqual(testResult, {
+    stored: true,
+    numEvents: 1,
+    key: true,
+    newValue: true,
+    oldValue: true,
+    storageArea: true,
+    url: true
+  });
+});
+
 test('Storage - removeItem: the item set should be removable and an event should be fired indicating removal', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
