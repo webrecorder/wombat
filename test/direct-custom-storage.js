@@ -52,6 +52,33 @@ test('Storage - post creation: internal values should not be exposed', async t =
   t.deepEqual(testResult, {});
 });
 
+test('Storage - missing getItem: absent items should return null', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    return storage.getItem('a') === null;
+  });
+  t.true(testResult);
+});
+
+test('Storage - missing dot accessor: absent items should return undefined to dot notation accessor', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    return storage.a === undefined;
+  });
+  t.true(testResult);
+});
+
+test('Storage - missing bracket accessor: absent items should return undefined to bracket notation accessor', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    return storage['a'] === undefined;
+  });
+  t.true(testResult);
+});
+
 test('Storage - getItem: the item set should be retrievable', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
