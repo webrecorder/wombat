@@ -52,6 +52,43 @@ test('Storage - post creation: internal values should not be exposed', async t =
   t.deepEqual(testResult, {});
 });
 
+test('Storage - prefixed internal properties: internal properties should minimize collision', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const prefix = '__wb_';
+    return Object.getOwnPropertyNames(storage).every(name => name.startsWith(prefix));
+  });
+  t.true(testResult);
+});
+
+test('Storage - missing getItem: absent items should return null', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    return storage.getItem('a') === null;
+  });
+  t.true(testResult);
+});
+
+test('Storage - missing dot accessor: absent items should return undefined to dot notation accessor', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    return storage.a === undefined;
+  });
+  t.true(testResult);
+});
+
+test('Storage - missing bracket accessor: absent items should return undefined to bracket notation accessor', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    return storage['a'] === undefined;
+  });
+  t.true(testResult);
+});
+
 test('Storage - getItem: the item set should be retrievable', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
@@ -64,13 +101,97 @@ test('Storage - getItem: the item set should be retrievable', async t => {
   t.true(testResult);
 });
 
-test('Storage - setItem: the item set should be mapped and an storage event fired', async t => {
+test('Storage - dot accessor get: the item set should be retrievable with dot notation accessor', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
     const storage = new Storage(window.fakeWombat, 'bogus value');
     const key = 'a';
     const value = 'b';
     storage.setItem(key, value);
+    return storage.a === value;
+  });
+  t.true(testResult);
+});
+
+test('Storage - bracket accessor get: the item set should be retrievable with bracket notation accessor', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage.setItem(key, value);
+    return storage[key] === value;
+  });
+  t.true(testResult);
+});
+
+test('Storage - setItem: the item set should be mapped and a storage event fired', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage.setItem(key, value);
+    const events = window.fakeWombat.storage_listeners.sEvents;
+    const event = events[0];
+    return {
+      stored: storage.data[key] === value,
+      numEvents: events.length,
+      key: event.key === key,
+      newValue: event.newValue === value,
+      oldValue: event.oldValue === null,
+      storageArea: event.storageArea === storage,
+      url: event.url === 'bogus url'
+    };
+  });
+  t.deepEqual(testResult, {
+    stored: true,
+    numEvents: 1,
+    key: true,
+    newValue: true,
+    oldValue: true,
+    storageArea: true,
+    url: true
+  });
+});
+
+test('Storage - dot accessor set: the item set using dot notation accessor should be mapped and a storage event fired', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage.a = value;
+    const events = window.fakeWombat.storage_listeners.sEvents;
+    const event = events[0];
+    return {
+      stored: storage.data[key] === value,
+      numEvents: events.length,
+      key: event.key === key,
+      newValue: event.newValue === value,
+      oldValue: event.oldValue === null,
+      storageArea: event.storageArea === storage,
+      url: event.url === 'bogus url'
+    };
+  });
+  t.deepEqual(testResult, {
+    stored: true,
+    numEvents: 1,
+    key: true,
+    newValue: true,
+    oldValue: true,
+    storageArea: true,
+    url: true
+  });
+});
+
+test('Storage - bracket accessor set: the item set using bracket notation accessor should be mapped and a storage event fired', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage[key] = value;
     const events = window.fakeWombat.storage_listeners.sEvents;
     const event = events[0];
     return {
@@ -173,6 +294,30 @@ test('Storage - key: should return the correct key given the keys index', async 
   t.true(testResult);
 });
 
+test('Storage - keys: object keys should contain stored item key', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage.setItem(key, value);
+    return Object.keys(storage).includes(key);
+  });
+  t.true(testResult);
+});
+
+test('Storage - property: object own property name should contain stored item key', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage.setItem(key, value);
+    return Object.getOwnPropertyNames(storage).includes(key);
+  });
+  t.true(testResult);
+});
+
 test('Storage - fireEvent: should fire a StorageEvent with the supplied arguments', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
@@ -222,4 +367,22 @@ test('Storage - length: should return the correct value', async t => {
     return storage.length;
   });
   t.is(testResult, 2);
+});
+
+test('Storage - assorted length: should return the correct length of various setters', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key1 = 'a1';
+    const key2 = 'a2';
+    const key3 = 'a3';
+    const value1 = 'b1';
+    const value2 = 'b2';
+    const value3 = 'b3';
+    storage.setItem(key1, value1);
+    storage[key2] = value2;
+    storage.a3 = value3;
+    return storage.length;
+  });
+  t.is(testResult, 3);
 });
