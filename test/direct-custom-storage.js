@@ -125,7 +125,7 @@ test('Storage - bracket accessor get: the item set should be retrievable with br
   t.true(testResult);
 });
 
-test('Storage - setItem: the item set should be mapped and an storage event fired', async t => {
+test('Storage - setItem: the item set should be mapped and a storage event fired', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
     const storage = new Storage(window.fakeWombat, 'bogus value');
