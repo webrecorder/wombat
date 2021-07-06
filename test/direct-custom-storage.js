@@ -284,6 +284,30 @@ test('Storage - key: should return the correct key given the keys index', async 
   t.true(testResult);
 });
 
+test('Storage - keys: object keys should contain stored item key', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage.setItem(key, value);
+    return Object.keys(storage).includes(key);
+  });
+  t.true(testResult);
+});
+
+test('Storage - property: object own property name should contain stored item key', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage.setItem(key, value);
+    return Object.getOwnPropertyNames(storage).includes(key);
+  });
+  t.true(testResult);
+});
+
 test('Storage - fireEvent: should fire a StorageEvent with the supplied arguments', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
