@@ -91,6 +91,30 @@ test('Storage - getItem: the item set should be retrievable', async t => {
   t.true(testResult);
 });
 
+test('Storage - dot accessor get: the item set should be retrievable with dot notation accessor', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage.setItem(key, value);
+    return storage.a === value;
+  });
+  t.true(testResult);
+});
+
+test('Storage - bracket accessor get: the item set should be retrievable with bracket notation accessor', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const key = 'a';
+    const value = 'b';
+    storage.setItem(key, value);
+    return storage[key] === value;
+  });
+  t.true(testResult);
+});
+
 test('Storage - setItem: the item set should be mapped and an storage event fired', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
