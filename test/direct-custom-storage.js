@@ -52,6 +52,16 @@ test('Storage - post creation: internal values should not be exposed', async t =
   t.deepEqual(testResult, {});
 });
 
+test('Storage - prefixed internal properties: internal properties should minimize collision', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    const storage = new Storage(window.fakeWombat, 'bogus value');
+    const prefix = '__wb_';
+    return Object.getOwnPropertyNames(storage).every(name => name.startsWith(prefix));
+  });
+  t.true(testResult);
+});
+
 test('Storage - missing getItem: absent items should return null', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
