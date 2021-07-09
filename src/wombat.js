@@ -5761,7 +5761,7 @@ Wombat.prototype.initStorageOverride = function() {
       return {
         get: function(target, prop) {
           if (prop in target) return target[prop];
-          return target.getItem(prop);
+          return target.data.hasOwnProperty(prop) ? target.getItem(prop) : undefined;
         },
         set: function(target, prop, value) {
           if (target.hasOwnProperty(prop)) return false;
