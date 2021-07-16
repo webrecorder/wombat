@@ -111,7 +111,7 @@ test('WombatLocation: should return the href property as the value for toString'
   );
   t.true(
     result,
-    `WB_wombat_location does not return the href property as the value for toString`
+    'WB_wombat_location does not return the href property as the value for toString'
   );
 });
 
@@ -122,7 +122,7 @@ test('WombatLocation: should return itself as the value for valueOf', async t =>
   );
   t.true(
     result,
-    `WB_wombat_location does not return itself as the value for valueOf`
+    'WB_wombat_location does not return itself as the value for valueOf'
   );
 });
 
@@ -135,7 +135,7 @@ test('WombatLocation: should have a Symbol.toStringTag value of "Location"', asy
   );
   t.true(
     result,
-    `WB_wombat_location does not have a Symbol.toStringTag value of "Location"`
+    'WB_wombat_location does not have a Symbol.toStringTag value of "Location"'
   );
 });
 

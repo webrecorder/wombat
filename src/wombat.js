@@ -1020,7 +1020,7 @@ Wombat.prototype._makeURLParser = function(url, docElem) {
   p._no_rewrite = true;
   p.href = url;
   return p;
-}
+};
 
 /**
  * Defines a new getter and optional setter for the property on the supplied
@@ -1403,7 +1403,7 @@ Wombat.prototype.setLoc = function(loc, originalURL) {
   loc._hostname = parser.hostname;
 
   if (parser.origin) {
-    loc._origin = parser.host ? parser.origin : "null";
+    loc._origin = parser.host ? parser.origin : 'null';
   } else {
     loc._origin =
       parser.protocol +
@@ -1562,14 +1562,14 @@ Wombat.prototype.domConstructorErrorChecker = function(
   var errorMsg;
   if (thisObj instanceof Window) {
     errorMsg =
-      "Failed to construct '" +
+      'Failed to construct \'' +
       what +
-      "': Please use the 'new' operator, this DOM object constructor cannot be called as a function.";
+      '\': Please use the \'new\' operator, this DOM object constructor cannot be called as a function.';
   } else if (args && args.length < needArgs) {
     errorMsg =
-      "Failed to construct '" +
+      'Failed to construct \'' +
       what +
-      "': " +
+      '\': ' +
       needArgs +
       ' argument required, but only 0 present.';
   }
@@ -1612,7 +1612,7 @@ Wombat.prototype.rewriteNodeFuncArgs = function(
   }
   var created = originalFn.call(fnThis, newNode, oldNode);
   if (created && created.tagName === 'IFRAME') {
-    created.allow = "autoplay 'self'; fullscreen 'self'";
+    created.allow = 'autoplay \'self\'; fullscreen \'self\'';
     this.initIframeWombat(created);
   }
   return created;
@@ -1721,8 +1721,8 @@ Wombat.prototype.rewriteUrl_ = function(originalURL, useRel, mod, doc) {
   // just in case _wombat reference made it into url!
   url = url.replace('WB_wombat_', '');
 
-  if (mod === "if_" && this.wb_info.isSW && this.startsWith(url, "blob:")) {
-    return this.wb_info.prefix + this.wb_info.timestamp + "if_/" + url;
+  if (mod === 'if_' && this.wb_info.isSW && this.startsWith(url, 'blob:')) {
+    return this.wb_info.prefix + this.wb_info.timestamp + 'if_/' + url;
   }
 
   // ignore anchors, about, data
@@ -2166,13 +2166,13 @@ Wombat.prototype.rewriteElem = function(elem) {
         }
         break;
       case 'OBJECT':
-        if (this.wb_info.isSW && elem.parentElement && elem.getAttribute('type') === "application/pdf") {
-          var iframe = this.$wbwindow.document.createElement("IFRAME");
+        if (this.wb_info.isSW && elem.parentElement && elem.getAttribute('type') === 'application/pdf') {
+          var iframe = this.$wbwindow.document.createElement('IFRAME');
           for (var i = 0; i < elem.attributes.length; i++) {
             var attr = elem.attributes[i];
             var name = attr.name;
-            if (name === "data") {
-              name = "src";
+            if (name === 'data') {
+              name = 'src';
             }
             this.wb_setAttribute.call(iframe, name, attr.value);
           }
@@ -2193,17 +2193,17 @@ Wombat.prototype.rewriteElem = function(elem) {
       case 'IFRAME':
         changed = this.rewriteFrameSrc(elem, 'src');
         if (this.wb_info.isSW && !changed) {
-          var srcdoc = elem.getAttribute("srcdoc");
+          var srcdoc = elem.getAttribute('srcdoc');
           if (srcdoc) {
-            elem.removeAttribute("srcdoc");
-            elem.src = this.wb_info.prefix + this.wb_info.timestamp + "id_/srcdoc:" + btoa(encodeURIComponent(srcdoc));
+            elem.removeAttribute('srcdoc');
+            elem.src = this.wb_info.prefix + this.wb_info.timestamp + 'id_/srcdoc:' + btoa(encodeURIComponent(srcdoc));
           } else {
-            var src = elem.getAttribute("src");
-            if (!src || src === "about:blank") {
+            var src = elem.getAttribute('src');
+            if (!src || src === 'about:blank') {
               if (!src) {
                 elem.__WB_blank = true;
               }
-              elem.src = this.wb_info.prefix + this.wb_info.timestamp + "mp_/about:blank";
+              elem.src = this.wb_info.prefix + this.wb_info.timestamp + 'mp_/about:blank';
             }
           }
         }
@@ -2551,15 +2551,15 @@ Wombat.prototype.rewriteWorker = function(workerUrl) {
       this.wb_info.ww_rw_script ||
       this.wb_info.static_prefix + 'wombatWorkers.js';
     var rw =
-      "(function() { self.importScripts('" +
+      '(function() { self.importScripts(\'' +
       ww_rw +
-      "'); new WBWombat({'prefix': '" +
+      '\'); new WBWombat({\'prefix\': \'' +
       this.wb_abs_prefix +
-      "', 'prefixMod': '" +
+      '\', \'prefixMod\': \'' +
       this.wb_abs_prefix +
-      "wkrf_/', 'originalURL': '" +
+      'wkrf_/\', \'originalURL\': \'' +
       originalURL +
-      "'}); })();";
+      '\'}); })();';
 
     workerCode = rw + workerCode;
   }
@@ -2733,7 +2733,7 @@ Wombat.prototype.rewriteHTMLAssign = function(thisObj, oSetter, newValue) {
   if (!thisObj._no_rewrite && !(thisObj instanceof this.$wbwindow.HTMLTemplateElement)) {
     if (tagName === 'STYLE') {
       res = this.rewriteStyle(newValue);
-    } else if (tagName === "SCRIPT") {
+    } else if (tagName === 'SCRIPT') {
       // script tags are used to hold HTML for later use
       // check if this contains tags or a script
 
@@ -2788,7 +2788,7 @@ Wombat.prototype.rewriteEvalArg = function(rawEvalOrWrapper, evalArg) {
 
 Wombat.prototype.otherEvalRewrite = function(value) {
   return value.replace(this.IMPORT_JS_REGEX, this.styleReplacer);
-}
+};
 
 /**
  * Applies an Event property getter override for the supplied property
@@ -2899,8 +2899,8 @@ Wombat.prototype.overrideAttr = function(obj, attr, mod) {
       res = wombat.wb_getAttribute.call(this, attr);
     }
     res = wombat.extractOriginalURL(res);
-    if (this.__WB_blank && res === "about:blank") {
-      return "";
+    if (this.__WB_blank && res === 'about:blank') {
+      return '';
     }
     return res;
   };
@@ -2938,7 +2938,7 @@ Wombat.prototype.overridePropExtract = function(proto, prop, cond) {
  * @param {*} [cond]
  */
 Wombat.prototype.overrideReferrer = function($document) {
-  var orig_getter = this.getOrigGetter($document, "referrer");
+  var orig_getter = this.getOrigGetter($document, 'referrer');
   var wombat = this;
   if (orig_getter) {
     var new_getter = function overridePropExtractNewGetter() {
@@ -2948,14 +2948,14 @@ Wombat.prototype.overrideReferrer = function($document) {
 
       // if top replay-frame, referrer should always be ""
       if ($win === $win.__WB_replay_top) {
-        return "";
+        return '';
       }
 
       var res = orig_getter.call(obj);
 
       return wombat.extractOriginalURL(res);
     };
-    this.defGetterProp($document, "referrer", new_getter);
+    this.defGetterProp($document, 'referrer', new_getter);
   }
 };
 
@@ -3238,20 +3238,20 @@ Wombat.prototype.overrideSWAccess = function($wbwindow) {
 
 
   var overrideSW = {
-                  "controller": null,
-                  "ready": Promise.resolve({"unregister": function() {} }),
-                  "register": function() { return Promise.reject(); },
-                  "addEventListener": function() {},
-                  "removeEventListener": function() {},
+                  'controller': null,
+                  'ready': Promise.resolve({'unregister': function() {} }),
+                  'register': function() { return Promise.reject(); },
+                  'addEventListener': function() {},
+                  'removeEventListener': function() {},
                   'onmessage': null,
                   'oncontrollerchange': null,
                   'getRegistrations': function() { return Promise.resolve([]); },
                   'getRegistration': function() { return Promise.resolve(undefined); },
                   'startMessages': function() {}
-                 }
+                 };
 
-  this.defGetterProp($wbwindow.navigator, "serviceWorker", function() { return overrideSW; });
-}
+  this.defGetterProp($wbwindow.navigator, 'serviceWorker', function() { return overrideSW; });
+};
 
 
 
@@ -3985,19 +3985,19 @@ Wombat.prototype.initDateOverride = function(timestamp) {
 
   this.$wbwindow.Date.prototype.getTimezoneOffset = function() {
     return 0;
-  }
+  };
 
   var orig_toString = this.$wbwindow.Date.prototype.toString;
   this.$wbwindow.Date.prototype.toString = function() {
-    var string = orig_toString.call(this).split(" GMT")[0];
-    return string + " GMT+0000 (Coordinated Universal Time)";
-  }
+    var string = orig_toString.call(this).split(' GMT')[0];
+    return string + ' GMT+0000 (Coordinated Universal Time)';
+  };
 
   var orig_toTimeString = this.$wbwindow.Date.prototype.toTimeString;
   this.$wbwindow.Date.prototype.toTimeString = function() {
-    var string = orig_toTimeString.call(this).split(" GMT")[0];
-    return string + " GMT+0000 (Coordinated Universal Time)";
-  }
+    var string = orig_toTimeString.call(this).split(' GMT')[0];
+    return string + ' GMT+0000 (Coordinated Universal Time)';
+  };
 
   Object.defineProperty(this.$wbwindow.Date.prototype, 'constructor', {
     value: this.$wbwindow.Date
@@ -4018,20 +4018,20 @@ Wombat.prototype.initBlobOverride = function() {
   this.$wbwindow.Blob = (function(Blob_) {
     return function Blob(array, options) {
 
-      if (options && options.type === "application/xhtml+xml" || options.type === "text/html") {
+      if (options && options.type === 'application/xhtml+xml' || options.type === 'text/html') {
         // for now, just handle single string case
-        if (array.length === 1 && typeof(array[0]) === "string" && wombat.startsWith(array[0], "<!DOCTYPE html>")) {
+        if (array.length === 1 && typeof(array[0]) === 'string' && wombat.startsWith(array[0], '<!DOCTYPE html>')) {
           array[0] = wombat.rewriteHtml(array[0]);
-          options.type = "text/html";
+          options.type = 'text/html';
         }
       }
 
       return new Blob_(array, options);
-    }
+    };
   })(this.$wbwindow.Blob);
 
   this.$wbwindow.Blob.prototype = orig_blob.prototype;
-}
+};
 
 Wombat.prototype.initWSOverride = function() {
   if (!this.$wbwindow.WebSocket || !this.$wbwindow.WebSocket.prototype) {
@@ -4044,10 +4044,10 @@ Wombat.prototype.initWSOverride = function() {
       this.removeEventListener = function() {};
       this.close = function() {};
       this.send = function(data) {
-        console.log("ws send", data);
+        console.log('ws send', data);
       };
 
-      this.protocol = protocols && protocols.length ? protocols[0] : "";
+      this.protocol = protocols && protocols.length ? protocols[0] : '';
       this.url = url;
       this.readyState = 0;
     }
@@ -4065,7 +4065,7 @@ Wombat.prototype.initWSOverride = function() {
   });
 
   addToStringTagToClass(this.$wbwindow.WebSocket, 'WebSocket');
-}
+};
  
 /**
  * Applies an override to the document.title property in order to ensure
@@ -4209,12 +4209,12 @@ Wombat.prototype.initHistoryOverrides = function() {
  */
 Wombat.prototype.initCookiePreset = function() {
   if (this.wb_info.presetCookie) {
-    var splitCookies = this.wb_info.presetCookie.split(";");
+    var splitCookies = this.wb_info.presetCookie.split(';');
     for (var i = 0; i < splitCookies.length; i++) {
       this.$wbwindow.document.cookie = splitCookies[i].trim();
     }
   }
-}
+};
 
 /**
  * Applies overrides to the XMLHttpRequest.open and XMLHttpRequest.responseURL
@@ -4274,16 +4274,16 @@ Wombat.prototype.initHTTPOverrides = function() {
     this.$wbwindow.XMLHttpRequest.prototype.open = function() {
       this.__WB_xhr_open_arguments = arguments;
       this.__WB_xhr_headers = new Headers();
-    }
+    };
 
     this.$wbwindow.XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
       this.__WB_xhr_headers.set(name, value);
-    }
+    };
 
     var wombat = this;
 
     function jsonToQueryString(json) {
-      if (typeof(json) === "string") {
+      if (typeof(json) === 'string') {
         try {
           json = JSON.parse(json);
         } catch(e) {
@@ -4294,7 +4294,7 @@ Wombat.prototype.initHTTPOverrides = function() {
     var q = new URLSearchParams();
 
       JSON.stringify(json, function(k, v) {
-        if (!["object", "function"].includes(typeof(v))) {
+        if (!['object', 'function'].includes(typeof(v))) {
           q.set(k, v);
         }
         return v;
@@ -4307,9 +4307,9 @@ Wombat.prototype.initHTTPOverrides = function() {
       var params = new URLSearchParams();
 
       try {
-        var boundary = contentType.split("boundary=")[1];
+        var boundary = contentType.split('boundary=')[1];
 
-        var parts = mfd.split(new RegExp("-*" + boundary + "-*", "mi"));
+        var parts = mfd.split(new RegExp('-*' + boundary + '-*', 'mi'));
 
         for (var i = 0; i < parts.length; i++) {
           var m = parts[i].trim().match(/name="([^"]+)"\r\n\r\n(.*)/mi);
@@ -4326,41 +4326,41 @@ Wombat.prototype.initHTTPOverrides = function() {
     function binaryToString(data) {
       var string;
 
-      if (typeof(data) === "string") {
+      if (typeof(data) === 'string') {
         string = data;
       } else if (data && data.length) {
-        string = "";
+        string = '';
         for (let i = 0; i < data.length; i++) {
           string += String.fromCharCode(data[i]);
         }
       } else if (data) {
         string = data.toString();
       } else {
-        string = "";
+        string = '';
       }
-      return "__wb_post_data=" + btoa(string);
+      return '__wb_post_data=' + btoa(string);
     }
 
     this.$wbwindow.XMLHttpRequest.prototype.send = function(value) {
-      if (this.__WB_xhr_open_arguments[0] === "POST" || this.__WB_xhr_open_arguments[0] === "PUT") {
-        var contentTypeFull = this.__WB_xhr_headers.get("Content-Type") || "";
-        var contentType = contentTypeFull.split(";")[0];
+      if (this.__WB_xhr_open_arguments[0] === 'POST' || this.__WB_xhr_open_arguments[0] === 'PUT') {
+        var contentTypeFull = this.__WB_xhr_headers.get('Content-Type') || '';
+        var contentType = contentTypeFull.split(';')[0];
         var newValue;
 
         switch (contentType) {
-          case "application/x-www-form-urlencoded":
+          case 'application/x-www-form-urlencoded':
             newValue = value.toString();
             break;
 
-          case "application/json":
+          case 'application/json':
             try {
               newValue = jsonToQueryString(value);
             } catch (e) {
-              newValue = "";
+              newValue = '';
             }
             break;
 
-          case "text/plain":
+          case 'text/plain':
             try {
               newValue = jsonToQueryString(value);
             } catch (e) {
@@ -4368,7 +4368,7 @@ Wombat.prototype.initHTTPOverrides = function() {
             }
             break;
 
-          case "multipart/form-data":
+          case 'multipart/form-data':
             newValue = mfdToQueryString(value, contentTypeFull);
             break;
 
@@ -4376,8 +4376,8 @@ Wombat.prototype.initHTTPOverrides = function() {
             newValue = binaryToString(value);
         }
 
-        this.__WB_xhr_open_arguments[1] += (this.__WB_xhr_open_arguments[1].indexOf("?") > 0 ? "&" : "?") + "__wb_method=" + this.__WB_xhr_open_arguments[0] + "&" + newValue;
-        this.__WB_xhr_open_arguments[0] = "GET";
+        this.__WB_xhr_open_arguments[1] += (this.__WB_xhr_open_arguments[1].indexOf('?') > 0 ? '&' : '?') + '__wb_method=' + this.__WB_xhr_open_arguments[0] + '&' + newValue;
+        this.__WB_xhr_open_arguments[0] = 'GET';
         value = null;
       }
 
@@ -4400,7 +4400,7 @@ Wombat.prototype.initHTTPOverrides = function() {
       }
 
       origSend.call(this, value);
-    }
+    };
   }
 
   if (this.$wbwindow.fetch) {
@@ -4919,7 +4919,7 @@ Wombat.prototype.initNewWindowWombat = function(win, src) {
   if (
     !src ||
     src === '' ||
-    this.startsWithOneOf(src, ["about:blank", "javascript:"])
+    this.startsWithOneOf(src, ['about:blank', 'javascript:'])
   ) {
     fullWombat = true;
   }
@@ -4927,7 +4927,7 @@ Wombat.prototype.initNewWindowWombat = function(win, src) {
 
   if (!fullWombat && this.wb_info.isSW) {
     var origURL = this.extractOriginalURL(src);
-    if (origURL === "about:blank" || origURL.startsWith("srcdoc:") || origURL.startsWith("blob:")) {
+    if (origURL === 'about:blank' || origURL.startsWith('srcdoc:') || origURL.startsWith('blob:')) {
       fullWombat = true;
     }
   }
@@ -5130,7 +5130,7 @@ Wombat.prototype.initWombatLoc = function(win) {
     var setter = function(value) {
       var loc =
         this._WB_wombat_location ||
-        (this.defaultView && this.defaultView._WB_wombat_location)
+        (this.defaultView && this.defaultView._WB_wombat_location);
 
       if (loc) {
         loc.href = value;
@@ -5212,7 +5212,7 @@ Wombat.prototype.initCheckThisFunc = function(win) {
       });
     }
   } catch(e) {}
-}
+};
 
 /**
  * Override Object.getOwnPropertyNames() to filter out special wombat-added properties
@@ -5224,15 +5224,15 @@ Wombat.prototype.overrideGetOwnPropertyNames = function(win) {
 
   var removeProps = [
     this.WB_CHECK_THIS_FUNC,
-    "WB_wombat_location",
-    "__WB_pmw",
-    "WB_wombat_top",
-    "WB_wombat_eval",
-    "WB_wombat_runEval"
+    'WB_wombat_location',
+    '__WB_pmw',
+    'WB_wombat_top',
+    'WB_wombat_eval',
+    'WB_wombat_runEval'
   ];
 
   try {
-    win.Object.defineProperty(win.Object, "getOwnPropertyNames", {
+    win.Object.defineProperty(win.Object, 'getOwnPropertyNames', {
       value: function(object) {
         var props = orig_getOwnPropertyNames(object);
 
@@ -5249,7 +5249,7 @@ Wombat.prototype.overrideGetOwnPropertyNames = function(win) {
   } catch (e) {
     console.log(e);
   }
-}
+};
 
 /**
  * Adds listeners for `message` and `hashchange` to window of the browser context wombat is in
@@ -5753,12 +5753,12 @@ Wombat.prototype.initStorageOverride = function() {
     try {
       initStorage = JSON.parse(atob(this.wb_info.storage));
     } catch (e) {
-      console.warn("Error parsing storage, storages not loaded");
+      console.warn('Error parsing storage, storages not loaded');
     }
   }
 
-  createStorage(this, "localStorage", initStorage.local);
-  createStorage(this, "sessionStorage", initStorage.session);
+  createStorage(this, 'localStorage', initStorage.local);
+  createStorage(this, 'sessionStorage', initStorage.session);
 
   // ensure localStorage instanceof Storage works
   this.$wbwindow.Storage = Storage;
@@ -5773,17 +5773,17 @@ Wombat.prototype.initIndexedDBOverride = function() {
 
   var proto = this.$wbwindow.IDBFactory.prototype;
 
-  var prefix = "wb-" + this.wb_orig_origin + "-";
+  var prefix = 'wb-' + this.wb_orig_origin + '-';
 
   var orig_open = proto.open;
   proto.open = function(dbName, version) {
     return orig_open.call(this, prefix + dbName, version);
-  }
+  };
 
   var orig_delete = proto.deleteDatabase;
   proto.delete = function(dbName) {
     return orig_delete.call(this, prefix + dbName, options);
-  }
+  };
 
   var orig_databases = proto.databases;
   proto.databases = function() {
@@ -5799,8 +5799,8 @@ Wombat.prototype.initIndexedDBOverride = function() {
         resolve(keys);
       }).catch(function(err) { reject(err); });
     });
-  }
-}
+  };
+};
 
 Wombat.prototype.initCachesOverride = function() {
   if (!this.$wbwindow.CacheStorage) {
@@ -5814,22 +5814,22 @@ Wombat.prototype.initCachesOverride = function() {
 
   var proto = this.$wbwindow.CacheStorage.prototype;
 
-  var prefix = "wb-" + this.wb_orig_origin + "-";
+  var prefix = 'wb-' + this.wb_orig_origin + '-';
 
   var orig_open = proto.open;
   proto.open = function(cacheName) {
     return orig_open.call(this, prefix + cacheName);
-  }
+  };
 
   var orig_has = proto.has;
   proto.has = function(cacheName) {
     return orig_has.call(this, prefix + cacheName);
-  }
+  };
 
   var orig_delete = proto.delete;
   proto.delete = function(cacheName) {
     return orig_delete.call(this, prefix + cacheName);
-  }
+  };
 
   var orig_keys = proto.keys;
   proto.keys = function() {
@@ -5845,7 +5845,7 @@ Wombat.prototype.initCachesOverride = function() {
         resolve(keys);
       }).catch(function(err) { reject(err); });
     });
-  }
+  };
 
   var orig_match = proto.match;
   proto.match = function match(request, opts) {
@@ -5866,7 +5866,7 @@ Wombat.prototype.initCachesOverride = function() {
       }, Promise.resolve());
     });
   };
-}
+};
 
 /**
  * Initializes the wombat window JS Proxy object IFF JS Proxies are available.
@@ -6091,7 +6091,7 @@ Wombat.prototype.initTopFrameNotify = function(wbinfo) {
 
     var icons = [];
     var hicons = wombat.$wbwindow.document.querySelectorAll(
-      "link[rel*='icon']"
+      'link[rel*=\'icon\']'
     );
 
     for (var i = 0; i < hicons.length; i++) {
@@ -6103,8 +6103,8 @@ Wombat.prototype.initTopFrameNotify = function(wbinfo) {
     }
 
     icons.push({
-      rel: "icon",
-      href: wombat.rewriteUrl("/favicon.ico"),
+      rel: 'icon',
+      href: wombat.rewriteUrl('/favicon.ico'),
     });
 
     var message = {

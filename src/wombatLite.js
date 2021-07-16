@@ -138,19 +138,19 @@ WombatLite.prototype.initDateOverride = function(timestamp) {
 
   this.$wbwindow.Date.prototype.getTimezoneOffset = function() {
     return 0;
-  }
+  };
 
   var orig_toString = this.$wbwindow.Date.prototype.toString;
   this.$wbwindow.Date.prototype.toString = function() {
-    var string = orig_toString.call(this).split(" GMT")[0];
-    return string + " GMT+0000 (Coordinated Universal Time)";
-  }
+    var string = orig_toString.call(this).split(' GMT')[0];
+    return string + ' GMT+0000 (Coordinated Universal Time)';
+  };
 
   var orig_toTimeString = this.$wbwindow.Date.prototype.toTimeString;
   this.$wbwindow.Date.prototype.toTimeString = function() {
-    var string = orig_toTimeString.call(this).split(" GMT")[0];
-    return string + " GMT+0000 (Coordinated Universal Time)";
-  }
+    var string = orig_toTimeString.call(this).split(' GMT')[0];
+    return string + ' GMT+0000 (Coordinated Universal Time)';
+  };
 
   Object.defineProperty(this.$wbwindow.Date.prototype, 'constructor', {
     value: this.$wbwindow.Date

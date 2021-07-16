@@ -4,8 +4,8 @@ import {
   ThrowExceptions
 } from './wombatUtils';
 
-var WOMBAT = Symbol("__wb__storage_WOMBAT");
-var TYPE = Symbol("__wb__storage_TYPE");
+var WOMBAT = Symbol('__wb__storage_WOMBAT');
+var TYPE = Symbol('__wb__storage_TYPE');
 
 /**
  * A re-implementation of the Storage interface.
@@ -50,14 +50,14 @@ export function Storage(wombat, type, initData) {
 function storageProxyHandler() {
   return {
     get: function(target, prop) {
-      if (prop === "__proto__") {
+      if (prop === '__proto__') {
         return target.__proto__;
       }
 
       if (target.__proto__.hasOwnProperty(prop)) {
         var res = target[prop];
 
-        if (typeof(res) === "function") {
+        if (typeof(res) === 'function') {
           res = res.bind(target);
         }
 
@@ -120,7 +120,7 @@ Storage.prototype.setItem = function setItem(name, value) {
 
 Storage.prototype._deleteItem = function(item) {
   delete this[item];
-}
+};
 
 /**
  * When passed a key name, will remove that key from the storage
@@ -201,8 +201,8 @@ Storage.prototype.valueOf = function valueOf() {
  * An override of toString to return '[object Storage]'
  **/
 Storage.prototype.toString = function() {
-  return "[object Storage]";
-}
+  return '[object Storage]';
+};
 
 
 

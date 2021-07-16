@@ -7,11 +7,11 @@
       "camelcase": "off",
       "no-fallthrough": "off",
       "quotes": [
-          "warn",
+          "error",
           "single"
       ],
       "semi": [
-          "warn",
+          "error",
           "always"
       ]
    },

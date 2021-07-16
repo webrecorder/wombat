@@ -218,7 +218,7 @@ test('Storage - toString: should return the correct value', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
     const storage = sessionStorage;
-    return storage.toString() === "[object Storage]";
+    return storage.toString() === '[object Storage]';
   });
   t.true(testResult);
 });

@@ -124,7 +124,7 @@ test.serial(
         init_paths: 'function',
         local_init: 'function'
       },
-      `window._wb_wombat does not have the expected interface`
+      'window._wb_wombat does not have the expected interface'
     );
   }
 );
