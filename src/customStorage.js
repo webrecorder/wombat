@@ -5,7 +5,6 @@ import {
 } from './wombatUtils';
 
 var WOMBAT = Symbol("__wb__storage_WOMBAT");
-var DATA = Symbol("__wb__storage_DATA");
 var TYPE = Symbol("__wb__storage_TYPE");
 
 /**
@@ -29,34 +28,23 @@ export function Storage(wombat, type, initData) {
     throw new TypeError('Illegal constructor');
   }
 
-  var value = {};
-
   if (initData && initData.length) {
     for (var i = 0; i < initData.length; i++) {
-      value[initData[i][0]] = initData[i][1].toString();
+      this[initData[i][0]] = initData[i][1].toString();
     }
   }
 
-  var wombatProp = {
+  Object.defineProperty(this, WOMBAT, {
     value: wombat,
     enumerable: false
-  };
+  });
 
-  var dataProp = {
-    value: value,
-    enumerable: false
-  };
-
-  var typeProp = {
+  Object.defineProperty(this, TYPE, {
     value: type,
     enumerable: false
-  };
+  });
 
   var props = {};
-  props[DATA] = dataProp;
-  props[WOMBAT] = wombatProp;
-  props[TYPE] = typeProp;
-  Object.defineProperties(this, props);
 }
 
 function storageProxyHandler() {
@@ -76,8 +64,9 @@ function storageProxyHandler() {
         return res;
       }
 
-      return target[DATA].hasOwnProperty(prop) ? target.getItem(prop) : undefined;
+      return target.hasOwnProperty(prop) ? target.getItem(prop) : undefined;
     },
+
     set: function(target, prop, value) {
       if (target.__proto__.hasOwnProperty(prop)) {
         target[prop] = value;
@@ -86,19 +75,6 @@ function storageProxyHandler() {
 
       target.setItem(prop, value);
       return true;
-    },
-    getOwnPropertyDescriptor: function(target, prop) {
-      var result = Object.getOwnPropertyDescriptor(target[DATA], prop);
-      if (result) {
-        return result;
-      }
-      return Object.getOwnPropertyDescriptor(target, prop);
-    },
-
-    ownKeys: function(target) {
-      //console.log(Object.keys(target[DATA]));
-      return [...Reflect.ownKeys(target), ...Object.keys(target[DATA])];
-      //return Reflect.ownKeys(target).concat(Object.keys(target[DATA]));
     }
   };
 };
@@ -123,7 +99,7 @@ export function createStorage(wombat, type, initData) {
  * @return {*}
  */
 Storage.prototype.getItem = function getItem(name) {
-  return this[DATA].hasOwnProperty(name) ? this[DATA][name] : null;
+  return this.hasOwnProperty(name) ? this[name] : null;
 };
 
 /**
@@ -137,13 +113,13 @@ Storage.prototype.setItem = function setItem(name, value) {
   var sname = String(name);
   var svalue = String(value);
   var old = this.getItem(sname);
-  this[DATA][sname] = value;
+  this[sname] = value;
   this.fireEvent(sname, old, svalue);
   return undefined;
 };
 
 Storage.prototype._deleteItem = function(item) {
-  delete this[DATA][item];
+  delete this[item];
 }
 
 /**
@@ -164,8 +140,8 @@ Storage.prototype.removeItem = function removeItem(name) {
  * @return {undefined}
  */
 Storage.prototype.clear = function clear() {
-  for (var member in this[DATA]) {
-    delete this[DATA][member];
+  for (var member in this) {
+    delete this[member];
   }
 
   this.fireEvent(null, null, null);
@@ -180,7 +156,7 @@ Storage.prototype.clear = function clear() {
 Storage.prototype.key = function key(index) {
   var n = ensureNumber(index);
   if (n == null || n < 0) return null;
-  var keys = Object.keys(this[DATA]);
+  var keys = Object.keys(this);
   if (n < keys.length) return keys[n];
   return null;
 };
@@ -234,7 +210,7 @@ Storage.prototype.toString = function() {
 Object.defineProperty(Storage.prototype, 'length', {
   enumerable: false,
   get: function length() {
-    return Object.keys(this[DATA]).length;
+    return Object.keys(this).length;
   }
 });
 
