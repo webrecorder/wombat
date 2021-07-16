@@ -50,10 +50,10 @@ export function Storage(wombat, type, initData) {
 function storageProxyHandler() {
   return {
     get: function(target, prop) {
-      if (prop === "__orig") {
-        return target;
+      if (prop === "__proto__") {
+        return target.__proto__;
       }
-      //if (prop in target) return target[prop];
+
       if (target.__proto__.hasOwnProperty(prop)) {
         var res = target[prop];
 

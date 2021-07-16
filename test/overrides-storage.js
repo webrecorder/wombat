@@ -258,3 +258,12 @@ test('Storage - assorted length: should return the correct length of various set
   t.is(testResult, 3);
 });
 
+test('Storage - getPrototypeOf() and __proto__ equivalence', async t => {
+  const { sandbox, server } = t.context;
+  const testResult = await sandbox.evaluate(() => {
+    return Object.getPrototypeOf(localStorage) === Object.getPrototypeOf(sessionStorage) &&
+           Object.getPrototypeOf(localStorage) === localStorage.__proto__ &&
+           Object.getPrototypeOf(localStorage) === Storage.prototype;
+  });
+  t.is(testResult, true);
+});
