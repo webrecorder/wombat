@@ -3243,6 +3243,11 @@ Wombat.prototype.overrideSWAccess = function($wbwindow) {
                   "register": function() { return Promise.reject(); },
                   "addEventListener": function() {},
                   "removeEventListener": function() {},
+                  'onmessage': null,
+                  'oncontrollerchange': null,
+                  'getRegistrations': function() { return Promise.resolve([]); },
+                  'getRegistration': function() { return Promise.resolve(undefined); },
+                  'startMessages': function() {}
                  }
 
   this.defGetterProp($wbwindow.navigator, "serviceWorker", function() { return overrideSW; });
