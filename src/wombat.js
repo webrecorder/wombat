@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import FuncMap from './funcMap';
-import Storage from './customStorage';
+import { createStorage, Storage } from './customStorage';
 import WombatLocation from './wombatLocation';
 import AutoFetcher from './autoFetcher';
 import { wrapEventListener, wrapSameOriginEventListener } from './listeners';
@@ -5740,10 +5740,6 @@ Wombat.prototype.initDisableNotificationsGeoLocation = function() {
 Wombat.prototype.initStorageOverride = function() {
   this.addEventOverride('storageArea', this.$wbwindow.StorageEvent.prototype);
 
-  var local;
-  var session;
-  var pLocal = 'localStorage';
-  var pSession = 'sessionStorage';
   ThrowExceptions.yes = false;
 
   var initStorage = {};
@@ -5756,43 +5752,9 @@ Wombat.prototype.initStorageOverride = function() {
     }
   }
 
-  if (this.$wbwindow.Proxy) {
-    var storageProxyHandler = function() {
-      return {
-        get: function(target, prop) {
-          if (prop in target) return target[prop];
-          return target.data.hasOwnProperty(prop) ? target.getItem(prop) : undefined;
-        },
-        set: function(target, prop, value) {
-          if (target.hasOwnProperty(prop)) return false;
-          target.setItem(prop, value);
-          return true;
-        },
-        getOwnPropertyDescriptor: function(target, prop) {
-          return Object.getOwnPropertyDescriptor(target, prop);
-        }
-      };
-    };
-    local = new this.$wbwindow.Proxy(
-      new Storage(this, pLocal, initStorage.local),
-      storageProxyHandler()
-    );
-    session = new this.$wbwindow.Proxy(
-      new Storage(this, pSession, initStorage.session),
-      storageProxyHandler()
-    );
-  } else {
-    local = new Storage(this, pLocal, initStorage.local);
-    session = new Storage(this, pSession, initStorage.session);
-  }
+  createStorage(this, "localStorage", initStorage.local);
+  createStorage(this, "sessionStorage", initStorage.session);
 
-  this.defGetterProp(this.$wbwindow, pLocal, function localStorage() {
-    return local;
-  });
-
-  this.defGetterProp(this.$wbwindow, pSession, function sessionStorage() {
-    return session;
-  });
   // ensure localStorage instanceof Storage works
   this.$wbwindow.Storage = Storage;
   ThrowExceptions.yes = true;
@@ -6512,7 +6474,6 @@ Wombat.prototype.wombatInit = function() {
 
   var wombat = this;
   return {
-    actual: false,
     extract_orig: this.extractOriginalURL,
     rewrite_url: this.rewriteUrl,
     watch_elem: this.watchElem,

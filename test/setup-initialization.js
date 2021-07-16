@@ -106,7 +106,6 @@ test.serial(
     const result = await sandbox.evaluate(() => {
       window._WBWombatInit(window.wbinfo);
       return {
-        actual: window._wb_wombat.actual,
         extract_orig: typeof window._wb_wombat.extract_orig,
         rewrite_url: typeof window._wb_wombat.rewrite_url,
         watch_elem: typeof window._wb_wombat.watch_elem,
@@ -118,7 +117,6 @@ test.serial(
     t.deepEqual(
       result,
       {
-        actual: true,
         extract_orig: 'function',
         rewrite_url: 'function',
         watch_elem: 'function',
