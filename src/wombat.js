@@ -6474,7 +6474,6 @@ Wombat.prototype.wombatInit = function() {
 
   var wombat = this;
   return {
-    actual: false,
     extract_orig: this.extractOriginalURL,
     rewrite_url: this.rewriteUrl,
     watch_elem: this.watchElem,

@@ -15,7 +15,9 @@ test.beforeEach(async t => {
   t.context.sandbox = helper.sandbox();
   t.context.testPage = helper.testPage();
   t.context.server = helper.server();
-  await helper.initWombat();
+  await t.context.sandbox.evaluate(() => {
+    window.wombat = new window.Wombat(window, window.wbinfo);
+  });
 });
 
 test.after.always(async t => {
