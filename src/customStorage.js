@@ -4,6 +4,10 @@ import {
   ThrowExceptions
 } from './wombatUtils';
 
+var WOMBAT = Symbol("__wb__storage_WOMBAT");
+var DATA = Symbol("__wb__storage_DATA");
+var TYPE = Symbol("__wb__storage_TYPE");
+
 /**
  * A re-implementation of the Storage interface.
  * This re-implementation is required for replay in order to ensure
@@ -12,11 +16,12 @@ import {
  * This re-implementation ensures that limit is unlimited as it would be in
  * the live-web.
  * @param {Wombat} wombat
- * @param {string} proxying
+ * @param {string} type
+ * @param {object} initData
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Storage
  * @see https://html.spec.whatwg.org/multipage/webstorage.html#the-storage-interface
  */
-export default function Storage(wombat, proxying, initData) {
+export function Storage(wombat, type, initData) {
   if (ThrowExceptions.yes) {
     // there is no constructor exposed for this interface however there is an
     // interface object exposed, thus we must throw an TypeError if userland
@@ -32,27 +37,84 @@ export default function Storage(wombat, proxying, initData) {
     }
   }
 
-  // hide our values from enumeration, spreed, et al
-  Object.defineProperties(this, {
-    data: {
-      enumerable: false,
-      value: value,
-    },
-    wombat: {
-      enumerable: false,
-      value: wombat
-    },
-    proxying: {
-      enumerable: false,
-      value: proxying
-    },
-    _deleteItem: {
-      enumerable: false,
-      value: function(item) {
-        delete this.data[item];
+  var wombatProp = {
+    value: wombat,
+    enumerable: false
+  };
+
+  var dataProp = {
+    value: value,
+    enumerable: false
+  };
+
+  var typeProp = {
+    value: type,
+    enumerable: false
+  };
+
+  var props = {};
+  props[DATA] = dataProp;
+  props[WOMBAT] = wombatProp;
+  props[TYPE] = typeProp;
+  Object.defineProperties(this, props);
+}
+
+function storageProxyHandler() {
+  return {
+    get: function(target, prop) {
+      if (prop === "__orig") {
+        return target;
       }
+      //if (prop in target) return target[prop];
+      if (target.__proto__.hasOwnProperty(prop)) {
+        var res = target[prop];
+
+        if (typeof(res) === "function") {
+          res = res.bind(target);
+        }
+
+        return res;
+      }
+
+      return target[DATA].hasOwnProperty(prop) ? target.getItem(prop) : undefined;
+    },
+    set: function(target, prop, value) {
+      if (target.__proto__.hasOwnProperty(prop)) {
+        target[prop] = value;
+        return true;
+      }
+
+      target.setItem(prop, value);
+      return true;
+    },
+    getOwnPropertyDescriptor: function(target, prop) {
+      var result = Object.getOwnPropertyDescriptor(target[DATA], prop);
+      if (result) {
+        return result;
+      }
+      return Object.getOwnPropertyDescriptor(target, prop);
+    },
+
+    ownKeys: function(target) {
+      //console.log(Object.keys(target[DATA]));
+      return [...Reflect.ownKeys(target), ...Object.keys(target[DATA])];
+      //return Reflect.ownKeys(target).concat(Object.keys(target[DATA]));
     }
+  };
+};
+
+export function createStorage(wombat, type, initData) {
+  var storage = new Storage(wombat, type, initData);
+
+  if (wombat.$wbwindow.Proxy) {
+    storage = new wombat.$wbwindow.Proxy(storage, storageProxyHandler());
+  }
+
+  wombat.defGetterProp(wombat.$wbwindow, type, function() {
+    return storage;
   });
+
+  return storage;
 }
 
 /**
@@ -61,7 +123,7 @@ export default function Storage(wombat, proxying, initData) {
  * @return {*}
  */
 Storage.prototype.getItem = function getItem(name) {
-  return this.data.hasOwnProperty(name) ? this.data[name] : null;
+  return this[DATA].hasOwnProperty(name) ? this[DATA][name] : null;
 };
 
 /**
@@ -75,10 +137,14 @@ Storage.prototype.setItem = function setItem(name, value) {
   var sname = String(name);
   var svalue = String(value);
   var old = this.getItem(sname);
-  this.data[sname] = value;
+  this[DATA][sname] = value;
   this.fireEvent(sname, old, svalue);
   return undefined;
 };
+
+Storage.prototype._deleteItem = function(item) {
+  delete this[DATA][item];
+}
 
 /**
  * When passed a key name, will remove that key from the storage
@@ -92,12 +158,16 @@ Storage.prototype.removeItem = function removeItem(name) {
   return undefined;
 };
 
+
 /**
  * When invoked, will empty all keys out of the storage
  * @return {undefined}
  */
 Storage.prototype.clear = function clear() {
-  this.data = {};
+  for (var member in this[DATA]) {
+    delete this[DATA][member];
+  }
+
   this.fireEvent(null, null, null);
   return undefined;
 };
@@ -110,7 +180,7 @@ Storage.prototype.clear = function clear() {
 Storage.prototype.key = function key(index) {
   var n = ensureNumber(index);
   if (n == null || n < 0) return null;
-  var keys = Object.keys(this.data);
+  var keys = Object.keys(this[DATA]);
   if (n < keys.length) return keys[n];
   return null;
 };
@@ -128,7 +198,7 @@ Storage.prototype.fireEvent = function fireEvent(key, oldValue, newValue) {
     key: key,
     newValue: newValue,
     oldValue: oldValue,
-    url: this.wombat.$wbwindow.WB_wombat_location.href
+    url: this[WOMBAT].$wbwindow.WB_wombat_location.href
   });
   // storage is a read only property of StorageEvent
   // that must be on the fired instance of the event
@@ -138,7 +208,7 @@ Storage.prototype.fireEvent = function fireEvent(key, oldValue, newValue) {
     configurable: false
   });
   sevent._storageArea = this;
-  this.wombat.storage_listeners.map(sevent);
+  this[WOMBAT].storage_listeners.map(sevent);
 };
 
 /**
@@ -147,14 +217,24 @@ Storage.prototype.fireEvent = function fireEvent(key, oldValue, newValue) {
  * @return {Proxy<Storage>}
  */
 Storage.prototype.valueOf = function valueOf() {
-  return this.wombat.$wbwindow[this.proxying];
+  return this[WOMBAT].$wbwindow[this[TYPE]];
 };
+
+
+/**
+ * An override of toString to return '[object Storage]'
+ **/
+Storage.prototype.toString = function() {
+  return "[object Storage]";
+}
+
+
 
 // the length getter is on the prototype (__proto__ modern browsers)
 Object.defineProperty(Storage.prototype, 'length', {
   enumerable: false,
   get: function length() {
-    return Object.keys(this.data).length;
+    return Object.keys(this[DATA]).length;
   }
 });
 

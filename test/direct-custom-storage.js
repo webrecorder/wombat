@@ -68,13 +68,14 @@ test('Storage - setItem: the item set should be mapped and an storage event fire
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
     const storage = new Storage(window.fakeWombat, 'bogus value');
+    const DATA = Object.getOwnPropertySymbols(storage)[0];
     const key = 'a';
     const value = 'b';
     storage.setItem(key, value);
     const events = window.fakeWombat.storage_listeners.sEvents;
     const event = events[0];
     return {
-      stored: storage.data[key] === value,
+      stored: storage[DATA][key] === value,
       numEvents: events.length,
       key: event.key === key,
       newValue: event.newValue === value,
@@ -98,6 +99,7 @@ test('Storage - removeItem: the item set should be removable and an event should
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
     const storage = new Storage(window.fakeWombat, 'bogus value');
+    const DATA = Object.getOwnPropertySymbols(storage)[0];
     const key = 'a';
     const value = 'b';
     storage.setItem(key, value);
@@ -105,7 +107,7 @@ test('Storage - removeItem: the item set should be removable and an event should
     const events = window.fakeWombat.storage_listeners.sEvents;
     const event = events[1];
     return {
-      stored: storage.data[key] === undefined,
+      stored: storage[DATA][key] === undefined,
       numEvents: events.length,
       key: event.key === key,
       newValue: event.newValue === null,
