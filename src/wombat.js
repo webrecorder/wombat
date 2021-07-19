@@ -4066,7 +4066,7 @@ Wombat.prototype.initWSOverride = function() {
 
   addToStringTagToClass(this.$wbwindow.WebSocket, 'WebSocket');
 };
- 
+
 /**
  * Applies an override to the document.title property in order to ensure
  * that actual top (archive top frame containing the replay iframe) receives
