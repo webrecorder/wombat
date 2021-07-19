@@ -4291,7 +4291,7 @@ Wombat.prototype.initHTTPOverrides = function() {
         }
       }
 
-    var q = new URLSearchParams();
+      var q = new URLSearchParams();
 
       JSON.stringify(json, function(k, v) {
         if (!['object', 'function'].includes(typeof(v))) {
