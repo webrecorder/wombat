@@ -1330,7 +1330,6 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
     case '_WB_wombat_obj_proxy':
       return obj._WB_wombat_obj_proxy;
     case '__WB_pmw':
-    case 'WB_wombat_eval':
     case this.WB_ASSIGN_FUNC:
     case this.WB_CHECK_THIS_FUNC:
       return obj[prop];
@@ -1360,6 +1359,12 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
         }
         break;
       }
+
+      case 'eval':
+        if (this.isNativeFunction(retVal)) {
+          return this.wrappedEval(retVal);
+        }
+        break;
     }
     // due to specific use cases involving native functions
     // we must return the
@@ -2787,6 +2792,9 @@ Wombat.prototype.rewriteEvalArg = function(rawEvalOrWrapper, evalArg) {
  */
 
 Wombat.prototype.otherEvalRewrite = function(value) {
+  if (typeof(value) !== 'string') {
+    return value;
+  }
   return value.replace(this.IMPORT_JS_REGEX, this.styleReplacer);
 };
 
@@ -6262,23 +6270,29 @@ Wombat.prototype.initWombatTop = function($wbwindow) {
 Wombat.prototype.initEvalOverride = function() {
   var rewriteEvalArg = this.rewriteEvalArg;
   var setNoop = function() {};
-  var wrappedEval = function wrappedEval(arg) {
-    return rewriteEvalArg(eval, arg);
-  };
-  this.defProp(
-    this.$wbwindow.Object.prototype,
-    'WB_wombat_eval',
-    setNoop,
-    function() {
-      return wrappedEval;
-    }
-  );
-  var runEval = function runEval(func) {
-    return {
-      eval: function(arg) {
-        return rewriteEvalArg(func, arg);
-      }
+
+  this.wrappedEval = function (evalFunc) {
+    return function(arg) {
+      return rewriteEvalArg(evalFunc, arg);
     };
+  };
+
+  var runEval = function runEval(func) {
+    var obj = this;
+
+    if (obj.eval && obj.eval !== eval) {
+      return {
+        eval: function() {
+          return obj.eval.__WB_orig_apply(obj, arguments);
+        }
+      };
+    } else {
+      return {
+        eval: function(arg) {
+          return rewriteEvalArg(func, arg);
+        }
+      };
+    }
   };
   this.defProp(
     this.$wbwindow.Object.prototype,
