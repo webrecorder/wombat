@@ -802,9 +802,9 @@ Wombat.prototype.wrapScriptTextJsProxy = function(scriptText) {
     'let top = _____WB$wombat$assign$function_____("top");\n' +
     'let parent = _____WB$wombat$assign$function_____("parent");\n' +
     'let frames = _____WB$wombat$assign$function_____("frames");\n' +
-    'let opener = _____WB$wombat$assign$function_____("opener");\n' +
+    'let opener = _____WB$wombat$assign$function_____("opener");\n{\n' +
     scriptText.replace(this.DotPostMessageRe, '.__WB_pmw(self.window)$1') +
-    '\n\n}'
+    '\n\n}}'
   );
 };
 
