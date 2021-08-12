@@ -1,6 +1,9 @@
 import * as path from 'path';
 import minify from 'rollup-plugin-babel-minify';
 
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+
+
 const license = `/*
 Wombat.js client-side rewriting engine for web archive replay
 Copyright (C) 2014-2020 Webrecorder Software, Rhizome, and Contributors. Released under the GNU Affero General Public License.
@@ -51,7 +54,7 @@ const minificationOpts = {
 export default [
   {
     input: 'src/wbWombat.js',
-    plugins: [minify(minificationOpts), addLicenceNoStrict],
+    plugins: [nodeResolve({ browser: true }), minify(minificationOpts), addLicenceNoStrict],
     output: {
       name: 'wombat',
       file: path.join(outputDir, 'wombat.js'),

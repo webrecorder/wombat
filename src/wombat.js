@@ -10,6 +10,8 @@ import {
   ThrowExceptions
 } from './wombatUtils';
 
+import { postToGetUrl } from 'warcio/src/utils.js';
+
 /**
  * @param {Window} $wbwindow
  * @param {Object} wbinfo
@@ -4242,6 +4244,12 @@ Wombat.prototype.initCookiePreset = function() {
 Wombat.prototype.initHTTPOverrides = function() {
   var wombat = this;
 
+    // responseURL override
+  this.overridePropExtract(
+    this.$wbwindow.XMLHttpRequest.prototype,
+    'responseURL'
+  );
+
   if (!this.wb_info.isSW) {
     if (this.$wbwindow.XMLHttpRequest.prototype.open) {
       var origXMLHttpOpen = this.$wbwindow.XMLHttpRequest.prototype.open;
@@ -4263,16 +4271,7 @@ Wombat.prototype.initHTTPOverrides = function() {
         }
       };
     }
-  }
-
-    // responseURL override
-  this.overridePropExtract(
-    this.$wbwindow.XMLHttpRequest.prototype,
-    'responseURL'
-  );
-
-
-  if (this.wb_info.isSW) {
+  } else {
     var origOpen = this.$wbwindow.XMLHttpRequest.prototype.open;
     var origSetRequestHeader = this.$wbwindow.XMLHttpRequest.prototype.setRequestHeader;
     var origSend = this.$wbwindow.XMLHttpRequest.prototype.send;
@@ -4290,107 +4289,28 @@ Wombat.prototype.initHTTPOverrides = function() {
 
     var wombat = this;
 
-    function jsonToQueryString(json) {
-      if (typeof(json) === 'string') {
-        try {
-          json = JSON.parse(json);
-        } catch(e) {
-          json = {};
+    this.$wbwindow.XMLHttpRequest.prototype.send = async function(value) {
+      var convertToGet = false;
+
+      if (convertToGet && (this.__WB_xhr_open_arguments[0] === 'POST' || this.__WB_xhr_open_arguments[0] === 'PUT')) {
+
+        var request = {
+          'method': this.__WB_xhr_open_arguments[0],
+          'headers': this.__WB_xhr_headers,
+          'postData': value
+        };
+
+        if (postToGetUrl(request)) {
+          this.__WB_xhr_open_arguments[1] += request.url;
+          this.__WB_xhr_open_arguments[0] = 'GET';
+          value = null;
         }
       }
 
-    var q = new URLSearchParams();
-
-      JSON.stringify(json, function(k, v) {
-        if (!['object', 'function'].includes(typeof(v))) {
-          q.set(k, v);
-        }
-        return v;
-      });
-
-      return q.toString();
-    }
-
-    function mfdToQueryString(mfd, contentType) {
-      var params = new URLSearchParams();
-
-      try {
-        var boundary = contentType.split('boundary=')[1];
-
-        var parts = mfd.split(new RegExp('-*' + boundary + '-*', 'mi'));
-
-        for (var i = 0; i < parts.length; i++) {
-          var m = parts[i].trim().match(/name="([^"]+)"\r\n\r\n(.*)/mi);
-          if (m) {
-            params.set(m[1], m[2]);
-          }
-        }
-
-      } catch (e) {}
-
-      return params.toString();
-    }
-
-    function binaryToString(data) {
-      var string;
-
-      if (typeof(data) === 'string') {
-        string = data;
-      } else if (data && data.length) {
-        string = '';
-        for (let i = 0; i < data.length; i++) {
-          string += String.fromCharCode(data[i]);
-        }
-      } else if (data) {
-        string = data.toString();
-      } else {
-        string = '';
-      }
-      return '__wb_post_data=' + btoa(string);
-    }
-
-    this.$wbwindow.XMLHttpRequest.prototype.send = function(value) {
-      if (this.__WB_xhr_open_arguments[0] === 'POST' || this.__WB_xhr_open_arguments[0] === 'PUT') {
-        var contentTypeFull = this.__WB_xhr_headers.get('Content-Type') || '';
-        var contentType = contentTypeFull.split(';')[0];
-        var newValue;
-
-        switch (contentType) {
-          case 'application/x-www-form-urlencoded':
-            newValue = value.toString();
-            break;
-
-          case 'application/json':
-            try {
-              newValue = jsonToQueryString(value);
-            } catch (e) {
-              newValue = '';
-            }
-            break;
-
-          case 'text/plain':
-            try {
-              newValue = jsonToQueryString(value);
-            } catch (e) {
-              newValue = binaryToString(value);
-            }
-            break;
-
-          case 'multipart/form-data':
-            newValue = mfdToQueryString(value, contentTypeFull);
-            break;
-
-          default:
-            newValue = binaryToString(value);
-        }
-
-        this.__WB_xhr_open_arguments[1] += (this.__WB_xhr_open_arguments[1].indexOf('?') > 0 ? '&' : '?') + '__wb_method=' + this.__WB_xhr_open_arguments[0] + '&' + newValue;
-        this.__WB_xhr_open_arguments[0] = 'GET';
-        value = null;
-      }
-
-      if (this.__WB_xhr_open_arguments.length > 2) {
+      // sync mode: disable in chrome
+      if (this.__WB_xhr_open_arguments.length > 2 && !this.__WB_xhr_open_arguments[2] && wombat.$wbwindow.chrome !== undefined) {
         this.__WB_xhr_open_arguments[2] = true;
+        console.warn('wombat.js: Sync XHR not supported in SW-based replay in chromium-based browsers, converted to async');
       }
 
       if (!this._no_rewrite) {
@@ -4407,7 +4327,7 @@ Wombat.prototype.initHTTPOverrides = function() {
         origSetRequestHeader.call(this, 'X-Pywb-Requested-With', 'XMLHttpRequest');
       }
 
-      origSend.call(this, value);
+      return origSend.call(this, value);
     };
   }
 
