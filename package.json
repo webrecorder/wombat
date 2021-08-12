@@ -9,6 +9,7 @@
     "John Berlin <n0tan3rd@gmail.com>"
   ],
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^20.0.0",
     "@rollup/plugin-node-resolve": "^13.0.4",
     "@types/fs-extra": "^8.0.0",
     "ava": "^2.3.0",
@@ -25,9 +26,7 @@
     "lodash-es": "^4.17.15",
     "prettier": "^1.18.2",
     "rollup": "^2.56.2",
-    "rollup-plugin-babel-minify": "^9.0.0",
-    "@rollup/plugin-commonjs": "^20.0.0",
-    "rollup-plugin-node-resolve": "^5.2.0"
+    "rollup-plugin-babel-minify": "^9.0.0"
   },
   "scripts": {
     "build-prod": "rollup -c rollup.config.prod.js",

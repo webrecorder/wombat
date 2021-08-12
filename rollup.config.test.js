@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 const baseTestOutput = path.join(__dirname, 'test', 'assets');
 const noStrict = {
@@ -16,7 +17,7 @@ export default [
       sourcemap: false,
       format: 'iife'
     },
-    plugins: [noStrict]
+    plugins: [noStrict, nodeResolve()]
   },
   {
     input: 'src/wbWombatProxyMode.js',
@@ -69,6 +70,7 @@ export default [
     },
     plugins: [
       noStrict,
+      nodeResolve(),
       {
         renderChunk(code) {
           return code.replace(

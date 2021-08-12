@@ -1,8 +1,7 @@
 import * as path from 'path';
-import resolve from 'rollup-plugin-node-resolve';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 const wombatDir = path.join(__dirname, '..');
-const moduleDirectory = path.join(wombatDir, 'node_modules');
 const baseTestOutput = path.join(wombatDir, 'test', 'assets');
 
 const noStrict = {
@@ -20,11 +19,7 @@ export default {
     format: 'es'
   },
   plugins: [
-    resolve({
-      customResolveOptions: {
-        moduleDirectory
-      }
-    }),
+    nodeResolve(),
     noStrict
   ]
 };
