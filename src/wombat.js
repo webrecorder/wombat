@@ -4307,10 +4307,12 @@ Wombat.prototype.initHTTPOverrides = function() {
         }
       }
 
-      // sync mode: disable in chrome
-      if (this.__WB_xhr_open_arguments.length > 2 && !this.__WB_xhr_open_arguments[2] && wombat.$wbwindow.chrome !== undefined) {
+      // sync mode: disable unless Firefox
+      // sync xhr with service workers supported only in FF at the moment
+      // https://wpt.fyi/results/service-workers/service-worker/fetch-request-xhr-sync.https.html
+      if (this.__WB_xhr_open_arguments.length > 2 && !this.__WB_xhr_open_arguments[2] && navigator.userAgent.indexOf('Firefox') === -1) {
         this.__WB_xhr_open_arguments[2] = true;
-        console.warn('wombat.js: Sync XHR not supported in SW-based replay in chromium-based browsers, converted to async');
+        console.warn('wombat.js: Sync XHR not supported in SW-based replay in this browser, converted to async');
       }
 
       if (!this._no_rewrite) {
