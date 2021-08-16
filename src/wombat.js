@@ -2201,8 +2201,10 @@ Wombat.prototype.rewriteElem = function(elem) {
         changed = this.rewriteFrameSrc(elem, 'src');
         if (this.wb_info.isSW && !changed) {
           var srcdoc = elem.getAttribute('srcdoc');
-          if (srcdoc) {
+          if (elem.hasAttribute('srcdoc')) {
             elem.removeAttribute('srcdoc');
+          }
+          if (srcdoc) {
             elem.src = this.wb_info.prefix + this.wb_info.timestamp + 'id_/srcdoc:' + btoa(encodeURIComponent(srcdoc));
           } else {
             var src = elem.getAttribute('src');
