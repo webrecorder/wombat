@@ -929,6 +929,10 @@ Wombat.prototype.extractOriginalURL = function(rewrittenUrl) {
     return url;
   }
 
+  if (url.startsWith(this.wb_info.static_prefix)) {
+    return url;
+  }
+
   var start;
 
   if (this.startsWith(url, this.wb_abs_prefix)) {
