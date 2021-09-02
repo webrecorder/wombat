@@ -4296,7 +4296,7 @@ Wombat.prototype.initHTTPOverrides = function() {
     var wombat = this;
 
     this.$wbwindow.XMLHttpRequest.prototype.send = async function(value) {
-      var convertToGet = false;
+      var convertToGet = !!this.wb_info.convert_post_to_get;
 
       if (convertToGet && (this.__WB_xhr_open_arguments[0] === 'POST' || this.__WB_xhr_open_arguments[0] === 'PUT')) {
 
