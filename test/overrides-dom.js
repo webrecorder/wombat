@@ -50,6 +50,19 @@ test('links should not be broken by wombat', async t => {
   t.is(actual, 'https://tests.wombat.io/foo');
 });
 
+test('scheme-relative URL assignemnts should work', async t => {
+  const { sandbox, server } = t.context;
+  const actual = await sandbox.evaluate(
+    () => {
+      const a = document.createElement('a');
+      a.href = '//example.com/foo2'; // note: browsers "magic" this property into an absolute URL on set.
+      return a.href;
+    },
+  );
+  t.is(actual, 'https://example.com/foo2');
+});
+
+
 test('anchor links should not be broken by wombat', async t => {
   const { sandbox, server } = t.context;
   const actual = await sandbox.evaluate(

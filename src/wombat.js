@@ -1502,12 +1502,13 @@ Wombat.prototype.makeSetLocProp = function(prop, origSetter, origGetter) {
       if (value) {
         if (value[0] === '.' || value[0] === '#') {
           value = wombat.resolveRelUrl(value, this.ownerDocument);
-        } else if (
-          value[0] === '/' &&
-          (value.length <= 1 || value[1] !== '/')
-        ) {
-          rel = true;
-          value = WB_wombat_location.origin + value;
+        } else if (value[0] === '/') {
+          if (value.length > 1 && value[1] === '/') {
+            value = this._parser.protocol + value;
+          } else {
+            rel = true;
+            value = WB_wombat_location.origin + value;
+          }
         }
       }
     }
@@ -4294,20 +4295,20 @@ Wombat.prototype.initHTTPOverrides = function() {
     };
 
     var wombat = this;
+    var convertToGet = !!this.wb_info.convert_post_to_get;
 
     this.$wbwindow.XMLHttpRequest.prototype.send = async function(value) {
-      var convertToGet = !!this.wb_info.convert_post_to_get;
-
       if (convertToGet && (this.__WB_xhr_open_arguments[0] === 'POST' || this.__WB_xhr_open_arguments[0] === 'PUT')) {
 
         var request = {
+          'url': this.__WB_xhr_open_arguments[1],
           'method': this.__WB_xhr_open_arguments[0],
           'headers': this.__WB_xhr_headers,
           'postData': value
         };
 
         if (postToGetUrl(request)) {
-          this.__WB_xhr_open_arguments[1] += request.url;
+          this.__WB_xhr_open_arguments[1] = request.url;
           this.__WB_xhr_open_arguments[0] = 'GET';
           value = null;
         }
