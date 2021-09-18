@@ -6209,7 +6209,7 @@ Wombat.prototype.initEvalOverride = function() {
   var runEval = function runEval(func) {
     var obj = this;
 
-    if (obj.eval && obj.eval !== eval) {
+    if (obj && obj.eval && obj.eval !== eval) {
       return {
         eval: function() {
           return obj.eval.__WB_orig_apply(obj, arguments);
