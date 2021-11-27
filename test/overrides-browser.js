@@ -278,4 +278,3 @@ test('browser history control: should send the "replace-url" msg to the top fram
     'the "replace-url" message was not sent to the top frame on history.pushState usage'
   );
 });
-
