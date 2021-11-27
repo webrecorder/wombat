@@ -139,6 +139,23 @@ test('WombatLocation: should have a Symbol.toStringTag value of "Location"', asy
   );
 });
 
+test('WombatLocation should not navigate when assigning to local object', async t => {
+  const { sandbox, server } = t.context;
+  const result = await sandbox.evaluate(() => {
+    function navTest(location) {
+      location = ((self.__WB_check_loc && self.__WB_check_loc(location)) || {}).href = location.protocol + '//' + location.hostname + '/it';
+      return location;
+    }
+
+    return navTest(window.WB_wombat_location);
+  });
+  t.is(
+    result,
+    `https://tests.wombat.io/it`,
+    'the page navigated away and did not return a URL'
+  );
+});
+
 test('WombatLocation browser navigation control: should rewrite Location.replace usage', async t => {
   const { sandbox, server } = t.context;
   const [navigationResponse] = await Promise.all([
@@ -259,3 +276,4 @@ test('browser history control: should send the "replace-url" msg to the top fram
     'the "replace-url" message was not sent to the top frame on history.pushState usage'
   );
 });
+
