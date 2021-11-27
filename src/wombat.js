@@ -5123,8 +5123,18 @@ Wombat.prototype.initProtoPmOrigin = function(win) {
     });
   } catch (e) {}
 
-  win.__WB_check_loc = function(loc) {
+  win.__WB_check_loc = function(loc, args) {
     if (loc instanceof Location || loc instanceof WombatLocation) {
+      // args, if provided, should be the 'arguments' from calling function
+      // check if the location is actually a locally passed in argument,
+      // if so, don't assign to global location
+      if (args) {
+        for (var i = 0; i < args.length; i++) {
+          if (loc === args[i]) {
+            return {};
+          }
+        }
+      }
       return this.WB_wombat_location;
     } else {
       return {};

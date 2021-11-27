@@ -139,6 +139,25 @@ test('WombatLocation: should have a Symbol.toStringTag value of "Location"', asy
   );
 });
 
+test('WombatLocation should not navigate when assigning to local object', async t => {
+  const { sandbox, server } = t.context;
+  const result = await sandbox.evaluate(() => {
+    let location = window.WB_wombat_location;
+
+    function navTest(location) {
+      location = ((self.__WB_check_loc && self.__WB_check_loc(location, arguments)) || {}).href = location.protocol + '//' + location.hostname + '/it';
+      return location;
+    }
+
+    return navTest(location);
+  });
+  t.is(
+    result,
+    'https://tests.wombat.io/it',
+    'the page navigated away and did not return a URL'
+  );
+});
+
 test('WombatLocation browser navigation control: should rewrite Location.replace usage', async t => {
   const { sandbox, server } = t.context;
   const [navigationResponse] = await Promise.all([
