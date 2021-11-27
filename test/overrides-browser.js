@@ -142,12 +142,14 @@ test('WombatLocation: should have a Symbol.toStringTag value of "Location"', asy
 test('WombatLocation should not navigate when assigning to local object', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(() => {
+    let location = window.WB_wombat_location;
+
     function navTest(location) {
-      location = ((self.__WB_check_loc && self.__WB_check_loc(location)) || {}).href = location.protocol + '//' + location.hostname + '/it';
+      location = ((self.__WB_check_loc && self.__WB_check_loc(location, arguments)) || {}).href = location.protocol + '//' + location.hostname + '/it';
       return location;
     }
 
-    return navTest(window.WB_wombat_location);
+    return navTest(location);
   });
   t.is(
     result,
