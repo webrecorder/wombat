@@ -151,7 +151,7 @@ test('WombatLocation should not navigate when assigning to local object', async 
   });
   t.is(
     result,
-    `https://tests.wombat.io/it`,
+    'https://tests.wombat.io/it',
     'the page navigated away and did not return a URL'
   );
 });
