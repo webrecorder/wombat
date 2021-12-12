@@ -1734,7 +1734,7 @@ Wombat.prototype.rewriteUrl_ = function(originalURL, useRel, mod, doc) {
   url = url.replace('WB_wombat_', '');
 
   if (mod === 'if_' && this.wb_info.isSW && this.startsWith(url, 'blob:')) {
-    return this.wb_info.prefix + this.wb_info.timestamp + 'if_/' + url;
+    return this.wb_info.prefix + this.wb_info.request_ts + 'if_/' + url;
   }
 
   // ignore anchors, about, data
@@ -2210,14 +2210,14 @@ Wombat.prototype.rewriteElem = function(elem) {
             elem.removeAttribute('srcdoc');
           }
           if (srcdoc) {
-            elem.src = this.wb_info.prefix + this.wb_info.timestamp + 'id_/srcdoc:' + btoa(encodeURIComponent(srcdoc));
+            elem.src = this.wb_info.prefix + this.wb_info.request_ts + 'id_/srcdoc:' + btoa(encodeURIComponent(srcdoc));
           } else {
             var src = elem.getAttribute('src');
             if (!src || src === 'about:blank') {
               if (!src) {
                 elem.__WB_blank = true;
               }
-              elem.src = this.wb_info.prefix + this.wb_info.timestamp + 'mp_/about:blank';
+              elem.src = this.wb_info.prefix + this.wb_info.request_ts + 'mp_/about:blank';
             }
           }
         }
