@@ -23,7 +23,7 @@
     "fastify-favicon": "^2.0.0",
     "fastify-static": "^2.5.0",
     "fs-extra": "^8.1.0",
-    "lodash-es": "^4.17.15",
+    "lodash-es": "^4.17.21",
     "prettier": "^1.18.2",
     "rollup": "^2.56.2",
     "rollup-plugin-babel-minify": "^9.0.0"
