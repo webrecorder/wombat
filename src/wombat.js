@@ -2029,9 +2029,9 @@ Wombat.prototype.rewriteSrcset = function(value, elem) {
     // Filter removes non-truthy values like null, undefined, and ""
     var v = split[i];
     if (v) {
-      var parts = v.trim().split(" ");
+      var parts = v.trim().split(' ');
       parts[0] = this.rewriteUrl(parts[0], true, mod);
-      values.push(parts.join(" "));
+      values.push(parts.join(' '));
     }
   }
 
