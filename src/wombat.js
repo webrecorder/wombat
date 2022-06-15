@@ -798,6 +798,7 @@ Wombat.prototype.wrapScriptTextJsProxy = function(scriptText) {
     'if (!self.__WB_pmw) { self.__WB_pmw = function(obj) { ' +
     'this.__WB_source = obj; return this; } }\n{\n' +
     'let window = _____WB$wombat$assign$function_____("window");\n' +
+    'let globalThis = _____WB$wombat$assign$function_____("globalThis");\n' +
     'let self = _____WB$wombat$assign$function_____("self");\n' +
     'let document = _____WB$wombat$assign$function_____("document");\n' +
     'let location = _____WB$wombat$assign$function_____("location");\n' +
