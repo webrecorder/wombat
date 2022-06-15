@@ -6217,6 +6217,8 @@ Wombat.prototype.initEvalOverride = function() {
     };
   };
 
+  var wombat = this;
+
   var runEval = function runEval(func) {
     var obj = this;
 
@@ -6242,12 +6244,14 @@ Wombat.prototype.initEvalOverride = function() {
     if (obj && obj.eval && obj.eval !== eval) {
       return {
         eval: function() {
-          return obj.eval.__WB_orig_apply(obj, [].slice.call(arguments, 1));
+          // should have at least 2 arguments as 2 are injected
+          return obj.eval.__WB_orig_apply(obj, [].slice.call(arguments, 2));
         }
       };
     } else {
       return {
-        eval: function(isGlobal, arg) {
+        eval: function(thisObj, isGlobal, arg) {
+          isGlobal = isGlobal && thisObj === wombat.proxyToObj(wombat.$wbwindow);
           return rewriteEvalArg(func, arg, isGlobal);
         }
       };
