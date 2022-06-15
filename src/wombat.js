@@ -2028,9 +2028,11 @@ Wombat.prototype.rewriteSrcset = function(value, elem) {
   var mod = this.rwModForElement(elem, 'srcset');
   for (var i = 0; i < split.length; i++) {
     // Filter removes non-truthy values like null, undefined, and ""
-    if (split[i]) {
-      var trimmed = split[i].trim();
-      if (trimmed) values.push(this.rewriteUrl(trimmed, true, mod));
+    var v = split[i];
+    if (v) {
+      var parts = v.trim().split(' ');
+      parts[0] = this.rewriteUrl(parts[0], true, mod);
+      values.push(parts.join(' '));
     }
   }
 
