@@ -6250,9 +6250,16 @@ Wombat.prototype.initEvalOverride = function() {
       };
     } else {
       return {
-        eval: function(thisObj, isGlobal, arg) {
-          isGlobal = isGlobal && thisObj === wombat.proxyToObj(wombat.$wbwindow);
-          return rewriteEvalArg(func, arg, isGlobal);
+        eval: function(thisObj, args, evalparam) {
+          // ensure this === window
+          var isGlobal = (thisObj === wombat.proxyToObj(wombat.$wbwindow));
+          // wrap in try/catch in the off chance case we're in strict mode, and then treat as non-global
+          try {
+            isGlobal = isGlobal && !args.callee.caller;
+          } catch (e) {
+            isGlobal = false;
+          }
+          return rewriteEvalArg(func, evalparam, isGlobal);
         }
       };
     }
