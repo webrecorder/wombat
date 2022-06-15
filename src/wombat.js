@@ -2789,12 +2789,12 @@ Wombat.prototype.rewriteHTMLAssign = function(thisObj, oSetter, newValue) {
  * @param {*} evalArg
  * @return {*}
  */
-Wombat.prototype.rewriteEvalArg = function(rawEvalOrWrapper, evalArg) {
+Wombat.prototype.rewriteEvalArg = function(rawEvalOrWrapper, evalArg, extraArg) {
   var toBeEvald =
     this.isString(evalArg) && !this.skipWrapScriptTextBasedOnText(evalArg)
       ? this.wrapScriptTextJsProxy(evalArg)
       : this.otherEvalRewrite(evalArg);
-  return rawEvalOrWrapper(toBeEvald);
+  return rawEvalOrWrapper(toBeEvald, extraArg);
 };
 
 /**
@@ -6205,9 +6205,7 @@ Wombat.prototype.initWombatTop = function($wbwindow) {
 };
 
 /**
- * There is evil in this world because this is it.
- * To quote the MDN / every sane person 'Do not ever use eval'.
- * Why cause we gotta otherwise infinite loops.
+ * To quote the MDN: 'Do not ever use eval'
  */
 Wombat.prototype.initEvalOverride = function() {
   var rewriteEvalArg = this.rewriteEvalArg;
@@ -6236,12 +6234,42 @@ Wombat.prototype.initEvalOverride = function() {
       };
     }
   };
+
+  // with additional global opt
+  var runEval2 = function runEval(func) {
+    var obj = this;
+
+    if (obj && obj.eval && obj.eval !== eval) {
+      return {
+        eval: function() {
+          return obj.eval.__WB_orig_apply(obj, [].slice.call(arguments, 1));
+        }
+      };
+    } else {
+      return {
+        eval: function(isGlobal, arg) {
+          return rewriteEvalArg(func, arg, isGlobal);
+        }
+      };
+    }
+  };
+
   this.defProp(
     this.$wbwindow.Object.prototype,
     'WB_wombat_runEval',
     setNoop,
     function() {
       return runEval;
+    }
+  );
+
+  // for extra global eval option
+  this.defProp(
+    this.$wbwindow.Object.prototype,
+    'WB_wombat_runEval2',
+    setNoop,
+    function() {
+      return runEval2;
     }
   );
 };
