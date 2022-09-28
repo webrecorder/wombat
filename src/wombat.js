@@ -568,9 +568,9 @@ Wombat.prototype.isArgumentsObj = function(maybeArgumentsObj) {
  * @param {string} prefix
  * @return {string}
  */
-// Wombat.prototype.getModuleDecl = function(localDecls, prefix) {
-//   return `import { ${localDecls.join(", ")} } from "${prefix}__wb_module_decl.js";\n`;
-// }
+Wombat.prototype.getModuleDecl = function(localDecls, prefix) {
+  return `import { ${localDecls.join(', ')} } from '${prefix}__wb_module_decl.js';\n`;
+};
 
 /**
  * Ensures that each element in the supplied arguments object or
@@ -2128,23 +2128,26 @@ Wombat.prototype.rewriteFrameSrc = function(elem, attrName) {
  * @return {boolean}
  */
 Wombat.prototype.rewriteScript = function(elem) {
-  // if ((elem.hasAttribute('type') && elem.getAttribute('type') === 'module') || this.isModule(elem.textContent)) {
-  //   const GLOBAL_OVERRIDES = [
-  //     "window",
-  //     "globalThis",
-  //     "self",
-  //     "document",
-  //     "location",
-  //     "top",
-  //     "parent",
-  //     "frames",
-  //     "opener"
-  //   ];
-  //   return this.getModuleDecl(GLOBAL_OVERRIDES, this.wb_replay_prefix) +
-  //     '{\n' +
-  //     elem.textContent.replace(this.DotPostMessageRe, '.__WB_pmw(self.window)$1') +
-  //     '\n\n}}';
-  // }
+  console.log(`js textcontent: ${elem.textContent}`);
+  if ((elem.hasAttribute('type') && elem.getAttribute('type') === 'module') || this.isModule(elem.textContent)) {
+    console.log('script is a module');
+    const GLOBAL_OVERRIDES = [
+      'window',
+      'globalThis',
+      'self',
+      'document',
+      'location',
+      'top',
+      'parent',
+      'frames',
+      'opener'
+    ];
+    elem.textContent = this.getModuleDecl(GLOBAL_OVERRIDES, this.wb_replay_prefix) +
+      '{\n' +
+      elem.textContent.replace(this.DotPostMessageRe, '.__WB_pmw(self.window)$1') +
+      '\n\n}}';
+    return true;
+  }
   if (elem.hasAttribute('src') || !elem.textContent || !this.$wbwindow.Proxy) {
     return this.rewriteAttr(elem, 'src');
   }
