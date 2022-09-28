@@ -446,6 +446,28 @@ Wombat.prototype.isNativeFunction = function(funToTest) {
 };
 
 /**
+ * Returns T/F indicating if the supplied script text is a module
+ * or not. The test checks for the presence of import or export statements
+ * @param {string} text - The script text to be tested
+ * @return {boolean}
+ */
+Wombat.prototype.isModule = function(text) {
+  if (!text || typeof text !== 'string') return false;
+  const IMPORT_RX = /^\s*?import\s*?[{"']/;
+  const EXPORT_RX = /^\s*?export\s*?({([\s\w,$\n]+?)}[\s;]*|default|class)\s+/m;
+
+  if (text.indexOf('import') >= 0 && text.match(IMPORT_RX)) {
+    return true;
+  }
+
+  if (text.indexOf('export') >= 0 && text.match(EXPORT_RX)) {
+    return true;
+  }
+
+  return false;
+};
+
+/**
  * Returns T/F indicating if the supplied argument is a string or not
  * @param {*} arg
  * @return {boolean}
@@ -539,6 +561,16 @@ Wombat.prototype.isArgumentsObj = function(maybeArgumentsObj) {
     return false;
   }
 };
+
+/**
+ * Returns custom import for module
+ * @param {*} localDecls
+ * @param {string} prefix
+ * @return {string}
+ */
+// Wombat.prototype.getModuleDecl = function(localDecls, prefix) {
+//   return `import { ${localDecls.join(", ")} } from "${prefix}__wb_module_decl.js";\n`;
+// }
 
 /**
  * Ensures that each element in the supplied arguments object or
@@ -2096,6 +2128,23 @@ Wombat.prototype.rewriteFrameSrc = function(elem, attrName) {
  * @return {boolean}
  */
 Wombat.prototype.rewriteScript = function(elem) {
+  // if ((elem.hasAttribute('type') && elem.getAttribute('type') === 'module') || this.isModule(elem.textContent)) {
+  //   const GLOBAL_OVERRIDES = [
+  //     "window",
+  //     "globalThis",
+  //     "self",
+  //     "document",
+  //     "location",
+  //     "top",
+  //     "parent",
+  //     "frames",
+  //     "opener"
+  //   ];
+  //   return this.getModuleDecl(GLOBAL_OVERRIDES, this.wb_replay_prefix) +
+  //     '{\n' +
+  //     elem.textContent.replace(this.DotPostMessageRe, '.__WB_pmw(self.window)$1') +
+  //     '\n\n}}';
+  // }
   if (elem.hasAttribute('src') || !elem.textContent || !this.$wbwindow.Proxy) {
     return this.rewriteAttr(elem, 'src');
   }

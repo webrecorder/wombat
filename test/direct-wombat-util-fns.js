@@ -1,6 +1,6 @@
 import test from 'ava';
 import TestHelper from './helpers/testHelper';
-import { NativeFnTest, SaveSrcSetDataSrcSet } from './helpers/testedValues';
+import { ModuleTest, NativeFnTest, SaveSrcSetDataSrcSet } from './helpers/testedValues';
 
 /**
  * @type {TestHelper}
@@ -36,6 +36,12 @@ test('isNativeFunction: should return T/F indicating if a function is a native f
   const { sandbox } = t.context;
   const testResult = await sandbox.evaluate(NativeFnTest.testFN);
   t.deepEqual(testResult, NativeFnTest.expectedValue);
+});
+
+test('isModule: should return T/F indiciating if a function is a module or not', async t => {
+  const { sandbox } = t.context;
+  const testResult = await sandbox.evaluate(ModuleTest.testFN);
+  t.deepEqual(testResult, ModuleTest.expectedValue);
 });
 
 for (let i = 0; i < SaveSrcSetDataSrcSet.values.length; i++) {

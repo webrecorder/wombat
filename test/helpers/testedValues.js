@@ -1089,6 +1089,31 @@ exports.NativeFnTest = {
   }
 };
 
+exports.ModuleTest = {
+  testFN() {
+    return {
+      moduleImport: wombat.isModule('import \'./a-module.js\'\n { let counter=0; }'),
+      moduleExport: wombat.isModule('export { name1 };\n'),
+      moduleExportDefault: wombat.isModule('export default function functionName() { /* … */ }'),
+      moduleExportClass: wombat.isModule('export class ClassName { /* … */ };'),
+      notModule: wombat.isModule('let counter = 0;\nconsole.log(counter);'),
+      null: wombat.isModule(null),
+      undefined: wombat.isModule(undefined),
+      obj: wombat.isModule({})
+    };
+  },
+  expectedValue: {
+    moduleImport: true,
+    moduleExport: true,
+    moduleExportDefault: true,
+    moduleExportClass: true,
+    notModule: false,
+    null: false,
+    undefined: false,
+    obj: false
+  }
+};
+
 exports.SaveSrcSetDataSrcSet = {
   values: [
     { name: 'IMG', tagName: 'IMG', expected: true },
