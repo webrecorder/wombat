@@ -2145,7 +2145,7 @@ Wombat.prototype.rewriteScript = function(elem) {
     elem.textContent = this.getModuleDecl(GLOBAL_OVERRIDES, this.wb_replay_prefix) +
       '{\n' +
       elem.textContent.replace(this.DotPostMessageRe, '.__WB_pmw(self.window)$1') +
-      '\n\n}}';
+      '\n\n}';
     return true;
   }
   if (elem.hasAttribute('src') || !elem.textContent || !this.$wbwindow.Proxy) {
