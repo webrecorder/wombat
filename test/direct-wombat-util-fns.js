@@ -38,7 +38,7 @@ test('isNativeFunction: should return T/F indicating if a function is a native f
   t.deepEqual(testResult, NativeFnTest.expectedValue);
 });
 
-test('isModule: should return T/F indiciating if a function is a module or not', async t => {
+test('isModule: should return T/F indicating if a function is a module or not', async t => {
   const { sandbox } = t.context;
   const testResult = await sandbox.evaluate(ModuleTest.testFN);
   t.deepEqual(testResult, ModuleTest.expectedValue);
