@@ -12,6 +12,10 @@ import {
 
 import { postToGetUrl } from 'warcio/src/utils.js';
 
+
+var WBWindow = Window;
+
+
 /**
  * @param {Window} $wbwindow
  * @param {Object} wbinfo
@@ -1385,7 +1389,7 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
     }
     return cachedFN.boundFn;
   } else if (type === 'object' && retVal && retVal._WB_wombat_obj_proxy) {
-    if (retVal instanceof Window) {
+    if (retVal instanceof WBWindow) {
       this.initNewWindowWombat(retVal);
     }
     return retVal._WB_wombat_obj_proxy;
@@ -1573,7 +1577,7 @@ Wombat.prototype.domConstructorErrorChecker = function(
 ) {
   var needArgs = typeof numRequiredArgs === 'number' ? numRequiredArgs : 1;
   var errorMsg;
-  if (thisObj instanceof Window) {
+  if (thisObj instanceof WBWindow) {
     errorMsg =
       'Failed to construct \'' +
       what +
