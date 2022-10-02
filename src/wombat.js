@@ -2235,6 +2235,17 @@ Wombat.prototype.rewriteElem = function(elem) {
       case 'SCRIPT':
         changed = this.rewriteScript(elem);
         break;
+      case 'A':
+        changed = this.rewriteAttr(elem, 'href') || changed;
+        if (elem.hasAttribute('target')) {
+          var newTarget = this.rewriteAttrTarget(elem.target);
+          if (newTarget !== elem.target) {
+            elem.target = newTarget;
+            changed = true;
+          }
+        }
+        break;
+
       default: {
         changed = this.rewriteAttr(elem, 'src');
         changed = this.rewriteAttr(elem, 'srcset') || changed;
@@ -5470,7 +5481,10 @@ Wombat.prototype.initOpenOverride = function() {
   var wombat = this;
 
   var open_rewritten = function open(strUrl, strWindowName, strWindowFeatures) {
-    var rwStrUrl = wombat.rewriteUrl(strUrl, false, '');
+    if (strWindowName) {
+      strWindowName = this.rewriteAttrTarget(strWindowName);
+    }
+    var rwStrUrl = wombat.rewriteUrl(strUrl, false);
     var res = orig.call(
       wombat.proxyToObj(this),
       rwStrUrl,
@@ -5494,6 +5508,22 @@ Wombat.prototype.initOpenOverride = function() {
       console.log(e);
     }
   }
+};
+
+/**
+ * Rewrite 'target' for anchor tag or window.open
+ */
+
+Wombat.prototype.rewriteAttrTarget = function(target) {
+  if (!this.wb_info.target_frame) {
+    return target;
+  }
+
+  if (target === '_blank' || target === '_parent' || target === '_top') {
+    return this.wb_info.target_frame;
+  }
+
+  return target;
 };
 
 /**
