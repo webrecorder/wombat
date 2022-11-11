@@ -5185,7 +5185,7 @@ Wombat.prototype.initImportWrapperFunc = function(win) {
   var wombat = this;
   win.____wb_rewrite_import__ = function(url) {
     return import(/*webpackIgnore: true*/ wombat.rewriteUrl(url));
-  }
+  };
 };
 
 /**
