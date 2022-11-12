@@ -1,14 +1,14 @@
 /* eslint-disable camelcase */
-import FuncMap from './funcMap';
-import { createStorage, Storage } from './customStorage';
-import WombatLocation from './wombatLocation';
-import AutoFetcher from './autoFetcher';
-import { wrapEventListener, wrapSameOriginEventListener } from './listeners';
+import FuncMap from './funcMap.js';
+import { createStorage, Storage } from './customStorage.js';
+import WombatLocation from './wombatLocation.js';
+import AutoFetcher from './autoFetcher.js';
+import { wrapEventListener, wrapSameOriginEventListener } from './listeners.js';
 import {
   addToStringTagToClass,
   autobind,
   ThrowExceptions
-} from './wombatUtils';
+} from './wombatUtils.js';
 
 import { postToGetUrl } from 'warcio/src/utils.js';
 
@@ -263,7 +263,7 @@ function Wombat($wbwindow, wbinfo) {
   this.IsTagRegex = /^\s*</;
 
   /** @type {RegExp} */
-  this.DotPostMessageRe = /(.postMessage\s*\()/;
+  this.DotPostMessageRe = /(\.postMessage\s*\()/;
 
   /** @type {RegExp} */
   this.extractPageUnderModiferRE = /\/(?:[0-9]{14})?([a-z]{2, 3}_)\//;
@@ -651,8 +651,10 @@ Wombat.prototype.shouldRewriteAttr = function(tagName, attr) {
  */
 Wombat.prototype.skipWrapScriptBasedOnType = function(scriptType) {
   if (!scriptType) return false;
+  if (scriptType.indexOf('javascript') >= 0 || scriptType.indexOf('ecmascript') >= 0) return false;
   if (scriptType.indexOf('json') >= 0) return true;
-  return scriptType.indexOf('text/template') >= 0;
+  if (scriptType.indexOf('text/') >= 0) return true;
+  return false;
 };
 
 /**
@@ -4487,7 +4489,7 @@ Wombat.prototype.initElementGetSetAttributeOverride = function() {
           rwValue = wombat.rewriteInlineStyle(value);
         } else if (lowername === 'style') {
           rwValue = wombat.rewriteStyle(value);
-        } else if (lowername === 'srcset') {
+        } else if (lowername === 'srcset' || (lowername === 'imagesrcset' && this.tagName === 'LINK')) {
           rwValue = wombat.rewriteSrcset(value, this);
         } else {
           var shouldRW = wombat.shouldRewriteAttr(this.tagName, lowername);
@@ -4902,6 +4904,7 @@ Wombat.prototype.initNewWindowWombat = function(win, src) {
     this.initPostMessageOverride(win);
     this.initMessageEventOverride(win);
     this.initCheckThisFunc(win);
+    this.initImportWrapperFunc(win);
   }
 };
 
@@ -5175,6 +5178,14 @@ Wombat.prototype.initCheckThisFunc = function(win) {
       });
     }
   } catch(e) {}
+};
+
+
+Wombat.prototype.initImportWrapperFunc = function(win) {
+  var wombat = this;
+  win.____wb_rewrite_import__ = function(url) {
+    return import(/*webpackIgnore: true*/ wombat.rewriteUrl(url));
+  };
 };
 
 /**
@@ -5520,6 +5531,13 @@ Wombat.prototype.rewriteAttrTarget = function(target) {
   }
 
   if (target === '_blank' || target === '_parent' || target === '_top') {
+    return this.wb_info.target_frame;
+  }
+
+  // if target is a different name, and we are the top frame, assume intent
+  // is to open a new window, and not some iframe
+  // (a futher check could also be to check list of iframes to see if the target matches)
+  if (target && this.$wbwindow === this.$wbwindow.__WB_replay_top) {
     return this.wb_info.target_frame;
   }
 
@@ -5949,7 +5967,7 @@ Wombat.prototype.initWindowObjProxy = function($wbwindow) {
       },
       defineProperty: function(target, prop, desc) {
         var ndesc = desc || {};
-        if (!ndesc.value && !ndesc.get) {
+        if (ndesc.value === undefined && ndesc.get === undefined) {
           ndesc.value = $wbwindow[prop];
         }
         Reflect.defineProperty($wbwindow, prop, ndesc);
@@ -6346,6 +6364,10 @@ Wombat.prototype.wombatInit = function() {
 
   // proxy check this func
   this.initCheckThisFunc(this.$wbwindow);
+
+
+  // add __wb_import for modules
+  this.initImportWrapperFunc(this.$wbwindow);
 
   // override getOwnPropertyNames
   this.overrideGetOwnPropertyNames(this.$wbwindow);
