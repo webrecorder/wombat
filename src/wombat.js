@@ -263,7 +263,7 @@ function Wombat($wbwindow, wbinfo) {
   this.IsTagRegex = /^\s*</;
 
   /** @type {RegExp} */
-  this.DotPostMessageRe = /(.postMessage\s*\()/;
+  this.DotPostMessageRe = /(\.postMessage\s*\()/;
 
   /** @type {RegExp} */
   this.extractPageUnderModiferRE = /\/(?:[0-9]{14})?([a-z]{2, 3}_)\//;
@@ -5967,7 +5967,7 @@ Wombat.prototype.initWindowObjProxy = function($wbwindow) {
       },
       defineProperty: function(target, prop, desc) {
         var ndesc = desc || {};
-        if (!ndesc.value && !ndesc.get) {
+        if (ndesc.value === undefined && ndesc.get === undefined) {
           ndesc.value = $wbwindow[prop];
         }
         Reflect.defineProperty($wbwindow, prop, ndesc);
