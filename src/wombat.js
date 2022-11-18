@@ -27,6 +27,10 @@ function Wombat($wbwindow, wbinfo) {
   this.$wbwindow = $wbwindow;
   this.WBWindow = Window;
 
+  this.origHost = $wbwindow.location.host;
+  this.origHostname = $wbwindow.location.hostname;
+  this.origProtocol = $wbwindow.location.protocol;
+
   /** @type {string} */
   this.HTTP_PREFIX = 'http://';
 
@@ -1763,12 +1767,12 @@ Wombat.prototype.rewriteUrl_ = function(originalURL, useRel, mod, doc) {
   var check_url;
 
   if (url.indexOf('//') === 0) {
-    check_url = window.location.protocol + url;
+    check_url = this.origProtocol + url;
   } else {
     check_url = url;
   }
 
-  var originalLoc = this.$wbwindow.location;
+  //var originalLoc = this.$wbwindow.location;
   if (
     this.startsWith(check_url, this.wb_abs_prefix) ||
     this.startsWith(check_url, this.wb_rel_prefix)
@@ -1779,15 +1783,15 @@ Wombat.prototype.rewriteUrl_ = function(originalURL, useRel, mod, doc) {
   // A special case where the port somehow gets dropped
   // Check for this and add it back in, eg http://localhost/path/ -> http://localhost:8080/path/
   if (
-    originalLoc.host !== originalLoc.hostname &&
+    this.origHost !== this.origHostname &&
     this.startsWith(
       url,
-      originalLoc.protocol + '//' + originalLoc.hostname + '/'
+      this.origProtocol + '//' + this.origHostname + '/'
     )
   ) {
     return url.replace(
-      '/' + originalLoc.hostname + '/',
-      '/' + originalLoc.host + '/'
+      '/' + this.origHostname + '/',
+      '/' + this.origHost + '/'
     );
   }
 
@@ -1826,8 +1830,10 @@ Wombat.prototype.rewriteUrl_ = function(originalURL, useRel, mod, doc) {
   var prefix = this.startsWithOneOf(url.toLowerCase(), this.VALID_PREFIXES);
 
   if (prefix) {
-    var orig_host = this.$wbwindow.__WB_replay_top.location.host;
-    var orig_protocol = this.$wbwindow.__WB_replay_top.location.protocol;
+    //var orig_host = this.$wbwindow.__WB_replay_top.location.host;
+    //var orig_protocol = this.$wbwindow.__WB_replay_top.location.protocol;
+    var orig_host = this.replayTopHost;
+    var orig_protocol = this.replayTopProtocol;
 
     var prefix_host = prefix + orig_host + '/';
 
@@ -5297,6 +5303,10 @@ Wombat.prototype.initPostMessageOverride = function($wbwindow) {
     var from;
     var src_id;
     var this_obj = wombat.proxyToObj(this);
+    if (!this_obj) {
+      this_obj = $wbwindow;
+      this_obj.__WB_source = $wbwindow;
+    }
     if (this_obj.__WB_source && this_obj.__WB_source.WB_wombat_location) {
       var source = this_obj.__WB_source;
 
@@ -6139,6 +6149,8 @@ Wombat.prototype.initTopFrame = function($wbwindow) {
   if (this.wb_is_proxy) {
     $wbwindow.__WB_replay_top = $wbwindow.top;
     $wbwindow.__WB_top_frame = undefined;
+    this.replayTopHost = replay_top.location.host;
+    this.replayTopProtocol = replay_top.location.protocol;
     return;
   }
 
@@ -6163,6 +6175,8 @@ Wombat.prototype.initTopFrame = function($wbwindow) {
   }
 
   $wbwindow.__WB_replay_top = replay_top;
+  this.replayTopHost = replay_top.location.host;
+  this.replayTopProtocol = replay_top.location.protocol;
 
   var real_parent = replay_top.parent;
   // Check to ensure top frame is different window and directly accessible (later refactor to support postMessage)
