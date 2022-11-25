@@ -5503,7 +5503,7 @@ Wombat.prototype.initOpenOverride = function() {
 
   var open_rewritten = function open(strUrl, strWindowName, strWindowFeatures) {
     if (strWindowName) {
-      strWindowName = this.rewriteAttrTarget(strWindowName);
+      strWindowName = wombat.rewriteAttrTarget(strWindowName);
     }
     var rwStrUrl = wombat.rewriteUrl(strUrl, false);
     var res = orig.call(
