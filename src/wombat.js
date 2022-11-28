@@ -4059,7 +4059,7 @@ Wombat.prototype.initBlobOverride = function() {
   this.$wbwindow.Blob = (function(Blob_) {
     return function Blob(array, options) {
 
-      if (options && options.type === 'application/xhtml+xml' || options.type === 'text/html') {
+      if (options && (options.type === 'application/xhtml+xml' || options.type === 'text/html')) {
         // for now, just handle single string case
         if (array.length === 1 && typeof(array[0]) === 'string' && wombat.startsWith(array[0], '<!DOCTYPE html>')) {
           array[0] = wombat.rewriteHtml(array[0]);
