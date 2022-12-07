@@ -10,7 +10,7 @@ import {
   ThrowExceptions
 } from './wombatUtils.js';
 
-import { postToGetUrl } from 'warcio/src/utils.js';
+import { postToGetUrl } from 'warcio/utils';
 
 
 /**
