@@ -1508,7 +1508,13 @@ Wombat.prototype.makeSetLocProp = function(prop, origSetter, origGetter) {
 
     // Special case for assigning href to a relative path
     if (prop === 'href' && typeof value === 'string') {
-      if (value) {
+      if (value && this._parser instanceof URL) {
+        try {
+          value = new URL(value, this._parser).href;
+        } catch (e) {
+          console.warn('Error resolving URL', e);
+        }
+      } else if (value) {
         if (value[0] === '.' || value[0] === '#') {
           value = wombat.resolveRelUrl(value, this.ownerDocument);
         } else if (value[0] === '/') {

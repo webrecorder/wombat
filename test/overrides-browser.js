@@ -188,19 +188,19 @@ test('WombatLocation browser navigation control: should rewrite Location.assign 
   );
 });
 
-test('WombatLocation browser navigation control: should reload the page via Location.reload usage', async t => {
+test('WombatLocation browser navigation control: should *not* reload the page via WombatLocation.reload usage', async t => {
   const { sandbox, server } = t.context;
-  const [originalLoc, navigationResponse] = await Promise.all([
+  const [originalLoc, currentLoc] = await Promise.all([
     sandbox.evaluate(() => window.location.href),
-    sandbox.waitForNavigation(),
     sandbox.evaluate(() => {
       window.WB_wombat_location.reload();
+      return window.location.href;
     })
   ]);
   t.is(
-    navigationResponse.url(),
     originalLoc,
-    'using WB_wombat_location.reload did not reload the page'
+    currentLoc,
+    'using WB_wombat_location.reload() did not stay on the page'
   );
 });
 

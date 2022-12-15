@@ -87,7 +87,8 @@ WombatLocation.prototype.assign = function assign(url) {
  * @return {*}
  */
 WombatLocation.prototype.reload = function reload(forcedReload) {
-  return this._orig_loc.reload(forcedReload || false);
+  //return this._orig_loc.reload(forcedReload || false);
+  return;
 };
 
 /**
