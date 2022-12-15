@@ -199,7 +199,7 @@ test('WombatLocation browser navigation control: should *not* reload the page vi
   ]);
   t.is(
     originalLoc,
-    currentLoc
+    currentLoc,
     'using WB_wombat_location.reload() did not stay on the page'
   );
 });
