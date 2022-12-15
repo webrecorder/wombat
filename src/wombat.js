@@ -3213,6 +3213,39 @@ Wombat.prototype.overrideHtmlAssign = function(elem, prop, rewriteGetter) {
   this.defProp(obj, prop, setter, rewriteGetter ? getter : orig_getter);
 };
 
+
+/**
+ * Override .dataset element on element and wraps in a proxy that unrewrites URLs
+ */
+Wombat.prototype.overrideDataSet = function() {
+  var obj = this.$wbwindow.HTMLElement.prototype;
+  var orig_getter = this.getOrigGetter(obj, 'dataset');
+
+  var wombat = this;
+
+  var getter = function wrapDataSet() {
+    var dataset = orig_getter.call(this);
+
+    var proxy = new Proxy(dataset, {
+      get(target, prop, receiver) {
+
+        var result = target[prop];
+
+        if (wombat.startsWithOneOf(result, wombat.wb_prefixes)) {
+          return wombat.extractOriginalURL(result);
+        }
+
+        return result;
+      }
+    });
+
+    return proxy;
+  };
+
+  this.defProp(obj, 'dataset', null, getter);
+};
+
+
 /**
  * Overrides the getter and setter functions for the supplied property
  * on the HTMLIFrameElement
@@ -6380,7 +6413,7 @@ Wombat.prototype.wombatInit = function() {
   this.initCheckThisFunc(this.$wbwindow);
 
 
-  // add __wb_import for modules
+  // add __wb_import__ for modules
   this.initImportWrapperFunc(this.$wbwindow);
 
   // override getOwnPropertyNames
@@ -6429,6 +6462,9 @@ Wombat.prototype.wombatInit = function() {
 
   // Attr nodeValue and value
   this.overrideAttrProps();
+
+  // Override dataset access and wrap in proxy
+  this.overrideDataSet();
 
   // init insertAdjacent[Element, HTML] override
   this.initInsertAdjacentElementHTMLOverrides();

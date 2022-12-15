@@ -551,6 +551,17 @@ test('Element.insertAdjacentHTML: should rewrite strings of html', async t => {
   t.true(result);
 });
 
+test('HTMLElement.dataset access should be unrewritten', async t => {
+  const { sandbox, server } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const div = document.createElement('div');
+    div.dataset.foo = 'http://localhost:3030/live/mp_/https://example.com/';
+
+    return div.dataset.foo === 'https://example.com/';
+  });
+  t.true(result);
+});
+
 for (const aTest of ElementGetSetAttribute) {
   if (aTest.elem === 'link') {
     for (const [as, mod] of Object.entries(LinkAsTypes)) {
