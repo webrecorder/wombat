@@ -3247,6 +3247,38 @@ Wombat.prototype.overrideDataSet = function() {
 
 
 /**
+ * Override .dataset element on element and wraps in a proxy that unrewrites URLs
+ */
+Wombat.prototype.overrideStyleProxy = function(overrideProps) {
+  var obj = this.$wbwindow.HTMLElement.prototype;
+  var orig_setter = this.getOrigSetter(obj, 'style');
+  var orig_getter = this.getOrigGetter(obj, 'style');
+
+  var wombat = this;
+
+  var getter = function wrapStyle() {
+    var style = orig_getter.call(this);
+
+    var proxy = new Proxy(style, {
+      set(target, prop, value) {
+        if (overrideProps.includes(prop)) {
+          value = wombat.rewriteStyle(value);
+        }
+
+        target[prop] = value;
+        return true;
+      }
+    });
+
+    return proxy;
+  };
+
+  this.defProp(obj, 'style', orig_setter, getter);
+};
+
+
+
+/**
  * Overrides the getter and setter functions for the supplied property
  * on the HTMLIFrameElement
  * @param {string} prop
@@ -3806,25 +3838,30 @@ Wombat.prototype.initAttrOverrides = function() {
 
   var style_proto = this.$wbwindow.CSSStyleDeclaration.prototype;
 
+  var cssAttrToProps = {
+    'background': 'background',
+    'backgroundImage': 'background-image',
+    'cursor': 'cursor',
+    'listStyle': 'list-style',
+    'listStyleImage': 'list-style-image',
+    'border': 'border',
+    'borderImage': 'border-image',
+    'borderImageSource': 'border-image-source',
+    'maskImage': 'mask-image'
+  };
+
+  this.overrideStyleProxy(Object.values(cssAttrToProps));
+
   // For FF
   if (this.$wbwindow.CSS2Properties) {
     style_proto = this.$wbwindow.CSS2Properties.prototype;
   }
 
   this.overrideStyleAttr(style_proto, 'cssText');
-  this.overrideStyleAttr(style_proto, 'background', 'background');
-  this.overrideStyleAttr(style_proto, 'backgroundImage', 'background-image');
-  this.overrideStyleAttr(style_proto, 'cursor', 'cursor');
-  this.overrideStyleAttr(style_proto, 'listStyle', 'list-style');
-  this.overrideStyleAttr(style_proto, 'listStyleImage', 'list-style-image');
-  this.overrideStyleAttr(style_proto, 'border', 'border');
-  this.overrideStyleAttr(style_proto, 'borderImage', 'border-image');
-  this.overrideStyleAttr(
-    style_proto,
-    'borderImageSource',
-    'border-image-source'
-  );
-  this.overrideStyleAttr(style_proto, 'maskImage', 'mask-image');
+
+  for (var [attr, prop] of Object.entries(cssAttrToProps)) {
+    this.overrideStyleAttr(style_proto, attr, prop);
+  }
 
   this.overrideStyleSetProp(style_proto);
 
