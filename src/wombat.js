@@ -3774,6 +3774,7 @@ Wombat.prototype.initAttrOverrides = function() {
   this.overrideAttr(this.$wbwindow.HTMLImageElement.prototype, 'src', 'im_');
   this.overrideAttr(this.$wbwindow.HTMLInputElement.prototype, 'src', 'oe_');
   this.overrideAttr(this.$wbwindow.HTMLEmbedElement.prototype, 'src', 'oe_');
+  this.overrideAttr(this.$wbwindow.HTMLMediaElement.prototype, 'src', 'oe_');
   this.overrideAttr(this.$wbwindow.HTMLVideoElement.prototype, 'src', 'oe_');
   this.overrideAttr(this.$wbwindow.HTMLAudioElement.prototype, 'src', 'oe_');
   this.overrideAttr(this.$wbwindow.HTMLSourceElement.prototype, 'src', 'oe_');
