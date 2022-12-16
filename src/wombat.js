@@ -3259,6 +3259,8 @@ Wombat.prototype.overrideStyleProxy = function(overrideProps) {
   var getter = function wrapStyle() {
     var style = orig_getter.call(this);
 
+    var fnCache = {};
+
     var proxy = new Proxy(style, {
       set(target, prop, value) {
         if (overrideProps.includes(prop)) {
@@ -3270,9 +3272,17 @@ Wombat.prototype.overrideStyleProxy = function(overrideProps) {
       },
 
       get(target, prop, receiver) {
-        return target[prop];
-      }
+        var value = target[prop];
 
+        if (typeof value === "function" && (prop === "setProperty" || wombat.isNativeFunction(value))) {
+          if (!fnCache[prop]) {
+            fnCache[prop] = value.bind(style);
+          }
+          return fnCache[prop];
+        }
+
+        return value;
+      },
     });
 
     return proxy;
