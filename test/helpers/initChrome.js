@@ -41,7 +41,7 @@ async function initChrome() {
   const chrome = await launch({
     chromeFlags: chromeArgs
   });
-  const client = await CRIExtra({ host: 'localhost', port: chrome.port });
+  const client = await CRIExtra({ host: '127.0.0.1', port: chrome.port });
   const browser = await Browser.create(client, {
     ignoreHTTPSErrors: true,
     additionalDomains: { workers: true },
