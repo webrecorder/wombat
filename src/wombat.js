@@ -3267,7 +3267,12 @@ Wombat.prototype.overrideStyleProxy = function(overrideProps) {
 
         target[prop] = value;
         return true;
+      },
+
+      get(target, prop, receiver) {
+        return target[prop];
       }
+
     });
 
     return proxy;
