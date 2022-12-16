@@ -14,7 +14,7 @@ jobs:
     - name: Lint
       uses: actions/setup-node@v2
       with:
-        node-version: 14.x
+        node-version: 18.x
     - run: yarn install
     - run: yarn run lint
   build-test:
@@ -24,7 +24,7 @@ jobs:
     - name: Build & Test
       uses: actions/setup-node@v2
       with:
-        node-version: 14.x
+        node-version: 18.x
     - run: yarn install
     - run: yarn run build-full-test
     # set up a virtual display for chrome (since the tests don't currently run it in headless mode)
