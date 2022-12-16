@@ -1,6 +1,6 @@
 {
   "name": "@webrecorder/wombat",
-  "version": "3.3.14",
+  "version": "3.4.0",
   "main": "index.js",
   "license": "AGPL-3.0-or-later",
   "author": "Ilya Kreymer, Webrecorder Software",

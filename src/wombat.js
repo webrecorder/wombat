@@ -3274,7 +3274,7 @@ Wombat.prototype.overrideStyleProxy = function(overrideProps) {
       get(target, prop, receiver) {
         var value = target[prop];
 
-        if (typeof value === "function" && (prop === "setProperty" || wombat.isNativeFunction(value))) {
+        if (typeof value === 'function' && (prop === 'setProperty' || wombat.isNativeFunction(value))) {
           if (!fnCache[prop]) {
             fnCache[prop] = value.bind(style);
           }
