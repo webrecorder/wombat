@@ -4252,10 +4252,10 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
 
-warcio@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/warcio/-/warcio-2.0.0.tgz#58743a7f793738dad6a8bd90b30257bd86e6776d"
-  integrity sha512-E/o1b0gj8jqsqfNok+7ykxk/exL3wyIw5oxrLzMaHYgH13Oro+kDAn8dLGJewasVXA+wZIW2OsEiIvEEdSdsrQ==
+warcio@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/warcio/-/warcio-2.0.1.tgz#b806849b155b9b4667a066b9903c829999f08227"
+  integrity sha512-+1AyOQJ3hjLkZwT0mIn2xGrg+RRbyu+fWXuCpU1A/VG25bVzrcsvj8T0lWToylJU4Xf9Q8W57Jej/iUxGxaHKg==
   dependencies:
     base32-encode "^2.0.0"
     pako "^1.0.11"

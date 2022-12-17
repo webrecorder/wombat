@@ -1,6 +1,6 @@
 {
   "name": "@webrecorder/wombat",
-  "version": "3.4.1",
+  "version": "3.4.2",
   "main": "index.js",
   "license": "AGPL-3.0-or-later",
   "author": "Ilya Kreymer, Webrecorder Software",
@@ -65,6 +65,6 @@
     "*/**/fs-extra": "~8.1.0"
   },
   "dependencies": {
-    "warcio": "^2.0.0"
+    "warcio": "^2.0.1"
   }
 }
