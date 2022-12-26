@@ -55,7 +55,7 @@ const minificationOpts = {
 export default [
   {
     input: 'src/wbWombat.js',
-    plugins: [nodeResolve({ browser: true }), minify(minificationOpts), addLicenceNoStrict, string({include: "dist/wombatWorkers.js"})],
+    plugins: [nodeResolve({ browser: true }), minify(minificationOpts), addLicenceNoStrict, string({include: "src/wombatWorkers.js"})],
     output: {
       name: 'wombat',
       file: path.join(outputDir, 'wombat.js'),

@@ -30,7 +30,7 @@ const wombat = {
     format: 'iife'
   },
   watch: watchOptions,
-  plugins: [nodeResolve(), noStrict, string({include: "dist/wombatWorkers.js"})]
+  plugins: [nodeResolve(), noStrict, string({include: "src/wombatWorkers.js"})]
 };
 
 const wombatProxyMode = {

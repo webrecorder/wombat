@@ -12,7 +12,7 @@ import {
 
 import { postToGetUrl } from 'warcio/utils';
 
-import wombatWorkers from '../dist/wombatWorkers.js';
+import wombatWorkers from './wombatWorkers.js';
 
 
 /**
