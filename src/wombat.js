@@ -12,6 +12,8 @@ import {
 
 import { postToGetUrl } from 'warcio/utils';
 
+import wombatWorkers from '../dist/wombatWorkers.js';
+
 
 /**
  * @param {Window} $wbwindow
@@ -2594,10 +2596,13 @@ Wombat.prototype.rewriteWorker = function(workerUrl) {
     var ww_rw =
       this.wb_info.ww_rw_script ||
       this.wb_info.static_prefix + 'wombatWorkers.js';
+
     var rw =
-      '(function() { self.importScripts(\'' +
-      ww_rw +
-      '\'); new WBWombat({\'prefix\': \'' +
+      //'(function() { self.importScripts(\'' +
+      //ww_rw +
+      //'\'); new WBWombat({\'prefix\': \'' +
+      wombatWorkers +
+      ';\n(function() { new WBWombat({\'prefix\': \'' +
       this.wb_abs_prefix +
       '\', \'prefixMod\': \'' +
       this.wb_abs_prefix +

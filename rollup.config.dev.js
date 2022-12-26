@@ -2,6 +2,8 @@ import * as path from 'path';
 
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 
+import { string } from "rollup-plugin-string";
+
 
 const outputDir = process.env.OUTPUT_DIR || path.join(__dirname, 'dist');
 
@@ -28,7 +30,7 @@ const wombat = {
     format: 'iife'
   },
   watch: watchOptions,
-  plugins: [nodeResolve(), noStrict]
+  plugins: [nodeResolve(), noStrict, string({include: "dist/wombatWorkers.js"})]
 };
 
 const wombatProxyMode = {
