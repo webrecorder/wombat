@@ -4344,7 +4344,7 @@ Wombat.prototype.initCookiePreset = function() {
   if (this.wb_info.presetCookie) {
     var splitCookies = this.wb_info.presetCookie.split(';');
     for (var i = 0; i < splitCookies.length; i++) {
-      this.$wbwindow.document.cookie = splitCookies[i].trim() + "; Path=" + this.rewriteUrl("./", true);
+      this.$wbwindow.document.cookie = splitCookies[i].trim() + '; Path=' + this.rewriteUrl('./', true);
     }
   }
 };
