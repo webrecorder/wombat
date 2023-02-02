@@ -5747,7 +5747,9 @@ Wombat.prototype.initBeaconOverride = function() {
 };
 
 Wombat.prototype.initMiscNavigatorOverrides = function() {
-  this.$wbwindow.navigator.mediaDevices.setCaptureHandleConfig = function() {};
+  if (this.$wbwindow.navigator.mediaDevices) {
+    this.$wbwindow.navigator.mediaDevices.setCaptureHandleConfig = function() {};
+  }
 };
 
 
