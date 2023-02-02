@@ -79,7 +79,6 @@ export function wrapEventListener(origListener, obj, wombat) {
       ne._srcElement = event.srcElement;
       ne._currentTarget = event.currentTarget;
       ne._eventPhase = event.eventPhase;
-      ne._composedPath = event.composedPath;
     } else {
       ne = event;
     }
