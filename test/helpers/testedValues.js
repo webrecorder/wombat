@@ -385,7 +385,7 @@ exports.TestedPropertyDescriptorUpdates = [
       'srcElement',
       'currentTarget',
       'eventPhase',
-      'path',
+      'composedPath',
       'source'
     ],
     expectedInterface: {
