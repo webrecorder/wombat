@@ -5746,6 +5746,11 @@ Wombat.prototype.initBeaconOverride = function() {
   };
 };
 
+Wombat.prototype.initMiscNavigatorOverrides = function() {
+  this.$wbwindow.navigator.mediaDevices.setCaptureHandleConfig = function() {};
+};
+
+
 /**
  * Applies an override to the constructor of the PresentationRequest interface object
  * in order to rewrite its URL(s) arguments
@@ -6594,6 +6599,9 @@ Wombat.prototype.wombatInit = function() {
 
   // sendBeacon override
   this.initBeaconOverride();
+
+  // additional navigator. overrides
+  this.initMiscNavigatorOverrides();
 
   // other overrides
   // proxy mode: only using these overrides
