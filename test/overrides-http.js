@@ -156,7 +156,7 @@ test('Request: should rewrite the input argument to the constructor when it is a
 test('Request: should rewrite the input argument to the constructor when it is an object with a url property', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(() => {
-    const req = new Request({ url: '/test' }, { method: 'GET', referrer: "https://example.com/" });
+    const req = new Request({ url: '/test' }, { method: 'GET', referrer: 'https://example.com/' });
     return {__wb_orig_url: req.__wb_orig_url, url: req.url};
   });
   t.true(result.__wb_orig_url === mpURL('https://tests.wombat.io/test'));

@@ -2967,7 +2967,8 @@ Wombat.prototype.overridePropExtract = function(proto, prop, addOrigProp) {
   if (orig_getter) {
     var new_getter = function () {
       var obj = wombat.proxyToObj(this);
-      return orig_getter.call(obj);
+      var res = orig_getter.call(obj);
+      return wombat.extractOriginalURL(res);
     };
     this.defGetterProp(proto, prop, new_getter);
 
