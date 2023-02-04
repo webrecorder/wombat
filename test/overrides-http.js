@@ -79,7 +79,7 @@ test('XMLHttpRequest: should rewrite the "responseURL" property', async t => {
   t.true(result);
 });
 
-test('fetch: should rewrite the input argument when it is a string (URL)', async t => {
+test('fetch: should rewrite the input argument when it is a string (URL), but return original', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(async () => {
     let to;
@@ -95,10 +95,10 @@ test('fetch: should rewrite the input argument when it is a string (URL)', async
     const data = await response.json();
     return {url: data.url};
   });
-  t.true(result.url === 'https://tests.wombat.io/test');
+  t.is(result.url, 'https://tests.wombat.io/test');
 });
 
-test('fetch: should rewrite the input argument when it is an Request object', async t => {
+test('fetch: should rewrite the input argument when it is an Request object, but return original', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(async () => {
     let to;
@@ -118,10 +118,10 @@ test('fetch: should rewrite the input argument when it is an Request object', as
     const data = await response.json();
     return {url: data.url};
   });
-  t.true(result.url === 'https://tests.wombat.io/test');
+  t.is(result.url, 'https://tests.wombat.io/test');
 });
 
-test('fetch: should rewrite the input argument when it is a object with an href property', async t => {
+test('fetch: should rewrite the input argument when it is a object with an href property, but return original', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(async () => {
     let to;
@@ -137,7 +137,7 @@ test('fetch: should rewrite the input argument when it is a object with an href 
     const data = await response.json();
     return {url: data.url};
   });
-  t.true(result.url === 'https://tests.wombat.io/test');
+  t.is(result.url, 'https://tests.wombat.io/test');
 });
 
 test('Request: should rewrite the input argument to the constructor when it is a string (URL)', async t => {
@@ -146,7 +146,7 @@ test('Request: should rewrite the input argument to the constructor when it is a
     const req = new Request('/test', { method: 'GET' });
     return {url: req.url};
   });
-  t.true(result.url === 'https://tests.wombat.io/test');
+  t.is(result.url, 'https://tests.wombat.io/test');
 });
 
 test('Request: should rewrite the input argument to the constructor when it is an object with a url property', async t => {
@@ -155,7 +155,7 @@ test('Request: should rewrite the input argument to the constructor when it is a
     const req = new Request({ url: '/test' }, { method: 'GET', referrer: 'https://example.com/' });
     return {url: req.url, referrer: req.referrer};
   });
-  t.true(result.url === 'https://tests.wombat.io/test');
-  t.true(result.referrer === 'https://example.com/');
+  t.is(result.url, 'https://tests.wombat.io/test');
+  t.is(result.referrer, 'https://example.com/');
 });
 
