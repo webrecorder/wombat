@@ -79,7 +79,7 @@ test('XMLHttpRequest: should rewrite the "responseURL" property', async t => {
   t.true(result);
 });
 
-test('fetch: should rewrite the input argument when it is a string (URL), but return original', async t => {
+test('fetch: should rewrite the input argument when it is a string (URL), also return original', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(async () => {
     let to;
@@ -93,12 +93,13 @@ test('fetch: should rewrite the input argument when it is a string (URL), but re
       throw new Error('no reply from server in 5 seconds');
     clearTimeout(to);
     const data = await response.json();
-    return {url: data.url};
+    return {url: data.url, respURL: response.url};
   });
-  t.is(result.url, 'https://tests.wombat.io/test');
+  t.is(result.url, '/live/20180803160549mp_/https://tests.wombat.io/test');
+  t.is(result.respURL, 'https://tests.wombat.io/test');
 });
 
-test('fetch: should rewrite the input argument when it is an Request object, but return original', async t => {
+test('fetch: should rewrite the input argument when it is an Request object, also return original', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(async () => {
     let to;
@@ -116,9 +117,10 @@ test('fetch: should rewrite the input argument when it is an Request object, but
       throw new Error('no reply from server in 5 seconds');
     clearTimeout(to);
     const data = await response.json();
-    return {url: data.url};
+    return {url: data.url, respURL: response.url};
   });
-  t.is(result.url, 'https://tests.wombat.io/test');
+  t.is(result.url, '/live/20180803160549mp_/https://tests.wombat.io/test');
+  t.is(result.respURL, 'https://tests.wombat.io/test');
 });
 
 test('fetch: should rewrite the input argument when it is a object with an href property, but return original', async t => {
@@ -135,9 +137,10 @@ test('fetch: should rewrite the input argument when it is a object with an href 
       throw new Error('no reply from server in 10 seconds');
     clearTimeout(to);
     const data = await response.json();
-    return {url: data.url};
+    return {url: data.url, respURL: response.url};
   });
-  t.is(result.url, 'https://tests.wombat.io/test');
+  t.is(result.url, '/live/20180803160549mp_/https://tests.wombat.io/test');
+  t.is(result.respURL, 'https://tests.wombat.io/test');
 });
 
 test('Request: should rewrite the input argument to the constructor when it is a string (URL)', async t => {
