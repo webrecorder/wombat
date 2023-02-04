@@ -2961,7 +2961,7 @@ Wombat.prototype.overrideAttr = function(obj, attr, mod) {
  * @param {string} prop
  * @param {*} [cond]
  */
-Wombat.prototype.overridePropExtract = function(proto, prop, addOrigProp) {
+Wombat.prototype.overridePropExtract = function(proto, prop) {
   var orig_getter = this.getOrigGetter(proto, prop);
   var wombat = this;
   if (orig_getter) {
@@ -2971,10 +2971,6 @@ Wombat.prototype.overridePropExtract = function(proto, prop, addOrigProp) {
       return wombat.extractOriginalURL(res);
     };
     this.defGetterProp(proto, prop, new_getter);
-
-    if (addOrigProp) {
-      this.defGetterProp(proto, addOrigProp, orig_getter);
-    }
   }
 };
 
@@ -4526,7 +4522,7 @@ Wombat.prototype.initHTTPOverrides = function() {
     });
 
     // override Request.url
-    this.overridePropExtract(this.$wbwindow.Request.prototype, 'url', '__wb_orig_url');
+    this.overridePropExtract(this.$wbwindow.Request.prototype, 'url');
 
     // override Request.referrer
     this.overridePropExtract(this.$wbwindow.Request.prototype, 'referrer');
@@ -4544,7 +4540,7 @@ Wombat.prototype.initHTTPOverrides = function() {
     };
 
     // override Response.url
-    this.overridePropExtract(this.$wbwindow.Response.prototype, 'url', '__wb_orig_url');
+    this.overridePropExtract(this.$wbwindow.Response.prototype, 'url');
   }
 
   if (this.$wbwindow.EventSource && this.$wbwindow.EventSource.prototype) {
