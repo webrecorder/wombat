@@ -93,9 +93,10 @@ test('fetch: should rewrite the input argument when it is a string (URL)', async
       throw new Error('no reply from server in 5 seconds');
     clearTimeout(to);
     const data = await response.json();
-    return data.url === '/live/20180803160549mp_/https://tests.wombat.io/test';
+    return {__wb_orig_url: data.__wb_orig_url, url: data.url};
   });
-  t.true(result);
+  t.true(result.__wb_orig_url === '/live/20180803160549mp_/https://tests.wombat.io/test');
+  t.true(result.url === 'https://tests.wombat.io/test');
 });
 
 test('fetch: should rewrite the input argument when it is an Request object', async t => {
@@ -116,9 +117,10 @@ test('fetch: should rewrite the input argument when it is an Request object', as
       throw new Error('no reply from server in 5 seconds');
     clearTimeout(to);
     const data = await response.json();
-    return data.url === '/live/20180803160549mp_/https://tests.wombat.io/test';
+    return {__wb_orig_url: data.__wb_orig_url, url: data.url};
   });
-  t.true(result);
+  t.true(result.__wb_orig_url === '/live/20180803160549mp_/https://tests.wombat.io/test');
+  t.true(result.url === 'https://tests.wombat.io/test');
 });
 
 test('fetch: should rewrite the input argument when it is a object with an href property', async t => {
@@ -135,25 +137,30 @@ test('fetch: should rewrite the input argument when it is a object with an href 
       throw new Error('no reply from server in 10 seconds');
     clearTimeout(to);
     const data = await response.json();
-    return data.url === '/live/20180803160549mp_/https://tests.wombat.io/test';
+    return {__wb_orig_url: data.__wb_orig_url, url: data.url};
   });
-  t.true(result);
+  t.true(result.__wb_orig_url === '/live/20180803160549mp_/https://tests.wombat.io/test');
+  t.true(result.url === 'https://tests.wombat.io/test');
 });
 
 test('Request: should rewrite the input argument to the constructor when it is a string (URL)', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(() => {
     const req = new Request('/test', { method: 'GET' });
-    return req.url;
+    return {__wb_orig_url: req.__wb_orig_url, url: req.url};
   });
-  t.true(result === mpURL('https://tests.wombat.io/test'));
+  t.true(result.__wb_orig_url === mpURL('https://tests.wombat.io/test'));
+  t.true(result.url === 'https://tests.wombat.io/test');
 });
 
 test('Request: should rewrite the input argument to the constructor when it is an object with a url property', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(() => {
-    const req = new Request({ url: '/test' }, { method: 'GET' });
-    return req.url;
+    const req = new Request({ url: '/test' }, { method: 'GET', referrer: "https://example.com/" });
+    return {__wb_orig_url: req.__wb_orig_url, url: req.url};
   });
-  t.true(result === mpURL('https://tests.wombat.io/test'));
+  t.true(result.__wb_orig_url === mpURL('https://tests.wombat.io/test'));
+  t.true(result.url === 'https://tests.wombat.io/test');
+  t.true(result.referrer === 'https://example.com/');
 });
+

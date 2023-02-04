@@ -2961,19 +2961,19 @@ Wombat.prototype.overrideAttr = function(obj, attr, mod) {
  * @param {string} prop
  * @param {*} [cond]
  */
-Wombat.prototype.overridePropExtract = function(proto, prop, cond) {
+Wombat.prototype.overridePropExtract = function(proto, prop, addOrigProp) {
   var orig_getter = this.getOrigGetter(proto, prop);
   var wombat = this;
   if (orig_getter) {
-    var new_getter = function overridePropExtractNewGetter() {
+    var new_getter = function () {
       var obj = wombat.proxyToObj(this);
-      var res = orig_getter.call(obj);
-      if (!cond || cond(obj)) {
-        return wombat.extractOriginalURL(res);
-      }
-      return res;
+      return orig_getter.call(obj);
     };
     this.defGetterProp(proto, prop, new_getter);
+
+    if (addOrigProp) {
+      this.defGetterProp(proto, addOrigProp, orig_getter);
+    }
   }
 };
 
@@ -2988,7 +2988,7 @@ Wombat.prototype.overrideReferrer = function($document) {
   var orig_getter = this.getOrigGetter($document, 'referrer');
   var wombat = this;
   if (orig_getter) {
-    var new_getter = function overridePropExtractNewGetter() {
+    var new_getter = function() {
       var obj = wombat.proxyToObj(this);
 
       var $win = this.defaultView;
@@ -4368,10 +4368,7 @@ Wombat.prototype.initHTTPOverrides = function() {
   var wombat = this;
 
     // responseURL override
-  this.overridePropExtract(
-    this.$wbwindow.XMLHttpRequest.prototype,
-    'responseURL'
-  );
+  this.overridePropExtract(this.$wbwindow.XMLHttpRequest.prototype, 'responseURL');
 
   if (!this.wb_info.isSW) {
     if (this.$wbwindow.XMLHttpRequest.prototype.open) {
@@ -4514,6 +4511,10 @@ Wombat.prototype.initHTTPOverrides = function() {
             break;
         }
         newInitOpts['credentials'] = 'include';
+        if (newInitOpts.referrer) {
+          newInitOpts.referrer = wombat.rewriteUrl(newInitOpts.referrer);
+        }
+
         return new Request_(newInput, newInitOpts);
       };
     })(this.$wbwindow.Request);
@@ -4522,6 +4523,12 @@ Wombat.prototype.initHTTPOverrides = function() {
     Object.defineProperty(this.$wbwindow.Request.prototype, 'constructor', {
       value: this.$wbwindow.Request
     });
+
+    // override Request.url
+    this.overridePropExtract(this.$wbwindow.Request.prototype, 'url', '__wb_orig_url');
+
+    // override Request.referrer
+    this.overridePropExtract(this.$wbwindow.Request.prototype, 'referrer');
   }
 
   if (this.$wbwindow.Response && this.$wbwindow.Response.prototype) {
@@ -4534,6 +4541,9 @@ Wombat.prototype.initHTTPOverrides = function() {
       var rwURL = wombat.rewriteUrl(url, true, null, wombat.$wbwindow.document);
       return originalRedirect.call(this, rwURL, status);
     };
+
+    // override Response.url
+    this.overridePropExtract(this.$wbwindow.Response.prototype, 'url', '__wb_orig_url');
   }
 
   if (this.$wbwindow.EventSource && this.$wbwindow.EventSource.prototype) {
@@ -4803,7 +4813,6 @@ Wombat.prototype.initDocOverrides = function($document) {
   if (!Object.defineProperty) return;
 
   // referrer
-  //this.overridePropExtract($document, 'referrer');
   this.overrideReferrer($document);
 
   // origin
