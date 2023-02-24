@@ -4,7 +4,7 @@ Wombat is a standalone client-side URL rewriting system that performs the
 rewrites through targeted JavaScript overrides.
 
 Wombat was originally included in and distributed as part of [pywb](https://github.com/webrecorder/pywb)
-but has now been refactored and split off into this module for improved maintainance.
+but has now been refactored and split off into this module for improved maintenance.
 
 pywb release >=2.3 rely on this standalone module. This standalone
 module now includes a thorough testing suite that checks for the correctness of
