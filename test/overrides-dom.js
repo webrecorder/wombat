@@ -50,7 +50,7 @@ test('links should not be broken by wombat', async t => {
   t.is(actual, 'https://tests.wombat.io/foo');
 });
 
-test('scheme-relative URL assignemnts should work', async t => {
+test('scheme-relative URL assignments should work', async t => {
   const { sandbox, server } = t.context;
   const actual = await sandbox.evaluate(
     () => {

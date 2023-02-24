@@ -270,7 +270,7 @@ function Wombat($wbwindow, wbinfo) {
   this.DotPostMessageRe = /(\.postMessage\s*\()/;
 
   /** @type {RegExp} */
-  this.extractPageUnderModiferRE = /\/(?:[0-9]{14})?([a-z]{2, 3}_)\//;
+  this.extractPageUnderModifierRE = /\/(?:[0-9]{14})?([a-z]{2, 3}_)\//;
 
   /** @type {string} */
   this.write_buff = '';
@@ -420,7 +420,7 @@ Wombat.prototype._removeEventListener = function(obj, event, fun) {
  */
 Wombat.prototype.getPageUnderModifier = function() {
   try {
-    var pageUnderModifier = this.extractPageUnderModiferRE.exec(
+    var pageUnderModifier = this.extractPageUnderModifierRE.exec(
       location.pathname
     );
     if (pageUnderModifier && pageUnderModifier[1]) {
@@ -2976,7 +2976,7 @@ Wombat.prototype.overridePropExtract = function(proto, prop) {
 
 
 /**
- * Overrides referer -- if top-replay frame, referrer should be "", otherwise extractOriginURL
+ * Overrides referrer -- if top-replay frame, referrer should be "", otherwise extractOriginURL
  * @param {Object} proto
  * @param {string} prop
  * @param {*} [cond]
@@ -3326,7 +3326,7 @@ Wombat.prototype.overrideIframeContentAccess = function(prop) {
 };
 
 /**
- * Applies an override to the gettter function for the frames property of
+ * Applies an override to the getter function for the frames property of
  * the supplied window in order to ensure that wombat is initialized in
  * all frames.
  * * @param {Window} $wbwindow
@@ -4999,7 +4999,7 @@ Wombat.prototype.initNewWindowWombat = function(win, src) {
     var wombat = new Wombat(win, newInfo);
     win._wb_wombat = wombat.wombatInit();
   } else {
-    // These should get overriden when content is loaded, but just in case...
+    // These should get overridden when content is loaded, but just in case...
     // win._WB_wombat_location = win.location;
     // win.document.WB_wombat_location = win.document.location;
     // win._WB_wombat_top = $wbwindow.WB_wombat_top;
@@ -5058,7 +5058,7 @@ Wombat.prototype.initTimeoutIntervalOverrides = function() {
 Wombat.prototype.initWorkerOverrides = function() {
   var wombat = this;
 
-  if (this.$wbwindow.Worker && !this.$wbwindow.Worker._wb_worker_overriden) {
+  if (this.$wbwindow.Worker && !this.$wbwindow.Worker._wb_worker_overridden) {
     // Worker unrewrite postMessage
     var orig_worker = this.$wbwindow.Worker;
     this.$wbwindow.Worker = (function(Worker_) {
@@ -5072,12 +5072,12 @@ Wombat.prototype.initWorkerOverrides = function() {
     Object.defineProperty(this.$wbwindow.Worker.prototype, 'constructor', {
       value: this.$wbwindow.Worker
     });
-    this.$wbwindow.Worker._wb_worker_overriden = true;
+    this.$wbwindow.Worker._wb_worker_overridden = true;
   }
 
   if (
     this.$wbwindow.SharedWorker &&
-    !this.$wbwindow.SharedWorker.__wb_sharedWorker_overriden
+    !this.$wbwindow.SharedWorker.__wb_sharedWorker_overridden
   ) {
     // per https://html.spec.whatwg.org/multipage/workers.html#sharedworker
     var oSharedWorker = this.$wbwindow.SharedWorker;
@@ -5096,7 +5096,7 @@ Wombat.prototype.initWorkerOverrides = function() {
         value: this.$wbwindow.SharedWorker
       }
     );
-    this.$wbwindow.SharedWorker.__wb_sharedWorker_overriden = true;
+    this.$wbwindow.SharedWorker.__wb_sharedWorker_overridden = true;
   }
 
   if (
@@ -5131,7 +5131,7 @@ Wombat.prototype.initWorkerOverrides = function() {
     this.$wbwindow.Worklet &&
     this.$wbwindow.Worklet.prototype &&
     this.$wbwindow.Worklet.prototype.addModule &&
-    !this.$wbwindow.Worklet.__wb_workerlet_overriden
+    !this.$wbwindow.Worklet.__wb_workerlet_overridden
   ) {
     // https://developer.mozilla.org/en-US/docs/Web/API/Worklet/addModule
     var oAddModule = this.$wbwindow.Worklet.prototype.addModule;
@@ -5142,7 +5142,7 @@ Wombat.prototype.initWorkerOverrides = function() {
       var rwModuleURL = wombat.rewriteUrl(moduleURL, false, 'js_');
       return oAddModule.call(this, rwModuleURL, options);
     };
-    this.$wbwindow.Worklet.__wb_workerlet_overriden = true;
+    this.$wbwindow.Worklet.__wb_workerlet_overridden = true;
   }
 };
 
@@ -5378,7 +5378,7 @@ Wombat.prototype.initHashChange = function() {
  * to ensure that listening to events behaves correctly during replay.
  *
  * This function is the place where the `onmessage` and `onstorage` setter functions
- * are overriden.
+ * are overridden.
  * @param {Window} $wbwindow
  */
 Wombat.prototype.initPostMessageOverride = function($wbwindow) {
@@ -5644,7 +5644,7 @@ Wombat.prototype.rewriteAttrTarget = function(target) {
 
   // if target is a different name, and we are the top frame, assume intent
   // is to open a new window, and not some iframe
-  // (a futher check could also be to check list of iframes to see if the target matches)
+  // (a further check could also be to check list of iframes to see if the target matches)
   if (target && this.$wbwindow === this.$wbwindow.__WB_replay_top) {
     return this.wb_info.target_frame;
   }
@@ -6315,7 +6315,7 @@ Wombat.prototype.initTopFrame = function($wbwindow) {
         false
       );
     }
-    //removed to rely on proxy object override to ensure 'parent' and 'top' overriden together
+    //removed to rely on proxy object override to ensure 'parent' and 'top' overridden together
     //$wbwindow.__WB_orig_parent = $wbwindow.parent;
     //$wbwindow.parent = replay_top;
   }
@@ -6516,7 +6516,7 @@ Wombat.prototype.wombatInit = function() {
   this.initTextNodeOverrides();
   this.initCSSOMOverrides();
 
-  // innerHTML & outerHTML can be overriden on prototype!
+  // innerHTML & outerHTML can be overridden on prototype!
   // we must override innerHTML & outerHTML on Element otherwise un-rewritten HTML
   // can get into replay
   this.overrideHtmlAssign(this.$wbwindow.Element, 'innerHTML', true);

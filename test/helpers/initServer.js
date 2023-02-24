@@ -4,7 +4,7 @@ const createServer = require('fastify');
 
 const host = '127.0.0.1';
 const port = 3030;
-const gracefullShutdownTimeout = 50000;
+const gracefulShutdownTimeout = 50000;
 const shutdownOnSignals = ['SIGINT', 'SIGTERM', 'SIGHUP'];
 const assetsPath = path.join(__dirname, '..', 'assets');
 const httpsSandboxPath = path.join(assetsPath, 'sandbox.html');
@@ -148,10 +148,10 @@ async function initServer() {
     process.once(signal, () => {
       setTimeout(() => {
         console.error(
-          `received ${signal} signal, terminate process after timeout of ${gracefullShutdownTimeout}ms`
+          `received ${signal} signal, terminate process after timeout of ${gracefulShutdownTimeout}ms`
         );
         process.exit(1);
-      }, gracefullShutdownTimeout).unref();
+      }, gracefulShutdownTimeout).unref();
       console.log(`received ${signal} signal, triggering close hook`);
       fastify.stop().then(() => {
         process.exit(0);
