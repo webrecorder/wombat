@@ -60,14 +60,18 @@ for (const attrToProp of CSS.styleAttrs.attrs) {
 }
 
 for (const attrToProp of CSS.styleAttrs.attrs) {
-  test(`style.setProperty("${attrToProp.attr}", "value"): value should NOT be rewritten`, async t => {
+  test(`style.setProperty("${attrToProp.attr}", "value"): value should be rewritten only if not url()`, async t => {
     const { sandbox } = t.context;
     const result = await sandbox.evaluate(
       CSS.styleAttrs.testFNSetProp,
       attrToProp.attr,
       attrToProp.unrw
     );
-    t.deepEqual(result, attrToProp.unrw);
+    if (attrToProp === "backgroundImage" || attrToProp === "cursor") {
+      t.deepEqual(result, attrToProp.unrw);
+    } else {
+      t.notDeepEqual(result, attrToProp.unrw);
+    }
   });
   if (attrToProp.attr !== attrToProp.propName) {
     test(`style.setProperty("${attrToProp.propName}", "value"): value should be rewritten`, async t => {
