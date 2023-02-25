@@ -3112,9 +3112,19 @@ Wombat.prototype.overrideStyleAttr = function(obj, attr, propName) {
 
   var getter = orig_getter;
 
+  var extractUrl = function (_, p1, p2, p3, p4) {
+    return p1 + (p2 || '') + wombat.extractOriginalURL(p3) + p4;
+  };
+
+  var EXTRACT_URL_RX = /(url\()(['"])?(.*?)(\2\))/;
+
   if (!orig_getter) {
     getter = function overrideStyleAttrGetter() {
-      return this.getPropertyValue(propName);
+      var res = this.getPropertyValue(propName);
+      if (res && res.startsWith('url(')) {
+        res = res.replace(EXTRACT_URL_RX, extractUrl);
+      }
+      return res;
     };
   }
 
@@ -3218,7 +3228,7 @@ Wombat.prototype.overrideHtmlAssign = function(elem, prop, rewriteGetter) {
 
 
 /**
- * Override .dataset element on element and wraps in a proxy that unrewrites URLs
+ * Override .dataset attribute on element and wraps in a proxy that unrewrites URLs
  */
 Wombat.prototype.overrideDataSet = function() {
   var obj = this.$wbwindow.HTMLElement.prototype;
@@ -3250,7 +3260,7 @@ Wombat.prototype.overrideDataSet = function() {
 
 
 /**
- * Override .dataset element on element and wraps in a proxy that unrewrites URLs
+ * Override .style attribute on element and wraps in a proxy that unrewrites URLs
  */
 Wombat.prototype.overrideStyleProxy = function(overrideProps) {
   var obj = this.$wbwindow.HTMLElement.prototype;
