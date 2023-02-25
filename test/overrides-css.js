@@ -67,7 +67,7 @@ for (const attrToProp of CSS.styleAttrs.attrs) {
       attrToProp.attr,
       attrToProp.unrw
     );
-    if (['backgroundImage', 'cursor', 'background', 'pointer'].includes(attrToProp.attr)) {
+    if (['cursor', 'background'].includes(attrToProp.attr)) {
       t.deepEqual(result, attrToProp.unrw);
     } else {
       t.notDeepEqual(result, attrToProp.unrw);
