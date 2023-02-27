@@ -3216,7 +3216,12 @@ Wombat.prototype.overrideHtmlAssignSrcDoc = function(elem, prop) {
   var setter = function overrideSetter(orig) {
     this.__wb_srcdoc = orig;
 
-    this.src = wombat.srcDocUrl(wombat.rewriteHtml(orig));
+    if (wombat.wb_info.isSW) {
+      this.src = wombat.srcDocUrl(wombat.rewriteHtml(orig));
+      return orig;
+    } else {
+      return wombat.rewriteHTMLAssign(this, orig_setter, orig);
+    }
   };
 
   var getter = function overrideGetter() {
