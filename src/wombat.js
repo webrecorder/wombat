@@ -462,11 +462,25 @@ Wombat.prototype.isString = function(arg) {
 
 
 /**
- * Return URL for 'srcdoc url', content served as service-worker based URL
+ * Create blob for content, convert to service-worker based blob URL
+ * set iframe to remove blob URL on unload
  *
 */
-Wombat.prototype.srcDocUrl = function(string) {
-  return this.wb_info.prefix + this.wb_info.request_ts + 'id_/srcdoc:' + btoa(encodeURIComponent(string));
+
+Wombat.prototype.blobUrlForIframe = function(iframe, string) {
+  var blob = new Blob([string], {type: 'text/html'});
+  var url = URL.createObjectURL(blob);
+
+  iframe.__wb_blobSrc = url;
+  iframe.addEventListener('load', function() {
+    if (iframe.__wb_blobSrc) {
+      URL.revokeObjectURL(iframe.__wb_blobSrc);
+      iframe.__wb_blobSrc = null;
+    }
+  }, {once: true});
+
+  iframe.__wb_origSrc = iframe.src;
+  iframe.src = this.wb_info.prefix + this.wb_info.request_ts + 'id_/' + url.toString();
 };
 
 /**
@@ -2238,7 +2252,7 @@ Wombat.prototype.rewriteElem = function(elem) {
             elem.removeAttribute('srcdoc');
           }
           if (srcdoc) {
-            elem.src = this.srcDocUrl(srcdoc);
+            this.blobUrlForIframe(elem, srcdoc);
           } else {
             var src = elem.getAttribute('src');
             if (!src || src === 'about:blank') {
@@ -3217,7 +3231,7 @@ Wombat.prototype.overrideHtmlAssignSrcDoc = function(elem, prop) {
     this.__wb_srcdoc = orig;
 
     if (wombat.wb_info.isSW) {
-      this.src = wombat.srcDocUrl(wombat.rewriteHtml(orig));
+      wombat.blobUrlForIframe(this, wombat.rewriteHtml(orig));
       return orig;
     } else {
       return wombat.rewriteHTMLAssign(this, orig_setter, orig);
@@ -4876,28 +4890,8 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
 
   var wombat = this;
 
-  function isSrcDocLoad() {
-    if (!wombat.wb_info.isSW) {
-      return false;
-    }
-
-    var win = wombat.$wbwindow;
-
-    if (!win.frameElement) {
-      return false;
-    }
-
-    if (win.frameElement.__WB_blank) {
-      return true;
-    }
-
-    var loc = win.location.href;
-
-    if (loc === 'about:blank' || loc.endsWith('/about:blank')) {
-      return true;
-    }
-
-    return false;
+  function isSWLoad() {
+    return wombat.wb_info.isSW && wombat.$wbwindow.frameElement;
   }
 
   function rewriteForWrite(args) {
@@ -4927,7 +4921,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   function docWrite(fnThis, originalFn, string) {
     var win = wombat.$wbwindow;
 
-    if (isSrcDocLoad()) {
+    if (isSWLoad()) {
       wombat._writeBuff += string;
       return;
     }
@@ -4967,7 +4961,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
       wombat.initNewWindowWombat(res, arguments[0]);
     } else {
       res = orig_doc_open.call(thisObj);
-      if (isSrcDocLoad()) {
+      if (isSWLoad()) {
         wombat._writeBuff = '';
       } else {
         wombat.initNewWindowWombat(thisObj.defaultView);
@@ -4984,7 +4978,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   var originalClose = $wbDocument.close;
   var newClose = function close() {
     if (wombat._writeBuff) {
-      wombat.$wbwindow.frameElement.src = wombat.srcDocUrl(wombat._writeBuff);
+      wombat.blobUrlForIframe(wombat.$wbwindow.frameElement, wombat._writeBuff);
       wombat._writeBuff = '';
       return;
     }
@@ -6608,7 +6602,6 @@ Wombat.prototype.wombatInit = function() {
   // can get into replay
   this.overrideHtmlAssign(this.$wbwindow.Element, 'innerHTML', true);
   this.overrideHtmlAssign(this.$wbwindow.Element, 'outerHTML', true);
-  //this.overrideHtmlAssign(this.$wbwindow.HTMLIFrameElement, 'srcdoc', true);
   this.overrideHtmlAssignSrcDoc(this.$wbwindow.HTMLIFrameElement, 'srcdoc', true);
   this.overrideHtmlAssign(this.$wbwindow.HTMLStyleElement, 'textContent');
   this.overrideShadowDom();
