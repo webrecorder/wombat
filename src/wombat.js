@@ -4921,7 +4921,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   function docWrite(fnThis, originalFn, string) {
     var win = wombat.$wbwindow;
 
-    if (isSWLoad()) {
+    if (fnThis.readyState === 'complete' && isSWLoad()) {
       wombat._writeBuff += string;
       return;
     }
