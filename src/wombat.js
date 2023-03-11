@@ -460,6 +460,29 @@ Wombat.prototype.isString = function(arg) {
   return arg != null && Object.getPrototypeOf(arg) === String.prototype;
 };
 
+
+/**
+ * Create blob for content, convert to service-worker based blob URL
+ * set iframe to remove blob URL on unload
+ *
+*/
+
+Wombat.prototype.blobUrlForIframe = function(iframe, string) {
+  var blob = new Blob([string], {type: 'text/html'});
+  var url = URL.createObjectURL(blob);
+
+  iframe.__wb_blobSrc = url;
+  iframe.addEventListener('load', function() {
+    if (iframe.__wb_blobSrc) {
+      URL.revokeObjectURL(iframe.__wb_blobSrc);
+      iframe.__wb_blobSrc = null;
+    }
+  }, {once: true});
+
+  iframe.__wb_origSrc = iframe.src;
+  iframe.src = this.wb_info.prefix + this.wb_info.request_ts + 'id_/' + url.toString();
+};
+
 /**
  * Returns T/F indicating if the supplied element may have attributes that
  * are auto-fetched
@@ -2229,7 +2252,7 @@ Wombat.prototype.rewriteElem = function(elem) {
             elem.removeAttribute('srcdoc');
           }
           if (srcdoc) {
-            elem.src = this.wb_info.prefix + this.wb_info.request_ts + 'id_/srcdoc:' + btoa(encodeURIComponent(srcdoc));
+            this.blobUrlForIframe(elem, srcdoc);
           } else {
             var src = elem.getAttribute('src');
             if (!src || src === 'about:blank') {
@@ -2645,36 +2668,6 @@ Wombat.prototype.rewriteTextNodeFn = function(fnThis, originalFn, argsObj) {
     return originalFn.__WB_orig_apply(deproxiedThis, args);
   }
   return originalFn.apply(deproxiedThis, args);
-};
-
-/**
- * Rewrite the arguments supplied to document.[write, writeln] in order
- * to ensure that the string of HTML is rewritten
- * @param {Object} fnThis
- * @param {function} originalFn
- * @param {Object} argsObj
- */
-Wombat.prototype.rewriteDocWriteWriteln = function(
-  fnThis,
-  originalFn,
-  argsObj
-) {
-  var thisObj = this.proxyToObj(fnThis);
-  var argLen = argsObj.length;
-  var string;
-  if (argLen === 0) {
-    return originalFn.call(thisObj);
-  }
-  if (argLen === 1) {
-    string = argsObj[0];
-  } else {
-    // use Array.join rather than Array.apply because join works with array like objects
-    string = Array.prototype.join.call(argsObj, '');
-  }
-  var new_buff = this.rewriteHtml(string, true);
-  var res = originalFn.call(thisObj, new_buff);
-  this.initNewWindowWombat(thisObj.defaultView);
-  return res;
 };
 
 /**
@@ -3224,6 +3217,32 @@ Wombat.prototype.overrideHtmlAssign = function(elem, prop, rewriteGetter) {
   };
 
   this.defProp(obj, prop, setter, rewriteGetter ? getter : orig_getter);
+};
+
+Wombat.prototype.overrideHtmlAssignSrcDoc = function(elem, prop) {
+  var obj = elem.prototype;
+
+  var orig_getter = this.getOrigGetter(obj, prop);
+  var orig_setter = this.getOrigSetter(obj, prop);
+
+  var wombat = this;
+
+  var setter = function overrideSetter(orig) {
+    this.__wb_srcdoc = orig;
+
+    if (wombat.wb_info.isSW) {
+      wombat.blobUrlForIframe(this, wombat.rewriteHtml(orig));
+      return orig;
+    } else {
+      return wombat.rewriteHTMLAssign(this, orig_setter, orig);
+    }
+  };
+
+  var getter = function overrideGetter() {
+    return this.__wb_srcdoc;
+  };
+
+  this.defProp(obj, prop, setter, getter);
 };
 
 
@@ -4866,12 +4885,57 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
 
   var DocumentProto = this.$wbwindow.Document.prototype;
   var $wbDocument = this.$wbwindow.document;
-  var docWriteWritelnRWFn = this.rewriteDocWriteWriteln;
+
+  this._writeBuff = '';
+
+  var wombat = this;
+
+  function isSWLoad() {
+    return wombat.wb_info.isSW && wombat.$wbwindow.frameElement;
+  }
+
+  function rewriteForWrite(args) {
+    var string;
+
+    if (args.length === 0) {
+      return '';
+    }
+
+    if (args.length === 1) {
+      string = args[0];
+    } else {
+      // use Array.join rather than Array.apply because join works with array like objects
+      string = Array.prototype.join.call(args, '');
+    }
+
+    return wombat.rewriteHtml(string, true);
+  }
+
+  /**
+   * Rewrite the arguments supplied to document.[write, writeln] in order
+   * to ensure that the string of HTML is rewritten
+   * @param {Object} fnThis
+   * @param {function} originalFn
+   * @param {Object} rewritten string
+   */
+  function docWrite(fnThis, originalFn, string) {
+    var win = wombat.$wbwindow;
+
+    if (fnThis.readyState === 'complete' && isSWLoad()) {
+      wombat._writeBuff += string;
+      return;
+    }
+
+    var thisObj = wombat.proxyToObj(fnThis);
+    var res = originalFn.call(thisObj, string);
+    wombat.initNewWindowWombat(thisObj.defaultView);
+    return res;
+  };
 
   // Write
   var orig_doc_write = $wbDocument.write;
   var new_write = function write() {
-    return docWriteWritelnRWFn(this, orig_doc_write, arguments);
+    return docWrite(this, orig_doc_write, rewriteForWrite(arguments));
   };
   $wbDocument.write = new_write;
   DocumentProto.write = new_write;
@@ -4879,12 +4943,10 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   // Writeln
   var orig_doc_writeln = $wbDocument.writeln;
   var new_writeln = function writeln() {
-    return docWriteWritelnRWFn(this, orig_doc_writeln, arguments);
+    return docWrite(this, orig_doc_writeln, rewriteForWrite(arguments));
   };
   $wbDocument.writeln = new_writeln;
   DocumentProto.writeln = new_writeln;
-
-  var wombat = this;
 
   // Open
   var orig_doc_open = $wbDocument.open;
@@ -4899,7 +4961,11 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
       wombat.initNewWindowWombat(res, arguments[0]);
     } else {
       res = orig_doc_open.call(thisObj);
-      wombat.initNewWindowWombat(thisObj.defaultView);
+      if (isSWLoad()) {
+        wombat._writeBuff = '';
+      } else {
+        wombat.initNewWindowWombat(thisObj.defaultView);
+      }
     }
     return res;
   };
@@ -4911,6 +4977,11 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   // https://html.spec.whatwg.org/multipage/dynamic-markup-insertion.html#dom-document-close
   var originalClose = $wbDocument.close;
   var newClose = function close() {
+    if (wombat._writeBuff) {
+      wombat.blobUrlForIframe(wombat.$wbwindow.frameElement, wombat._writeBuff);
+      wombat._writeBuff = '';
+      return;
+    }
     var thisObj = wombat.proxyToObj(this);
     wombat.initNewWindowWombat(thisObj.defaultView);
     if (originalClose.__WB_orig_apply) {
@@ -6531,7 +6602,7 @@ Wombat.prototype.wombatInit = function() {
   // can get into replay
   this.overrideHtmlAssign(this.$wbwindow.Element, 'innerHTML', true);
   this.overrideHtmlAssign(this.$wbwindow.Element, 'outerHTML', true);
-  this.overrideHtmlAssign(this.$wbwindow.HTMLIFrameElement, 'srcdoc', true);
+  this.overrideHtmlAssignSrcDoc(this.$wbwindow.HTMLIFrameElement, 'srcdoc', true);
   this.overrideHtmlAssign(this.$wbwindow.HTMLStyleElement, 'textContent');
   this.overrideShadowDom();
 
