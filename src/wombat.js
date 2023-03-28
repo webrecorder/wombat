@@ -5369,7 +5369,7 @@ Wombat.prototype.initCheckThisFunc = function(win) {
 Wombat.prototype.initImportWrapperFunc = function(win) {
   var wombat = this;
   win.____wb_rewrite_import__ = function(base, url) {
-    // if base provided (import.meta.url), use that as base for imports
+    // if base provided (set to import.meta.url), use that as base for imports
     if (base) {
       url = new URL(url, base).href;
     }
