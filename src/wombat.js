@@ -480,7 +480,7 @@ Wombat.prototype.blobUrlForIframe = function(iframe, string) {
   }, {once: true});
 
   iframe.__wb_origSrc = iframe.src;
-  var blobIdUrl = url.slice(url.lastIndexOf("/") + 1) + "/" + this.wb_info.url;
+  var blobIdUrl = url.slice(url.lastIndexOf('/') + 1) + '/' + this.wb_info.url;
   iframe.src = this.wb_info.prefix + this.wb_info.request_ts + 'mp_/blob:' + blobIdUrl;
 };
 
