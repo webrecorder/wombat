@@ -480,7 +480,8 @@ Wombat.prototype.blobUrlForIframe = function(iframe, string) {
   }, {once: true});
 
   iframe.__wb_origSrc = iframe.src;
-  iframe.src = this.wb_info.prefix + this.wb_info.request_ts + 'id_/' + url.toString();
+  var blobIdUrl = url.slice(url.lastIndexOf('/') + 1) + '/' + this.wb_info.url;
+  iframe.src = this.wb_info.prefix + this.wb_info.request_ts + 'mp_/blob:' + blobIdUrl;
 };
 
 /**
@@ -3231,7 +3232,7 @@ Wombat.prototype.overrideHtmlAssignSrcDoc = function(elem, prop) {
     this.__wb_srcdoc = orig;
 
     if (wombat.wb_info.isSW) {
-      wombat.blobUrlForIframe(this, wombat.rewriteHtml(orig));
+      wombat.blobUrlForIframe(this, orig);
       return orig;
     } else {
       return wombat.rewriteHTMLAssign(this, orig_setter, orig);
@@ -4894,7 +4895,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
     return wombat.wb_info.isSW && wombat.$wbwindow.frameElement;
   }
 
-  function rewriteForWrite(args) {
+  function prepForWrite(args) {
     var string;
 
     if (args.length === 0) {
@@ -4908,7 +4909,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
       string = Array.prototype.join.call(args, '');
     }
 
-    return wombat.rewriteHtml(string, true);
+    return string;
   }
 
   /**
@@ -4921,11 +4922,12 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   function docWrite(fnThis, originalFn, string) {
     var win = wombat.$wbwindow;
 
-    if (fnThis.readyState === 'complete' && isSWLoad()) {
+    if (isSWLoad()) {
       wombat._writeBuff += string;
       return;
     }
 
+    string = wombat.rewriteHtml(string, true);
     var thisObj = wombat.proxyToObj(fnThis);
     var res = originalFn.call(thisObj, string);
     wombat.initNewWindowWombat(thisObj.defaultView);
@@ -4935,7 +4937,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   // Write
   var orig_doc_write = $wbDocument.write;
   var new_write = function write() {
-    return docWrite(this, orig_doc_write, rewriteForWrite(arguments));
+    return docWrite(this, orig_doc_write, prepForWrite(arguments));
   };
   $wbDocument.write = new_write;
   DocumentProto.write = new_write;
@@ -4943,7 +4945,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   // Writeln
   var orig_doc_writeln = $wbDocument.writeln;
   var new_writeln = function writeln() {
-    return docWrite(this, orig_doc_writeln, rewriteForWrite(arguments));
+    return docWrite(this, orig_doc_writeln, prepForWrite(arguments));
   };
   $wbDocument.writeln = new_writeln;
   DocumentProto.writeln = new_writeln;
