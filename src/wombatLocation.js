@@ -31,7 +31,9 @@ export default function WombatLocation(orig_loc, wombat) {
     orig_setter: {
       enumerable: false,
       value: function(prop, value) {
-        this._orig_loc[prop] = value;
+        if (this._orig_loc[prop] != value) {
+          this._orig_loc[prop] = value;
+        }
       }
     }
   });
