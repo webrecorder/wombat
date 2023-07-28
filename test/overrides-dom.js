@@ -274,6 +274,33 @@ test('document.write: should perform rewriting when "write" is called with an ar
   );
 });
 
+test('document.write: should perform rewriting with multiple write calls, each including partial html snippet', async t => {
+  const { sandbox, server } = t.context;
+  const expectedRW = '<html><head></head><body><div><div><a href="http://localhost:3030/live/20180803160549mp_/http://javaScript.com/script.js">Link 1</a></div>Link 2</div></body></html>';
+  const result = await sandbox.evaluate(() => {
+    document.write('</div><div><div><a href="http://javaScript.com/script.js">Link 1</a>');
+    document.write('</div');
+    document.write('<a href="https://example.com/">Link 2</a></div></div>');
+    document.close();
+    document.documentElement._no_rewrite = true;
+    return {
+      doctype: document.doctype != null,
+      html: document.documentElement.outerHTML
+    };
+  });
+  t.deepEqual(
+    result,
+    {
+      doctype: false,
+      html: expectedRW
+    },
+    'wombat is not rewriting elements when document.write is used with full strings of html with <body>'
+  );
+});
+
+
+
+
 test('document.writeln: should not perform rewriting when "writeln" is called with no arguments', async t => {
   const { sandbox, testPage } = t.context;
   await sandbox.evaluate(() => {

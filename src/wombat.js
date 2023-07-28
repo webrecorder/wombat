@@ -2143,7 +2143,7 @@ Wombat.prototype.rewriteScript = function(elem) {
   var text = elem.textContent.trim();
   if (this.skipWrapScriptTextBasedOnText(text)) return false;
   elem.textContent = this.wrapScriptTextJsProxy(text);
-  if (this.wb_info.hasFlushWrite && elem.textContent.trim().length) {
+  if (this.wb_info.injectDocClose && elem.textContent.trim().length) {
     elem.textContent += ';document.close();';
   }
   return true;
@@ -4935,7 +4935,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   function docWrite(fnThis, originalFn, string) {
     var win = wombat.$wbwindow;
 
-    if (isSWLoad() || (document.readyState === 'loading' && wombat.wb_info.hasFlushWrite)) {
+    if (isSWLoad() || (document.readyState === 'loading' && wombat.wb_info.injectDocClose)) {
       wombat._writeBuff += string;
       return;
     }
