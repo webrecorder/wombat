@@ -5001,9 +5001,6 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
       wombat._writeBuff = '';
       return;
     }
-    if (document.readyState === 'loading') {
-      return;
-    }
     var thisObj = wombat.proxyToObj(this);
     wombat.initNewWindowWombat(thisObj.defaultView);
     if (originalClose.__WB_orig_apply) {
