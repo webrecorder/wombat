@@ -2144,7 +2144,7 @@ Wombat.prototype.rewriteScript = function(elem) {
   if (this.skipWrapScriptTextBasedOnText(text)) return false;
   elem.textContent = this.wrapScriptTextJsProxy(text);
   if (this.wb_info.hasFlushWrite && elem.textContent.trim().length) {
-    elem.textContent += ';(self._wb_wombat && self._wb_wombat.flush_write && self._wb_wombat.flush_write());';
+    elem.textContent += ';document.close();';
   }
   return true;
 };
@@ -4988,13 +4988,6 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   $wbDocument.open = new_open;
   DocumentProto.open = new_open;
 
-  this.flushDocWrite = function() {
-    if (wombat._writeBuff) {
-      orig_doc_write.call($wbDocument, wombat.rewriteHtml(wombat._writeBuff, true));
-      wombat._writeBuff = '';
-    }
-  };
-
   // we override close in order to ensure wombat is init'd
   // https://html.spec.whatwg.org/multipage/dynamic-markup-insertion.html#dom-document-close
   var originalClose = $wbDocument.close;
@@ -5003,9 +4996,12 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
       if (isSWLoad()) {
         wombat.blobUrlForIframe(wombat.$wbwindow.frameElement, wombat._writeBuff);
       } else if (document.readyState === 'loading') {
-        wombat.flushDocWrite();
+        orig_doc_write.call($wbDocument, wombat.rewriteHtml(wombat._writeBuff, true));
       }
       wombat._writeBuff = '';
+      return;
+    }
+    if (document.readyState === 'loading') {
       return;
     }
     var thisObj = wombat.proxyToObj(this);
@@ -6769,7 +6765,6 @@ Wombat.prototype.wombatInit = function() {
     watch_elem: this.watchElem,
     init_new_window_wombat: this.initNewWindowWombat,
     init_paths: this.initPaths,
-    flush_write: this.flushDocWrite,
     local_init: function(name) {
       var res = wombat.$wbwindow._WB_wombat_obj_proxy[name];
       if (name === 'document' && res && !res._WB_wombat_obj_proxy) {
