@@ -2143,6 +2143,9 @@ Wombat.prototype.rewriteScript = function(elem) {
   var text = elem.textContent.trim();
   if (this.skipWrapScriptTextBasedOnText(text)) return false;
   elem.textContent = this.wrapScriptTextJsProxy(text);
+  if (this.wb_info.injectDocClose && elem.textContent.trim().length) {
+    elem.textContent += ';document.close();';
+  }
   return true;
 };
 
@@ -2428,11 +2431,21 @@ Wombat.prototype.rewriteHtml = function(string, checkEndTag) {
         template.content.children && template.content.children[0];
       if (first_elem) {
         var end_tag = '</' + first_elem.tagName.toLowerCase() + '>';
+        // check if new_html has an extra ending tag while original did not
+        // eg. <div>... rewritten to </div>, then we strip out the ending tag
         if (
           this.endsWith(new_html, end_tag) &&
           !this.endsWith(rwString.toLowerCase(), end_tag)
         ) {
           new_html = new_html.substring(0, new_html.length - end_tag.length);
+        // similarly, check if original had extra ending tags that rewritten did not
+        // eg. <a>...</a></div> rewritten to <a>...</a>, then we add the remaining </div>
+        // currently only works with different tags
+        } else if (new_html.trimEnd().endsWith(end_tag) && !rwString.trimEnd().endsWith(end_tag)) {
+          var lastInx = rwString.lastIndexOf(end_tag);
+          if (lastInx > 0) {
+            new_html += rwString.slice(lastInx + end_tag.length);
+          }
         }
       } else if (rwString[0] !== '<' || rwString[rwString.length - 1] !== '>') {
         this.write_buff += rwString;
@@ -4922,7 +4935,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   function docWrite(fnThis, originalFn, string) {
     var win = wombat.$wbwindow;
 
-    if (isSWLoad()) {
+    if (isSWLoad() || (document.readyState === 'loading' && wombat.wb_info.injectDocClose)) {
       wombat._writeBuff += string;
       return;
     }
@@ -4980,7 +4993,11 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   var originalClose = $wbDocument.close;
   var newClose = function close() {
     if (wombat._writeBuff) {
-      wombat.blobUrlForIframe(wombat.$wbwindow.frameElement, wombat._writeBuff);
+      if (isSWLoad()) {
+        wombat.blobUrlForIframe(wombat.$wbwindow.frameElement, wombat._writeBuff);
+      } else if (document.readyState === 'loading') {
+        orig_doc_write.call($wbDocument, wombat.rewriteHtml(wombat._writeBuff, true));
+      }
       wombat._writeBuff = '';
       return;
     }
