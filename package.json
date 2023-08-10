@@ -65,6 +65,6 @@
     "*/**/fs-extra": "~8.1.0"
   },
   "dependencies": {
-    "warcio": "^2.0.1"
+    "warcio": "^2.2.0"
   }
 }
