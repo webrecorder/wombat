@@ -973,6 +973,20 @@ test('Audio: should rewrite the URL argument to the constructor', async t => {
   t.true(result);
 });
 
+test('Image: should rewrite image .src correctly, ignoring path in query', async t => {
+  const { sandbox, server } = t.context;
+  const result = await sandbox.evaluate(
+    () => {
+      const img = new Image(400, 400);
+      img.src = "../../image.png";
+      return window.WombatTestUtil.getElementPropertyAsIs(img, 'src');
+    }
+  );
+  t.deepEqual(result, "http://localhost:3030/live/20180803160549im_/https://tests.wombat.io/image.png");
+});
+
+
+
 test('FontFace: should rewrite the source argument to the constructor', async t => {
   const { sandbox, server } = t.context;
   await Promise.all([

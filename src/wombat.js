@@ -928,16 +928,8 @@ Wombat.prototype.getFinalUrl = function(useRel, mod, url) {
 Wombat.prototype.resolveRelUrl = function(url, doc) {
   var docObj = doc || this.$wbwindow.document;
   var parser = this.makeParser(docObj.baseURI, docObj);
-  var hash = parser.href.lastIndexOf('#');
-  var href = hash >= 0 ? parser.href.substring(0, hash) : parser.href;
-  var lastslash = href.lastIndexOf('/');
 
-  if (lastslash >= 0 && lastslash !== href.length - 1) {
-    parser.href = href.substring(0, lastslash + 1) + url;
-  } else {
-    parser.href = href + url;
-  }
-  return parser.href;
+  return new URL(url, parser).href;
 };
 
 /**
