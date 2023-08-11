@@ -978,11 +978,11 @@ test('Image: should rewrite image .src correctly, ignoring path in query', async
   const result = await sandbox.evaluate(
     () => {
       const img = new Image(400, 400);
-      img.src = "../../image.png";
+      img.src = '../../image.png';
       return window.WombatTestUtil.getElementPropertyAsIs(img, 'src');
     }
   );
-  t.deepEqual(result, "http://localhost:3030/live/20180803160549im_/https://tests.wombat.io/image.png");
+  t.deepEqual(result, 'http://localhost:3030/live/20180803160549im_/https://tests.wombat.io/image.png');
 });
 
 
