@@ -5696,10 +5696,18 @@ Wombat.prototype.initOpenOverride = function() {
   var wombat = this;
 
   var open_rewritten = function open(strUrl, strWindowName, strWindowFeatures) {
+    var mod = wombat.wb_info.mod;
+
     if (strWindowName) {
       strWindowName = wombat.rewriteAttrTarget(strWindowName);
+    } else {
+      if (wombat.wb_info.allowNewWindow) {
+        mod = '';
+      } else {
+        strWindowName = "_self";
+      }
     }
-    var rwStrUrl = wombat.rewriteUrl(strUrl, false);
+    var rwStrUrl = wombat.rewriteUrl(strUrl, false, mod);
     var res = orig.call(
       wombat.proxyToObj(this),
       rwStrUrl,
@@ -5734,7 +5742,18 @@ Wombat.prototype.rewriteAttrTarget = function(target) {
     return target;
   }
 
-  if (target === '_blank' || target === '_parent' || target === '_top') {
+  // always redirect top / parent to top-most target frame
+  if (target === '_parent' || target === '_top') {
+    return this.wb_info.target_frame;
+  }
+
+  // if allowing new window, keep target as is
+  if (this.wbinfo.allowNewWindow) {
+    return target;
+  }
+
+  // otherwise, replace new window with target frame
+  if (target === '_blank') {
     return this.wb_info.target_frame;
   }
 
