@@ -5704,7 +5704,7 @@ Wombat.prototype.initOpenOverride = function() {
       if (wombat.wb_info.allowNewWindow) {
         mod = '';
       } else {
-        strWindowName = "_self";
+        strWindowName = '_self';
       }
     }
     var rwStrUrl = wombat.rewriteUrl(strUrl, false, mod);
