@@ -1926,7 +1926,12 @@ Wombat.prototype.rewriteUrl_ = function(originalURL, useRel, mod, doc) {
  * @return {?string}
  */
 Wombat.prototype.rewriteUrl = function(url, useRel, mod, doc) {
-  var rewritten = this.rewriteUrl_(url, useRel, mod, doc);
+  var rewritten;
+  if (this.wb_info.rewrite_function) {
+    rewritten = this.wb_info.rewrite_function(url, useRel, mod, doc);
+  } else {
+    rewritten = this.rewriteUrl_(url, useRel, mod, doc);
+  }
   if (this.debug_rw) {
     if (url !== rewritten) {
       console.log('REWRITE: ' + url + ' -> ' + rewritten);
