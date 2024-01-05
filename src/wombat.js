@@ -4210,7 +4210,7 @@ Wombat.prototype.initWSOverride = function() {
       this.openCallbacks = [];
 
       this.addEventListener = function(type, callback) {
-        if (type === "open") {
+        if (type === 'open') {
           WebSocket.openCallbacks.push(callback);
         }
       };
@@ -4226,7 +4226,7 @@ Wombat.prototype.initWSOverride = function() {
 
       var ws = this;
       function simOpen() {
-        var ev = new CustomEvent("open");
+        var ev = new CustomEvent('open');
         if (ws.onopen) {
           ws.onopen(ev);
         }
@@ -5222,7 +5222,7 @@ Wombat.prototype.initWorkerOverrides = function() {
       scriptURL,
       options
     ) {
-      var newScriptURL = new this.URL(scriptURL, wombat.$wbwindow.document.baseURI)
+      var newScriptURL = new wombat.URL(scriptURL, wombat.$wbwindow.document.baseURI)
         .href;
       var mod = wombat.getPageUnderModifier();
       if (options && options.scope) {
