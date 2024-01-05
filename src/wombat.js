@@ -26,6 +26,7 @@ function Wombat($wbwindow, wbinfo) {
   /** @type {Window} */
   this.$wbwindow = $wbwindow;
   this.WBWindow = Window;
+  this.URL = URL;
 
   this.origHost = $wbwindow.location.host;
   this.origHostname = $wbwindow.location.hostname;
@@ -469,7 +470,8 @@ Wombat.prototype.isString = function(arg) {
 
 Wombat.prototype.blobUrlForIframe = function(iframe, string) {
   var blob = new Blob([string], {type: 'text/html'});
-  var url = URL.createObjectURL(blob);
+  var url = this.URL.createObjectURL(blob);
+  var URL = this.URL;
 
   iframe.__wb_blobSrc = url;
   iframe.addEventListener('load', function() {
@@ -929,7 +931,7 @@ Wombat.prototype.resolveRelUrl = function(url, doc) {
   var docObj = doc || this.$wbwindow.document;
   var parser = this.makeParser(docObj.baseURI, docObj);
 
-  return new URL(url, parser).href;
+  return new this.URL(url, parser).href;
 };
 
 /**
@@ -1515,18 +1517,16 @@ Wombat.prototype.makeSetLocProp = function(prop, origSetter, origGetter) {
 
     this['_' + prop] = value;
 
-    if (!this._parser) {
-      var href = origGetter.call(this);
-      this._parser = wombat.makeParser(href, this.ownerDocument);
-    }
+    var href = origGetter.call(this);
+    var parser = wombat.makeParser(href, this.ownerDocument);
 
     var rel = false;
 
     // Special case for assigning href to a relative path
     if (prop === 'href' && typeof value === 'string') {
-      if (value && this._parser instanceof URL) {
+      if (value && parser instanceof wombat.URL) {
         try {
-          value = new URL(value, this._parser).href;
+          value = new wombat.URL(value, parser).href;
         } catch (e) {
           console.warn('Error resolving URL', e);
         }
@@ -1535,7 +1535,7 @@ Wombat.prototype.makeSetLocProp = function(prop, origSetter, origGetter) {
           value = wombat.resolveRelUrl(value, this.ownerDocument);
         } else if (value[0] === '/') {
           if (value.length > 1 && value[1] === '/') {
-            value = this._parser.protocol + value;
+            value = parser.protocol + value;
           } else {
             rel = true;
             value = WB_wombat_location.origin + value;
@@ -1545,17 +1545,17 @@ Wombat.prototype.makeSetLocProp = function(prop, origSetter, origGetter) {
     }
 
     try {
-      this._parser[prop] = value;
+      parser[prop] = value;
     } catch (e) {
       console.log('Error setting ' + prop + ' = ' + value);
     }
 
     if (prop === 'hash') {
-      value = this._parser[prop];
+      value = parser[prop];
       origSetter.call(this, 'hash', value);
     } else {
-      rel = rel || value === this._parser.pathname;
-      value = wombat.rewriteUrl(this._parser.href, rel);
+      rel = rel || value === parser.pathname;
+      value = wombat.rewriteUrl(parser.href, rel);
       origSetter.call(this, 'href', value);
     }
   };
@@ -2290,6 +2290,8 @@ Wombat.prototype.rewriteElem = function(elem) {
         changed = this.rewriteAttr(elem, 'href') || changed;
         changed = this.rewriteAttr(elem, 'style') || changed;
         changed = this.rewriteAttr(elem, 'poster') || changed;
+        // for old html
+        changed = this.rewriteAttr(elem, 'background') || changed;
         break;
       }
     }
@@ -2642,7 +2644,7 @@ Wombat.prototype.rewriteWorker = function(workerUrl) {
     workerCode = rw + workerCode;
   }
   var blob = new Blob([workerCode], { type: 'application/javascript' });
-  return URL.createObjectURL(blob);
+  return this.URL.createObjectURL(blob);
 };
 
 /**
@@ -4210,7 +4212,13 @@ Wombat.prototype.initWSOverride = function() {
 
   this.$wbwindow.WebSocket = (function(WebSocket_) {
     function WebSocket(url, protocols) {
-      this.addEventListener = function() {};
+      this.openCallbacks = [];
+
+      this.addEventListener = function(type, callback) {
+        if (type === 'open') {
+          WebSocket.openCallbacks.push(callback);
+        }
+      };
       this.removeEventListener = function() {};
       this.close = function() {};
       this.send = function(data) {
@@ -4219,7 +4227,18 @@ Wombat.prototype.initWSOverride = function() {
 
       this.protocol = protocols && protocols.length ? protocols[0] : '';
       this.url = url;
-      this.readyState = 0;
+      this.readyState = 1;
+
+      var ws = this;
+      function simOpen() {
+        var ev = new CustomEvent('open');
+        if (ws.onopen) {
+          ws.onopen(ev);
+        }
+        ws.openCallbacks.forEach(callback => callback(ev));
+      }
+
+      setTimeout(simOpen, 500);
     }
 
     WebSocket.CONNECTING = 0;
@@ -5208,7 +5227,7 @@ Wombat.prototype.initWorkerOverrides = function() {
       scriptURL,
       options
     ) {
-      var newScriptURL = new URL(scriptURL, wombat.$wbwindow.document.baseURI)
+      var newScriptURL = new wombat.URL(scriptURL, wombat.$wbwindow.document.baseURI)
         .href;
       var mod = wombat.getPageUnderModifier();
       if (options && options.scope) {
@@ -5387,7 +5406,7 @@ Wombat.prototype.initImportWrapperFunc = function(win) {
   win.____wb_rewrite_import__ = function(base, url) {
     // if base provided (set to import.meta.url), use that as base for imports
     if (base) {
-      url = new URL(url, base).href;
+      url = new wombat.URL(url, base).href;
     }
     return import(/*webpackIgnore: true*/ wombat.rewriteUrl(url, false, 'esm_'));
   };
