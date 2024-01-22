@@ -836,12 +836,15 @@ test('Node.appendChild: should rewrite a element with multiple children are supp
     const a1 = window.WombatTestUtil.createUntamperedWithElement('a');
     const a2 = window.WombatTestUtil.createUntamperedWithElement('a');
     const a3 = window.WombatTestUtil.createUntamperedWithElement('a');
+    const iframe = window.WombatTestUtil.createUntamperedWithElement('iframe');
     a1.href = 'http://example1.com';
     a2.href = 'http://example2.com';
     a3.href = 'http://example3.com';
+    iframe.allow = 'fullscreen; clipboard-write';
     div.appendChild(a2);
     div.appendChild(a3);
     div.appendChild(a1);
+    div.appendChild(iframe);
     return {
       a1: window.WombatTestUtil.getElementPropertyAsIs(a1, 'href').endsWith(
         'mp_/http://example1.com'
@@ -851,10 +854,12 @@ test('Node.appendChild: should rewrite a element with multiple children are supp
       ),
       a3: window.WombatTestUtil.getElementPropertyAsIs(a3, 'href').endsWith(
         'mp_/http://example3.com'
-      )
+      ),
+      iframe: window.WombatTestUtil.getElementPropertyAsIs(iframe, 'allow')
+        === 'autoplay \'self\'; fullscreen \'self\'; fullscreen; clipboard-write',
     };
   });
-  t.deepEqual(result, { a1: true, a2: true, a3: true });
+  t.deepEqual(result, { a1: true, a2: true, a3: true, iframe: true });
 });
 
 test('Node.insertBefore: should rewrite a element with no children are supplied', async t => {

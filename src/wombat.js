@@ -1655,7 +1655,9 @@ Wombat.prototype.rewriteNodeFuncArgs = function(
   }
   var created = originalFn.call(fnThis, newNode, oldNode);
   if (created && created.tagName === 'IFRAME') {
-    created.allow = 'autoplay \'self\'; fullscreen \'self\'';
+    const currentAllow = created.allow ? `; ${created.allow}` : '';
+    created.allow = `autoplay 'self'; fullscreen 'self'${currentAllow}`;
+
     this.initIframeWombat(created);
   }
   return created;
