@@ -2014,7 +2014,7 @@ Wombat.prototype.rewriteAttr = function(elem, name, absUrlOnly) {
     return changed;
   }
 
-  var value = this.wb_getAttribute.call(elem, name);
+  var value = this.wb_getAttribute.call(this.proxyToObj(elem), name);
 
   if (!value || this.startsWith(value, 'javascript:')) return changed;
 
@@ -2237,18 +2237,26 @@ Wombat.prototype.rewriteElem = function(elem) {
         }
         break;
       case 'OBJECT':
-        if (this.wb_info.isSW && elem.parentElement && elem.getAttribute('type') === 'application/pdf') {
-          var iframe = this.$wbwindow.document.createElement('IFRAME');
+        if (this.wb_info.isSW && elem.parentElement) {
+          var altElemName;
+
+          if (elem.getAttribute('type') === 'application/pdf') {
+            altElemName = 'IFRAME';
+          } else if (elem.getAttribute('type') === 'image/svg+xml') {
+            altElemName = 'IMG';
+          }
+
+          var newElem = this.$wbwindow.document.createElement(altElemName);
           for (var i = 0; i < elem.attributes.length; i++) {
             var attr = elem.attributes[i];
             var name = attr.name;
             if (name === 'data') {
               name = 'src';
             }
-            this.wb_setAttribute.call(iframe, name, attr.value);
+            this.wb_setAttribute.call(newElem, name, attr.value);
           }
 
-          elem.parentElement.replaceChild(iframe, elem);
+          elem.parentElement.replaceChild(newElem, elem);
           changed = true;
           break;
         }
@@ -4526,6 +4534,8 @@ Wombat.prototype.initHTTPOverrides = function() {
       this.__WB_xhr_open_arguments = arguments;
       this.__WB_xhr_headers = new Headers();
     };
+
+    this.$wbwindow.XMLHttpRequest.prototype.setAttributionReporting = function() {};
 
     this.$wbwindow.XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
       this.__WB_xhr_headers.set(name, value);
