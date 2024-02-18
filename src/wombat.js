@@ -4,6 +4,7 @@ import { createStorage, Storage } from './customStorage.js';
 import WombatLocation from './wombatLocation.js';
 import AutoFetcher from './autoFetcher.js';
 import { wrapEventListener, wrapSameOriginEventListener } from './listeners.js';
+import { OBJECT_TO_IFRAME_TYPES, createObjectWrapper } from "./objectwrapper.js";
 import {
   addToStringTagToClass,
   autobind,
@@ -1637,7 +1638,12 @@ Wombat.prototype.rewriteNodeFuncArgs = function(
   if (newNode) {
     switch (newNode.nodeType) {
       case Node.ELEMENT_NODE:
-        this.rewriteElemComplete(newNode);
+        if (this.wb_info.isSW && !newNode.parentElement &&
+           newNode.tagName === "OBJECT" && newNode.__WB_object_proxy__) {
+          newNode = newNode.__WBProxyRealObj__;
+        } else {
+          this.rewriteElemComplete(newNode);
+        }
         break;
       case Node.TEXT_NODE:
         // newNode is the new child of fnThis (the parent node)
@@ -2000,7 +2006,7 @@ Wombat.prototype.rewriteAttr = function(elem, name, absUrlOnly) {
     return changed;
   }
 
-  var value = this.wb_getAttribute.call(elem, name);
+  var value = this.wb_getAttribute.call(this.proxyToObj(elem), name);
 
   if (!value || this.startsWith(value, 'javascript:')) return changed;
 
@@ -2223,7 +2229,7 @@ Wombat.prototype.rewriteElem = function(elem) {
         }
         break;
       case 'OBJECT':
-        if (this.wb_info.isSW && elem.parentElement && elem.getAttribute('type') === 'application/pdf') {
+        if (this.wb_info.isSW && elem.parentElement && OBJECT_TO_IFRAME_TYPES.includes(elem.getAttribute('type'))) {
           var iframe = this.$wbwindow.document.createElement('IFRAME');
           for (var i = 0; i < elem.attributes.length; i++) {
             var attr = elem.attributes[i];
@@ -4779,6 +4785,26 @@ Wombat.prototype.initCreateElementNSFix = function() {
   this.$wbwindow.document.createElementNS = createElementNS;
 };
 
+
+Wombat.prototype.initCreateElement = function() {
+  var orig_createElement = this.$wbwindow.document.createElement;
+  var wombat = this;
+
+  var createElement = function createElement(tagName, opts) {
+    var result = orig_createElement.call(
+      wombat.proxyToObj(this), tagName, opts
+    );
+    if (tagName === "object") {
+      return createObjectWrapper(result);
+    }
+
+    return result;
+  };
+
+  this.$wbwindow.Document.prototype.createElement = createElement;
+  this.$wbwindow.document.createElement = createElement;
+}
+
 /**
  * Applies an override to Element.insertAdjacentHTML in order to ensure
  * that the strings of HTML to be inserted are rewritten and to
@@ -6716,6 +6742,8 @@ Wombat.prototype.wombatInit = function() {
 
   // ensure namespace urls are NOT rewritten
   this.initCreateElementNSFix();
+
+  this.initCreateElement();
 
   // DOM
   // OPT skip
