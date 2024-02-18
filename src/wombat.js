@@ -3276,7 +3276,7 @@ Wombat.prototype.overrideDataSet = function() {
 
         var result = target[prop];
 
-        if (wombat.startsWithOneOf(result, wombat.wb_prefixes)) {
+        if (typeof(result) === 'string' && wombat.startsWithOneOf(result, wombat.wb_prefixes)) {
           return wombat.extractOriginalURL(result);
         }
 
