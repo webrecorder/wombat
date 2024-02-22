@@ -4207,6 +4207,29 @@ Wombat.prototype.initBlobOverride = function() {
   this.$wbwindow.Blob.prototype = orig_blob.prototype;
 };
 
+Wombat.prototype.initIntersectionObsOverride = function() {
+  var orig_iobs = this.$wbwindow.IntersectionObserver;
+
+  var wombat = this;
+
+  this.$wbwindow.IntersectionObserver = (function(IObs) {
+    return function(callback, options) {
+      if (options && options.root) {
+        options.root = wombat.proxyToObj(options.root);
+      }
+
+      return new IObs(callback, options);
+    };
+
+  })(this.$wbwindow.IntersectionObserver);
+
+  this.$wbwindow.IntersectionObserver.prototype = orig_iobs.prototype;
+
+  Object.defineProperty(this.$wbwindow.IntersectionObserver.prototype, 'constructor', {
+    value: this.$wbwindow.IntersectionObserver
+  });
+};
+
 Wombat.prototype.initWSOverride = function() {
   if (!this.$wbwindow.WebSocket || !this.$wbwindow.WebSocket.prototype) {
     return;
@@ -6667,6 +6690,9 @@ Wombat.prototype.wombatInit = function() {
   // ensure _wombat is inited on the iframe $wbwindow!
   this.overrideIframeContentAccess('contentWindow');
   this.overrideIframeContentAccess('contentDocument');
+
+  // IntersectionObserver constructor override
+  this.initIntersectionObsOverride();
 
   // override funcs to convert first arg proxy->obj
   this.overrideFuncArgProxyToObj(this.$wbwindow.MutationObserver, 'observe');
