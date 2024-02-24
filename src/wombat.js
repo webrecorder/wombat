@@ -3050,6 +3050,8 @@ Wombat.prototype.overrideHistoryFunc = function(funcName) {
     // in case functions rebound to different history obj!
     var historyWin = this.___wb_ownWindow || wombat.$wbwindow;
 
+    url = wombat.extractOriginalURL(url);
+
     var wombatLocation = historyWin.WB_wombat_location;
     var rewritten_url;
     var resolvedURL;
