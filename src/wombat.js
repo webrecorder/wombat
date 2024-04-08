@@ -929,7 +929,7 @@ Wombat.prototype.getFinalUrl = function(useRel, mod, url) {
  */
 Wombat.prototype.resolveRelUrl = function(url, doc) {
   var docObj = this.$wbwindow.document;
-  if (doc && doc.baseURI && (doc.startsWith(HTTPS_PREFIX) || doc.startsWith(HTTP_PREFIX))) {
+  if (doc && doc.baseURI && (doc.startsWith(this.HTTPS_PREFIX) || doc.startsWith(this.HTTP_PREFIX))) {
     docObj = doc;
   }
   var parser = this.makeParser(docObj.baseURI, docObj);
@@ -1691,7 +1691,6 @@ Wombat.prototype.rewriteWSURL = function(originalURL) {
   var wsScheme = 'ws://';
   var wssScheme = 'wss://';
 
-  // proxy mode: If no wb_replay_prefix, only rewrite scheme
   // proxy mode: If no wb_replay_prefix, only rewrite scheme
   if (this.wb_is_proxy) {
     if (
