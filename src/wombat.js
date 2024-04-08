@@ -928,7 +928,10 @@ Wombat.prototype.getFinalUrl = function(useRel, mod, url) {
  * @return {string}
  */
 Wombat.prototype.resolveRelUrl = function(url, doc) {
-  var docObj = doc || this.$wbwindow.document;
+  var docObj = this.$wbwindow.document;
+  if (doc && doc.baseURI && (doc.startsWith(HTTPS_PREFIX) || doc.startsWith(HTTP_PREFIX))) {
+    docObj = doc;
+  }
   var parser = this.makeParser(docObj.baseURI, docObj);
 
   return new this.URL(url, parser).href;
