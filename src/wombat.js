@@ -929,7 +929,7 @@ Wombat.prototype.getFinalUrl = function(useRel, mod, url) {
  */
 Wombat.prototype.resolveRelUrl = function(url, doc) {
   var docObj = this.$wbwindow.document;
-  if (doc && doc.baseURI && (doc.startsWith(this.HTTPS_PREFIX) || doc.startsWith(this.HTTP_PREFIX))) {
+  if (doc && doc.baseURI && (doc.baseURI.startsWith(this.HTTPS_PREFIX) || doc.baseURI.startsWith(this.HTTP_PREFIX))) {
     docObj = doc;
   }
   var parser = this.makeParser(docObj.baseURI, docObj);
