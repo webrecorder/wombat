@@ -922,22 +922,31 @@ Wombat.prototype.getFinalUrl = function(useRel, mod, url) {
 };
 
 /**
- * Converts the supplied relative URL to an absolute URL using an A tag
+ * Converts the supplied relative URL to an absolute URL using URL class
  * @param {string} url
  * @param {?Document} doc
  * @return {string}
  */
 Wombat.prototype.resolveRelUrl = function(url, doc) {
-  var docObj = this.$wbwindow.document;
-  if (doc) {
-    var baseURI = doc.baseURI;
-    if (baseURI.startsWith(this.HTTPS_PREFIX) || baseURI.startsWith(this.HTTP_PREFIX)) {
-      docObj = doc;
-    }
-  }
-  var parser = this.makeParser(docObj.baseURI, docObj);
+  var wombat = this;
 
-  return new this.URL(url, parser).href;
+  function isValidBaseURI(doc) {
+    if (!doc || !doc.baseURI) {
+      return false;
+    }
+    return (doc.baseURI.startsWith(wombat.HTTPS_PREFIX) || doc.baseURI.startsWith(wombat.HTTP_PREFIX));
+  }
+
+  var baseURI = null;
+  if (isValidBaseURI(doc)) {
+    baseURI = doc.baseURI;
+  } else if (isValidBaseURI(this.$wbwindow.document)) {
+    baseURI = this.$wbwindow.document.baseURI;
+  } else {
+    baseURI = this.$wbwindow.__WB_replay_top.document.baseURI;
+  }
+
+  return new this.URL(url, baseURI).href;
 };
 
 /**
