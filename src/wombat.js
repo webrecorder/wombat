@@ -2839,6 +2839,9 @@ Wombat.prototype.rewriteHTMLAssign = function(thisObj, oSetter, newValue) {
  * @return {*}
  */
 Wombat.prototype.rewriteEvalArg = function(rawEvalOrWrapper, evalArg, extraArg) {
+  if (this.$wbwindow.TrustedScript && (evalArg instanceof this.$wbwindow.TrustedScript)) {
+    evalArg = evalArg.toString();
+  }
   var toBeEvald =
     this.isString(evalArg) && !this.skipWrapScriptTextBasedOnText(evalArg)
       ? this.wrapScriptTextJsProxy(evalArg)
@@ -3525,6 +3528,30 @@ Wombat.prototype.overrideFunctionApply = function($wbwindow) {
 };
 
 
+/**
+ * Overrides Function.prototype.call in order to ensure that none of the
+ * arguments of `native` functions are one of the JS Proxy objects used by wombat.
+ * @param {Window} $wbwindow
+ */
+Wombat.prototype.overrideFunctionCall = function($wbwindow) {
+  if ($wbwindow.Function.prototype.__WB_orig_call) {
+    return;
+  }
+  var orig_call = $wbwindow.Function.prototype.call;
+  $wbwindow.Function.prototype.__WB_orig_call = orig_call;
+  var wombat = this;
+  $wbwindow.Function.prototype.call = function call(obj, ...args) {
+    // if native function, de-proxy
+    if (wombat.isNativeFunction(this)) {
+      obj = wombat.proxyToObj(obj);
+      args = wombat.deproxyArrayHandlingArgumentsObj(args);
+    }
+
+    return this.__WB_orig_call(obj, ...args);
+  };
+
+  this.wb_funToString.call = orig_call;
+};
 /**
  * Override Function.prototype.bind to deproxy the param target
  * in case of native functions
@@ -6629,6 +6656,7 @@ Wombat.prototype.wombatInit = function() {
   this.initHistoryOverrides();
 
   this.overrideFunctionApply(this.$wbwindow);
+  this.overrideFunctionCall(this.$wbwindow);
   this.overrideFunctionBind(this.$wbwindow);
 
   // Doc Title
