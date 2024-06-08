@@ -2010,7 +2010,7 @@ Wombat.prototype.performAttributeRewrite = function(
  */
 Wombat.prototype.rewriteAttr = function(elem, name, absUrlOnly) {
   var changed = false;
-  if (!elem || !elem.getAttribute || elem._no_rewrite || elem['_' + name]) {
+  if (!elem || !elem.getAttribute || elem._no_rewrite || elem['_' + name] || (elem.tagName && elem.tagName.indexOf("-") > 0)) {
     return changed;
   }
 
@@ -3006,6 +3006,26 @@ Wombat.prototype.overridePropExtract = function(proto, prop) {
     this.defGetterProp(proto, prop, new_getter);
   }
 };
+
+/**
+ * Applies an attribute setter override to de-proxy the prop
+ * @param {Object} proto
+ * @param {string} prop
+ * @param {*} [cond]
+ */
+Wombat.prototype.overrideDeProxyPropAssign = function(proto, prop) {
+  var orig_setter = this.getOrigSetter(proto, prop);
+  var orig_getter = this.getOrigGetter(proto, prop);
+  var wombat = this;
+  if (orig_setter) {
+    var new_setter = function (value) {
+      return orig_setter.call(wombat.proxyToObj(this), wombat.proxyToObj(value));
+    };
+    this.defProp(proto, prop, new_setter, orig_getter);
+  }
+};
+
+
 
 
 /**
@@ -5954,6 +5974,9 @@ Wombat.prototype.initMiscNavigatorOverrides = function() {
   if (this.$wbwindow.navigator.mediaDevices) {
     this.$wbwindow.navigator.mediaDevices.setCaptureHandleConfig = function() {};
   }
+  if (this.$wbwindow.navigator.getInstalledRelatedApps) {
+    this.$wbwindow.navigator.getInstalledRelatedApps = function() { return Promise.resolve([]); };
+  }
 };
 
 
@@ -6776,6 +6799,8 @@ Wombat.prototype.wombatInit = function() {
     this.$wbwindow.EventTarget.prototype,
     'dispatchEvent'
   );
+
+  this.overrideDeProxyPropAssign(this.$wbwindow.TreeWalker.prototype, "currentNode");
 
   this.initTimeoutIntervalOverrides();
 
