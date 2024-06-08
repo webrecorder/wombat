@@ -2010,7 +2010,7 @@ Wombat.prototype.performAttributeRewrite = function(
  */
 Wombat.prototype.rewriteAttr = function(elem, name, absUrlOnly) {
   var changed = false;
-  if (!elem || !elem.getAttribute || elem._no_rewrite || elem['_' + name] || (elem.tagName && elem.tagName.indexOf("-") > 0)) {
+  if (!elem || !elem.getAttribute || elem._no_rewrite || elem['_' + name] || (elem.tagName && elem.tagName.indexOf('-') > 0)) {
     return changed;
   }
 
@@ -6303,7 +6303,7 @@ Wombat.prototype.initWindowObjProxy = function($wbwindow) {
       },
       defineProperty: function(target, prop, desc) {
         var ndesc = desc || {};
-        if (ndesc.value === undefined && ndesc.get === undefined) {
+        if (!ndesc.hasOwnProperty('value') && !ndesc.hasOwnProperty('get') && !ndesc.hasOwnProperty('set')) {
           ndesc.value = $wbwindow[prop];
         }
         Reflect.defineProperty($wbwindow, prop, ndesc);
@@ -6800,7 +6800,7 @@ Wombat.prototype.wombatInit = function() {
     'dispatchEvent'
   );
 
-  this.overrideDeProxyPropAssign(this.$wbwindow.TreeWalker.prototype, "currentNode");
+  this.overrideDeProxyPropAssign(this.$wbwindow.TreeWalker.prototype, 'currentNode');
 
   this.initTimeoutIntervalOverrides();
 
