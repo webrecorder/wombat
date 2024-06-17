@@ -1390,11 +1390,22 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
       // you can't create a new instance of window, document or location using the constructors
       return obj.constructor;
   }
-  var retVal = obj[prop];
+  var retVal = Reflect.get(obj, prop);
 
   var type = typeof retVal;
 
-  if (type === 'function' && ownProps.indexOf(prop) !== -1) {
+  if (type === 'string' && retVal) {
+    var asNum = parseInt(prop);
+
+    if (retVal && !isNaN(asNum)) {
+      // frames array access
+      try {
+        this.initNewWindowWombat(retVal);
+        return retVal._WB_wombat_obj_proxy;
+      } catch (e) {}
+    }
+
+  } else if (type === 'function' && ownProps.indexOf(prop) !== -1) {
     // certain sites (e.g. facebook) are applying polyfills to native functions
     // treating the polyfill as a native function [fn.bind(obj)] causes incorrect execution of the polyfill
     // also depending on the site, the site can detect we "tampered" with the polyfill by binding it to obj
@@ -2420,7 +2431,7 @@ Wombat.prototype.rewriteHtml = function(string, checkEndTag) {
     this.write_buff = '';
   }
 
-  if (rwString.indexOf('<script') <= 0) {
+  if (rwString.indexOf('<script') <= 0 && rwString.indexOf('WB_wombat_') >= 0) {
     // string = string.replace(/WB_wombat_/g, "");
     rwString = rwString.replace(/((id|class)=".*)WB_wombat_([^"]+)/, '$1$3');
   }
@@ -3414,33 +3425,6 @@ Wombat.prototype.overrideIframeContentAccess = function(prop) {
 
   this.defProp(obj, prop, orig_setter, getter);
   obj['_get_' + prop] = orig_getter;
-};
-
-/**
- * Applies an override to the getter function for the frames property of
- * the supplied window in order to ensure that wombat is initialized in
- * all frames.
- * * @param {Window} $wbwindow
- */
-Wombat.prototype.overrideFramesAccess = function($wbwindow) {
-  // If $wbwindow.frames is the window itself, nothing to override
-  // This can be handled in the Obj Proxy
-  if ($wbwindow.Proxy && $wbwindow === $wbwindow.frames) {
-    return;
-  }
-  $wbwindow.__wb_frames = $wbwindow.frames;
-  var wombat = this;
-  var getter = function overrideFramesAccessGetter() {
-    for (var i = 0; i < this.__wb_frames.length; i++) {
-      try {
-        wombat.initNewWindowWombat(this.__wb_frames[i]);
-      } catch (e) {}
-    }
-    return this.__wb_frames;
-  };
-
-  this.defGetterProp($wbwindow, 'frames', getter);
-  this.defGetterProp($wbwindow.Window.prototype, 'frames', getter);
 };
 
 
@@ -6351,10 +6335,10 @@ Wombat.prototype.initDocumentObjProxy = function($document) {
     set: function(target, prop, value) {
       if (prop === 'location') {
         $document.WB_wombat_location = value;
+        return true;
       } else {
-        target[prop] = value;
+        return Reflect.set(target, prop, value);
       }
-      return true;
     }
   });
   $document._WB_wombat_obj_proxy = documentProxy;
@@ -6819,8 +6803,6 @@ Wombat.prototype.wombatInit = function() {
   this.overrideDeProxyPropAssign(this.$wbwindow.TreeWalker.prototype, 'currentNode');
 
   this.initTimeoutIntervalOverrides();
-
-  this.overrideFramesAccess(this.$wbwindow);
 
   this.overrideSWAccess(this.$wbwindow);
 
