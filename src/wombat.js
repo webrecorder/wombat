@@ -5049,7 +5049,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   function docWrite(fnThis, originalFn, string) {
     var win = wombat.$wbwindow;
 
-    if (isSWLoad() || (document.readyState === 'loading' && wombat.wb_info.injectDocClose)) {
+    if (isSWLoad() || (fnThis.readyState === 'loading' && wombat.wb_info.injectDocClose)) {
       wombat._writeBuff += string;
       return;
     }
@@ -5107,10 +5107,26 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   var originalClose = $wbDocument.close;
   var newClose = function close() {
     if (wombat._writeBuff) {
+      // if loading, apply as may be sync waiting for changes
+      if (this.readyState === 'loading') {
+        orig_doc_write.call($wbDocument, wombat.rewriteHtml(wombat._writeBuff, true));
+      }
       if (isSWLoad()) {
         wombat.blobUrlForIframe(wombat.$wbwindow.frameElement, wombat._writeBuff);
-      } else if (document.readyState === 'loading') {
-        orig_doc_write.call($wbDocument, wombat.rewriteHtml(wombat._writeBuff, true));
+
+        const doc = this;
+
+        try {
+          // catch any sync changes to doc being replaced, and create updated blob
+          if (doc.documentElement) {
+            const m = new wombat.$wbwindow.MutationObserver((mut, obs) => {
+              wombat.blobUrlForIframe(wombat.$wbwindow.frameElement, doc.documentElement.outerHTML);
+            });
+            m.observe(doc.documentElement, { childList: true, subtree: true });
+          }
+        } catch (e) {
+          // ignore
+        }
       }
       wombat._writeBuff = '';
       return;
