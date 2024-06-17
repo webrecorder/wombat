@@ -4860,6 +4860,40 @@ Wombat.prototype.initCreateElementNSFix = function() {
 };
 
 /**
+ * Applies an override to document.querySelector()
+ * to override exact/prefix 'src' / 'href' queries
+ */
+Wombat.prototype.initQuerySelectorOverride = function() {
+  if (
+    !this.$wbwindow.document.querySelector ||
+    !this.$wbwindow.Document.prototype.querySelector
+  ) {
+    return;
+  }
+  var orig_QA = this.$wbwindow.document.querySelector;
+  var wombat = this;
+
+  var querySelector = function(query) {
+    if (typeof(query) === 'string') {
+      try {
+        query = query.replace(/((?:^|\s)\b\w+\[(?:src|href))[\^]?(=['"]?(?:https?[:])?\/\/)/, '$1*$2');
+      } catch (e) {
+        // ignore
+      }
+    }
+    return orig_QA.call(
+      wombat.proxyToObj(this),
+      query
+    );
+  };
+
+  this.$wbwindow.Document.prototype.querySelector = querySelector;
+  this.$wbwindow.document.querySelector = querySelector;
+};
+
+
+
+/**
  * Applies an override to Element.insertAdjacentHTML in order to ensure
  * that the strings of HTML to be inserted are rewritten and to
  * Element.insertAdjacentElement in order to ensure that the Elements to
@@ -6803,6 +6837,8 @@ Wombat.prototype.wombatInit = function() {
   this.overrideDeProxyPropAssign(this.$wbwindow.TreeWalker.prototype, 'currentNode');
 
   this.initTimeoutIntervalOverrides();
+
+  this.initQuerySelectorOverride();
 
   this.overrideSWAccess(this.$wbwindow);
 
