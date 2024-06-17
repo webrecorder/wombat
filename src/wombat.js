@@ -1061,7 +1061,7 @@ Wombat.prototype.makeParser = function(maybeRewrittenURL, doc) {
 
 Wombat.prototype._makeURLParser = function(url, docElem) {
   try {
-    return new this.$wbwindow.URL(url, docElem.baseURI);
+    return new this.URL(url, docElem.baseURI);
   } catch (e) {}
 
   var p = docElem.createElement('a');
