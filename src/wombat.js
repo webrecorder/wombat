@@ -1430,7 +1430,7 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
     var cachedFN = fnCache[prop];
     if (!cachedFN || cachedFN.original !== retVal) {
       const boundFn = retVal.bind(obj);
-      const SKIP_OWN_PROPS = ["name", "length", "__WB_is_native_func__"];
+      const SKIP_OWN_PROPS = ['name', 'length', '__WB_is_native_func__'];
       for (const ownProp of Object.getOwnPropertyNames(retVal)) {
         if (!SKIP_OWN_PROPS.includes(ownProp)) {
           boundFn[ownProp] = retVal[ownProp];
