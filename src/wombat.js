@@ -62,6 +62,8 @@ function Wombat($wbwindow, wbinfo) {
   this.WB_CHECK_THIS_FUNC = '_____WB$wombat$check$this$function_____';
   this.WB_ASSIGN_FUNC = '_____WB$wombat$assign$function_____';
 
+  this.SKIP_OWN_FUNC_PROPS = ['name', 'length', '__WB_is_native_func__', 'arguments', 'caller', 'callee', 'prototype'];
+
   /** @type {function(qualifiedName: string, value: string): void} */
   this.wb_setAttribute = $wbwindow.Element.prototype.setAttribute;
 
@@ -1430,10 +1432,13 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
     var cachedFN = fnCache[prop];
     if (!cachedFN || cachedFN.original !== retVal) {
       const boundFn = retVal.bind(obj);
-      const SKIP_OWN_PROPS = ['name', 'length', '__WB_is_native_func__'];
       for (const ownProp of Object.getOwnPropertyNames(retVal)) {
-        if (!SKIP_OWN_PROPS.includes(ownProp)) {
-          boundFn[ownProp] = retVal[ownProp];
+        if (!this.SKIP_OWN_FUNC_PROPS.includes(ownProp)) {
+          try {
+            boundFn[ownProp] = retVal[ownProp];
+          } catch (e) {
+            // ignore
+          }
         }
       }
       fnCache[prop] = {
