@@ -3578,7 +3578,7 @@ Wombat.prototype.overrideFunctionBind = function($wbwindow) {
   var wombat = this;
   $wbwindow.Function.prototype.bind = function bind(obj) {
     var isNative = wombat.isNativeFunction(this);
-    var result = this.__WB_orig_bind.apply(this, arguments);
+    var result = isNative ? this.__WB_orig_bind.apply(this, arguments) : this.__WB_orig_bind.__WB_orig_apply(this, arguments);
     result.__WB_is_native_func__ = isNative;
     return result;
   };
