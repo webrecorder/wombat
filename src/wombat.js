@@ -4876,7 +4876,7 @@ Wombat.prototype.initQuerySelectorOverride = function() {
   var querySelector = function(query) {
     if (typeof(query) === 'string') {
       try {
-        query = query.replace(/((?:^|\s)\b\w+\[(?:src|href))[\^]?(=['"]?(?:https?[:])?\/\/)/, '$1*$2');
+        query = query.replace(/((?:^|\s)\b\w+\[(?:src|href|data-href))[\^]?(=['"]?(?:https?[:])?\/\/)/, '$1*$2');
       } catch (e) {
         // ignore
       }
