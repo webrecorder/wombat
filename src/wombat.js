@@ -4908,7 +4908,7 @@ Wombat.prototype.initQuerySelectorOverride = function() {
 
   this.$wbwindow.Document.prototype.querySelectorAll = querySelectorAll;
   this.$wbwindow.document.querySelectorAll = querySelectorAll;
-}};
+};
 
 
 
