@@ -4870,25 +4870,44 @@ Wombat.prototype.initQuerySelectorOverride = function() {
   ) {
     return;
   }
-  var orig_QA = this.$wbwindow.document.querySelector;
-  var wombat = this;
 
-  var querySelector = function(query) {
+  function rewriteQuery(query) {
     if (typeof(query) === 'string') {
       try {
-        query = query.replace(/((?:^|\s)\b\w+\[(?:src|href))[\^]?(=['"]?(?:https?[:])?\/\/)/, '$1*$2');
+        query = query.replace(/((?:^|\s)\b\w+\[(?:src|href|data-href))[\^]?(=['"]?(?:https?[:])?\/\/)/, '$1*$2');
       } catch (e) {
         // ignore
       }
     }
-    return orig_QA.call(
+
+    return query;
+  }
+
+  var wombat = this;
+
+  var orig_QS = this.$wbwindow.document.querySelector;
+
+  var querySelector = function(query) {
+    return orig_QS.call(
       wombat.proxyToObj(this),
-      query
+      rewriteQuery(query)
+    );
+  };
+
+  var orig_QSA = this.$wbwindow.document.querySelectorAll;
+
+  var querySelectorAll = function(query) {
+    return orig_QSA.call(
+      wombat.proxyToObj(this),
+      rewriteQuery(query)
     );
   };
 
   this.$wbwindow.Document.prototype.querySelector = querySelector;
   this.$wbwindow.document.querySelector = querySelector;
+
+  this.$wbwindow.Document.prototype.querySelectorAll = querySelectorAll;
+  this.$wbwindow.document.querySelectorAll = querySelectorAll;
 };
 
 
