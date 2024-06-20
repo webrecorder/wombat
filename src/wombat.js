@@ -1429,13 +1429,21 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
     // we must return the
     var cachedFN = fnCache[prop];
     if (!cachedFN || cachedFN.original !== retVal) {
-      cachedFN = {
+      const boundFn = retVal.bind(obj);
+      const SKIP_OWN_PROPS = ["name", "length", "__WB_is_native_func__"];
+      for (const ownProp of Object.getOwnPropertyNames(retVal)) {
+        if (!SKIP_OWN_PROPS.includes(ownProp)) {
+          boundFn[ownProp] = retVal[ownProp];
+        }
+      }
+      fnCache[prop] = {
         original: retVal,
-        boundFn: retVal.bind(obj)
+        boundFn
       };
-      fnCache[prop] = cachedFN;
+      return boundFn;
     }
     return cachedFN.boundFn;
+
   } else if (type === 'object' && retVal && retVal._WB_wombat_obj_proxy) {
     if (retVal instanceof this.WBWindow) {
       this.initNewWindowWombat(retVal);
