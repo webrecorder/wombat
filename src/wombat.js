@@ -5714,7 +5714,7 @@ Wombat.prototype.initPostMessageOverride = function($wbwindow) {
 
     var targetOrigin;
 
-    if (typeof(targetOrigin_or_options) === "object") {
+    if (typeof(targetOrigin_or_options) === 'object') {
       targetOrigin = targetOrigin_or_options.targetOrigin;
       transfer = targetOrigin_or_options.transfer;
     } else {
