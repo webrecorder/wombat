@@ -5678,7 +5678,7 @@ Wombat.prototype.initPostMessageOverride = function($wbwindow) {
   // use this_obj.__WB_source not window to fix google calendar embeds, pm_origin sets this.__WB_source
   var postmessage_rewritten = function postMessage(
     message,
-    targetOrigin,
+    targetOrigin_or_options,
     transfer,
     from_top
   ) {
@@ -5710,6 +5710,15 @@ Wombat.prototype.initPostMessageOverride = function($wbwindow) {
       this_obj.__WB_source = undefined;
     } else {
       from = window.WB_wombat_location.origin;
+    }
+
+    var targetOrigin;
+
+    if (typeof(targetOrigin_or_options) === "object") {
+      targetOrigin = targetOrigin_or_options.targetOrigin;
+      transfer = targetOrigin_or_options.transfer;
+    } else {
+      targetOrigin = targetOrigin_or_options;
     }
 
     var to_origin = targetOrigin;
