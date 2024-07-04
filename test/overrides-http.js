@@ -103,12 +103,11 @@ test('fetch: should rewrite the input argument when it is an Request object, als
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(async () => {
     let to;
+    let request = new Request('/test', {
+      method: 'GET'
+    });
     let response = await Promise.race([
-      fetch(
-        new Request('/test', {
-          method: 'GET'
-        })
-      ),
+      fetch(request),
       new Promise(resolve => {
         to = setTimeout(() => resolve('timed out'), 5000);
       })
@@ -117,18 +116,23 @@ test('fetch: should rewrite the input argument when it is an Request object, als
       throw new Error('no reply from server in 5 seconds');
     clearTimeout(to);
     const data = await response.json();
-    return {url: data.url, respURL: response.url};
+    return {url: data.url,
+            rwUrl: request.url,
+            realUrl: request.__WB_real_url,
+            respURL: response.url};
   });
+  t.is(result.rwUrl, 'https://tests.wombat.io/test');
+  t.is(result.realUrl, '/live/20180803160549mp_/https://tests.wombat.io/test');
   t.is(result.url, '/live/20180803160549mp_/https://tests.wombat.io/test');
   t.is(result.respURL, 'https://tests.wombat.io/test');
 });
 
-test('fetch: should rewrite the input argument when it is a object with an href property, but return original', async t => {
+test('fetch: should rewrite the input argument when it is a object, but return original', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(async () => {
     let to;
     let response = await Promise.race([
-      fetch({ href: '/test' }),
+      fetch({ href: '/test', toString: () => { return '/test'; }}),
       new Promise(resolve => {
         to = setTimeout(() => resolve('timed out'), 10000);
       })

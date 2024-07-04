@@ -4612,10 +4612,12 @@ Wombat.prototype.initHTTPOverrides = function() {
 
       if (input instanceof Request) {
         var new_url = wombat.rewriteUrl(input.url);
-        if (new_url !== input.url && (!input.__WB_real_url || new_url !== input.__WB_real_url)) {
-          request = new Request(new_url, input);
-        } else {
+        var real_url = input.__WB_real_url;
+        // if already a Request with rewritten url, just use that
+        if (new_url === input.url || new_url === real_url || new_url === wombat.$wbwindow.location.origin + real_url) {
           request = input;
+        } else {
+          request = new Request(new_url, input);
         }
       } else {
         input = wombat.rewriteUrl(input.toString());
@@ -4686,11 +4688,7 @@ Wombat.prototype.initHTTPOverrides = function() {
         }
 
         var request = new Request_(newInput, newOpts);
-        try {
-          request.__WB_real_url = new URL(newInput, wombat.$wbwindow.location.origin).href;
-        } catch (e) {
-
-        }
+        request.__WB_real_url = newInput;
         return request;
       };
     })(this.$wbwindow.Request);
