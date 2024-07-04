@@ -2323,6 +2323,7 @@ Wombat.prototype.rewriteElem = function(elem) {
         break;
       case 'A':
         changed = this.rewriteAttr(elem, 'href') || changed;
+        changed = this.rewriteAttr(elem, 'style') || changed;
         if (elem.hasAttribute('target')) {
           var newTarget = this.rewriteAttrTarget(elem.target);
           if (newTarget !== elem.target) {
