@@ -6028,25 +6028,12 @@ Wombat.prototype.initRegisterUnRegPHOverride = function() {
   }
 };
 
-/**
- * Applies an override to navigator.sendBeacon in order to ensure that
- * the URL argument is rewritten. This ensures that when a page is rewritten
- * no information about who is viewing is leaked to the outside world
- */
-Wombat.prototype.initBeaconOverride = function() {
-  if (!this.$wbwindow.navigator.sendBeacon) return;
-  var orig_sendBeacon = this.$wbwindow.navigator.sendBeacon;
-  var wombat = this;
-  this.$wbwindow.navigator.sendBeacon = function sendBeacon(url, data) {
-    try {
-      return orig_sendBeacon.call(this, wombat.rewriteUrl(url), data);
-    } catch(e) {
-      return true;
-    }
-  };
-};
 
 Wombat.prototype.initMiscNavigatorOverrides = function() {
+  if (this.$wbwindow.navigator.sendBeacon) {
+    this.$wbwindow.navigator.sendBeacon = function() { return true; };
+  }
+
   if (this.$wbwindow.navigator.mediaDevices) {
     this.$wbwindow.navigator.mediaDevices.setCaptureHandleConfig = function() {};
   }
@@ -6907,9 +6894,6 @@ Wombat.prototype.wombatInit = function() {
   // registerProtocolHandler override
   this.initRegisterUnRegPHOverride();
   this.initPresentationRequestOverride();
-
-  // sendBeacon override
-  this.initBeaconOverride();
 
   // additional navigator. overrides
   this.initMiscNavigatorOverrides();
