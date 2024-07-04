@@ -2686,9 +2686,9 @@ Wombat.prototype.rewriteWorker = function(workerUrl) {
       this.wb_abs_prefix +
       '\', \'prefixMod\': \'' +
       this.wb_abs_prefix +
-      'wkrf_/\', \'originalURL\': \'' +
-      originalURL +
-      '\'}); })();';
+      'wkrf_/\', \'originalURL\': ' +
+      JSON.stringify(originalURL) +
+      '}); })();';
 
     workerCode = rw + workerCode;
   }
@@ -4608,30 +4608,33 @@ Wombat.prototype.initHTTPOverrides = function() {
   if (this.$wbwindow.fetch) {
     var orig_fetch = this.$wbwindow.fetch;
     this.$wbwindow.fetch = function fetch(input, init_opts) {
-      var rwInput = input;
-      var inputType = typeof input;
-      if (inputType === 'string') {
-        rwInput = wombat.rewriteUrl(input);
-      } else if (inputType === 'object' && input.url) {
+      var request;
+
+      if (input instanceof Request) {
         var new_url = wombat.rewriteUrl(input.url);
-        if (new_url !== input.url) {
-          rwInput = new Request(new_url, init_opts);
+        var real_url = input.__WB_real_url;
+        // if already a Request with rewritten url, just use that
+        if (new_url === input.url || new_url === real_url || new_url === wombat.$wbwindow.location.origin + real_url) {
+          request = input;
+        } else {
+          request = new Request(new_url, input);
         }
-      } else if (inputType === 'object' && input.href) {
-        // it is likely that input is either window.location or window.URL
-        rwInput = wombat.rewriteUrl(input.href);
+      } else {
+        input = wombat.rewriteUrl(input.toString());
+
+        if (!init_opts) {
+          init_opts = {};
+        }
+        if (init_opts.credentials === undefined) {
+          try {
+            init_opts.credentials = 'include';
+          } catch(e) {}
+        }
+
+        request = new Request(input, init_opts);
       }
 
-      if (!init_opts) {
-        init_opts = {};
-      }
-      if (init_opts.credentials === undefined) {
-        try {
-          init_opts.credentials = 'include';
-        } catch(e) {}
-      }
-
-      return orig_fetch.call(wombat.proxyToObj(this), rwInput, init_opts);
+      return orig_fetch.call(wombat.proxyToObj(this), request);
     };
   }
 
@@ -4662,12 +4665,31 @@ Wombat.prototype.initHTTPOverrides = function() {
             }
             break;
         }
-        newInitOpts['credentials'] = 'include';
-        if (newInitOpts.referrer) {
-          newInitOpts.referrer = wombat.rewriteUrl(newInitOpts.referrer);
+        const props = ['cache', 'headers', 'integrity',
+          'keepalive', 'method', 'mode', 'redirect',
+          'referrerPolicy', 'signal'
+        ];
+
+        const newOpts = {};
+
+        for (const prop of props) {
+          newOpts[prop] = newInitOpts[prop];
         }
 
-        return new Request_(newInput, newInitOpts);
+        newOpts.credentials = 'include';
+
+        if (newInitOpts.referrer) {
+          newOpts.referrer = wombat.rewriteUrl(newInitOpts.referrer);
+        }
+
+        if (newInitOpts.duplex && newInitOpts.body) {
+          newOpts.body = newInitOpts.body;
+          newOpts.duplex = newInitOpts.duplex;
+        }
+
+        var request = new Request_(newInput, newOpts);
+        request.__WB_real_url = newInput;
+        return request;
       };
     })(this.$wbwindow.Request);
 
