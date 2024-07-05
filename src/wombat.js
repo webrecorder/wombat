@@ -3026,6 +3026,9 @@ Wombat.prototype.overridePropExtract = function(proto, prop) {
     var new_getter = function () {
       var obj = wombat.proxyToObj(this);
       var res = orig_getter.call(obj);
+      if (obj.__WB_no_unrewrite) {
+        return res;
+      }
       return wombat.extractOriginalURL(res);
     };
     this.defGetterProp(proto, prop, new_getter);
@@ -4612,25 +4615,15 @@ Wombat.prototype.initHTTPOverrides = function() {
 
       if (input instanceof Request) {
         var new_url = wombat.rewriteUrl(input.url);
-        var real_url = input.__WB_real_url;
-        // if already a Request with rewritten url, just use that
-        if (new_url === input.url || new_url === real_url || new_url === wombat.$wbwindow.location.origin + real_url) {
+        input.__WB_no_unrewrite = true;
+        if (new_url === input.url) {
           request = input;
         } else {
           request = new Request(new_url, input);
         }
+        delete input.__WB_no_unrewrite;
       } else {
         input = wombat.rewriteUrl(input.toString());
-
-        if (!init_opts) {
-          init_opts = {};
-        }
-        if (init_opts.credentials === undefined) {
-          try {
-            init_opts.credentials = 'include';
-          } catch(e) {}
-        }
-
         request = new Request(input, init_opts);
       }
 
@@ -4665,30 +4658,24 @@ Wombat.prototype.initHTTPOverrides = function() {
             }
             break;
         }
-        const props = ['cache', 'headers', 'integrity',
-          'keepalive', 'method', 'mode', 'redirect',
-          'referrerPolicy', 'signal'
-        ];
-
-        const newOpts = {};
-
-        for (const prop of props) {
-          newOpts[prop] = newInitOpts[prop];
+        let unrwSet = false;
+        // make a duplicate object to override referrer
+        if (newInitOpts && newInitOpts.referrer) {
+          var newReferrer = wombat.rewriteUrl(newInitOpts.referrer);
+          if (newReferrer !== newInitOpts.referrer) {
+            if (newInitOpts instanceof Request) {
+              newInitOpts.__WB_no_unrewrite = true;
+              unrwSet = true;
+            } else {
+              newInitOpts.referrer = newReferrer;
+            }
+          }
         }
 
-        newOpts.credentials = 'include';
-
-        if (newInitOpts.referrer) {
-          newOpts.referrer = wombat.rewriteUrl(newInitOpts.referrer);
+        var request = new Request_(newInput, newInitOpts);
+        if (unrwSet) {
+          delete newInitOpts.__WB_no_unrewrite;
         }
-
-        if (newInitOpts.duplex && newInitOpts.body) {
-          newOpts.body = newInitOpts.body;
-          newOpts.duplex = newInitOpts.duplex;
-        }
-
-        var request = new Request_(newInput, newOpts);
-        request.__WB_real_url = newInput;
         return request;
       };
     })(this.$wbwindow.Request);
