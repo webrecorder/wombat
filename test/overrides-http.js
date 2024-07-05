@@ -118,14 +118,35 @@ test('fetch: should rewrite the input argument when it is an Request object, als
     const data = await response.json();
     return {url: data.url,
             rwUrl: request.url,
-            realUrl: request.__WB_real_url,
             respURL: response.url};
   });
   t.is(result.rwUrl, 'https://tests.wombat.io/test');
-  t.is(result.realUrl, '/live/20180803160549mp_/https://tests.wombat.io/test');
   t.is(result.url, '/live/20180803160549mp_/https://tests.wombat.io/test');
   t.is(result.respURL, 'https://tests.wombat.io/test');
 });
+
+test('fetch: Request.referrer is rewritten across multiple copies of Request', async t => {
+  const { sandbox, server } = t.context;
+  const result = await sandbox.evaluate(async () => {
+    let to;
+    let A = new Request('/test', {'referrer': '/abc'});
+    let B = new Request('/test', A);
+    let C = new Request(B, {'referrer': '/xyz'});
+    let D = new Request({'url': '/test', 'referrer': '/cde'}, C);
+    D.__WB_no_unrewrite = true;
+
+    return {A: A.referrer,
+            B: B.referrer,
+            C: C.referrer,
+            D: D.referrer
+           };
+  });
+  t.is(result.A, 'https://tests.wombat.io/abc');
+  t.is(result.B, 'https://tests.wombat.io/abc');
+  t.is(result.C, 'https://tests.wombat.io/xyz');
+  t.is(result.D, 'http://localhost:3030/live/20180803160549mp_/https://tests.wombat.io/xyz');
+});
+
 
 test('fetch: should rewrite the input argument when it is a object, but return original', async t => {
   const { sandbox, server } = t.context;
