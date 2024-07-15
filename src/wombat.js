@@ -769,6 +769,8 @@ Wombat.prototype.rwModForElement = function(elem, attrName) {
         mod = this.linkTagMods[relV];
       }
     }
+  } else if (elem.tagName === 'SCRIPT') {
+    return (elem.type === 'module' ? 'esm_' : 'js_');
   } else {
     // check if this element has an rewrite modifiers and set mod to it if it does
     var maybeMod = this.tagToMod[elem.tagName];
@@ -2022,7 +2024,12 @@ Wombat.prototype.performAttributeRewrite = function(
   ) {
     this.WBAutoFetchWorker.preserveDataSrcset(elem);
   }
-  return this.rewriteUrl(value, false, mod, elem.ownerDocument);
+  var result = this.rewriteUrl(value, false, mod, elem.ownerDocument);
+  if (mod === 'esm_' && result.indexOf('esm_/') < 0) {
+    // replace current modifier with esm_ if already rewritten
+    result = result.replace(/(\/[\d]*)([\w]+_)(?=\/)/, '$1esm_');
+  }
+  return result;
 };
 
 /**
@@ -2985,8 +2992,13 @@ Wombat.prototype.overrideAttr = function(obj, attr, mod) {
   var wombat = this;
 
   var setter = function newAttrPropSetter(orig) {
-    if (mod === 'js_' && !this.__$removedWBOSRC$__) {
-      wombat.removeWBOSRC(this);
+    if (mod === 'js_') {
+      if (!this.__$removedWBOSRC$__) {
+        wombat.removeWBOSRC(this);
+      }
+      if (this.type === 'module') {
+        mod = 'esm_';
+      }
     }
     var val = wombat.rewriteUrl(orig, false, mod);
     if (orig_setter) {
