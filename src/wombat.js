@@ -2025,7 +2025,7 @@ Wombat.prototype.performAttributeRewrite = function(
     this.WBAutoFetchWorker.preserveDataSrcset(elem);
   }
   var result = this.rewriteUrl(value, false, mod, elem.ownerDocument);
-  if (mod === 'esm_' && result.indexOf('esm_/') < 0) {
+  if (mod === 'esm_' && result && result.indexOf('esm_/') < 0) {
     // replace current modifier with esm_ if already rewritten
     result = result.replace(/(\/[\d]*)([\w]+_)(?=\/)/, '$1esm_');
   }
