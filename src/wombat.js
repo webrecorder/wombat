@@ -264,7 +264,7 @@ function Wombat($wbwindow, wbinfo) {
   this.IP_RX = /^(\d)+\.(\d)+\.(\d)+\.(\d)+$/;
 
   /** @type {RegExp} */
-  this.FullHTMLRegex = /^\s*<(?:html|head|body|!doctype html)/i;
+  this.FullHTMLRegex = /^\s*<(?:html|head|body|frameset|frame|!doctype html)/i;
 
   /** @type {RegExp} */
   this.IsTagRegex = /^\s*</;
