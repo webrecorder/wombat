@@ -64,6 +64,17 @@ function Wombat($wbwindow, wbinfo) {
 
   this.SKIP_OWN_FUNC_PROPS = ['name', 'length', '__WB_is_native_func__', 'arguments', 'caller', 'callee', 'prototype'];
 
+  this.OVERRIDE_PROPS = [
+    'window',
+    'self',
+    'document',
+    'location',
+    'top',
+    'parent',
+    'frames',
+    'opener'
+  ];
+
   /** @type {function(qualifiedName: string, value: string): void} */
   this.wb_setAttribute = $wbwindow.Element.prototype.setAttribute;
 
@@ -696,7 +707,7 @@ Wombat.prototype.skipWrapScriptBasedOnType = function(scriptType) {
  * @param {?string} text
  * @return {boolean}
  */
-Wombat.prototype.skipWrapScriptTextBasedOnText = function(text) {
+Wombat.prototype.skipWrapScriptTextBasedOnText = function(text, excludes) {
   if (
     !text ||
     text.indexOf(this.WB_ASSIGN_FUNC) >= 0 ||
@@ -704,24 +715,20 @@ Wombat.prototype.skipWrapScriptTextBasedOnText = function(text) {
   ) {
     return true;
   }
-  var override_props = [
-    'window',
-    'self',
-    'document',
-    'location',
-    'top',
-    'parent',
-    'frames',
-    'opener'
-  ];
 
-  for (var i = 0; i < override_props.length; i++) {
-    if (text.indexOf(override_props[i]) >= 0) {
-      return false;
+  let found = false;
+
+  for (const prop of this.OVERRIDE_PROPS) {
+    const inx = text.indexOf(prop);
+    if (inx >= 0) {
+      if (text.indexOf('var ' + prop) >= 0) {
+        excludes.push(prop);
+      }
+      found = true;
     }
   }
 
-  return true;
+  return !found;
 };
 
 /**
@@ -829,24 +836,23 @@ Wombat.prototype.retrieveWBOSRC = function(elem) {
  * @param {?string} scriptText
  * @return {string}
  */
-Wombat.prototype.wrapScriptTextJsProxy = function(scriptText) {
-  return (
+Wombat.prototype.wrapScriptTextJsProxy = function(scriptText, excludes = []) {
+  let prefix = 
     'var _____WB$wombat$assign$function_____ = function(name) {return ' +
     '(self._wb_wombat && self._wb_wombat.local_init && self._wb_wombat.local_init(name)) || self[name]; };\n' +
     'if (!self.__WB_pmw) { self.__WB_pmw = function(obj) { ' +
-    'this.__WB_source = obj; return this; } }\n{\n' +
-    'let window = _____WB$wombat$assign$function_____("window");\n' +
-    'let globalThis = _____WB$wombat$assign$function_____("globalThis");\n' +
-    'let self = _____WB$wombat$assign$function_____("self");\n' +
-    'let document = _____WB$wombat$assign$function_____("document");\n' +
-    'let location = _____WB$wombat$assign$function_____("location");\n' +
-    'let top = _____WB$wombat$assign$function_____("top");\n' +
-    'let parent = _____WB$wombat$assign$function_____("parent");\n' +
-    'let frames = _____WB$wombat$assign$function_____("frames");\n' +
-    'let opener = _____WB$wombat$assign$function_____("opener");\n{\n' +
-    scriptText.replace(this.DotPostMessageRe, '.__WB_pmw(self.window)$1') +
-    '\n\n}}'
-  );
+    'this.__WB_source = obj; return this; } }\n{\n';
+
+  for (const prop of this.OVERRIDE_PROPS) {
+    if (!excludes.includes(prop)) {
+      prefix += `let ${prop} = _____WB$wombat$assign$function_____("${prop}");\n`;
+    }
+  }
+
+  prefix += '{\n';
+
+  return prefix + scriptText.replace(this.DotPostMessageRe, '.__WB_pmw(self.window)$1') +
+    '\n\n}}';
 };
 
 /**
@@ -2185,8 +2191,9 @@ Wombat.prototype.rewriteScript = function(elem) {
   }
   if (this.skipWrapScriptBasedOnType(elem.type)) return false;
   var text = elem.textContent.trim();
-  if (this.skipWrapScriptTextBasedOnText(text)) return false;
-  elem.textContent = this.wrapScriptTextJsProxy(text);
+  var excludes = [];
+  if (this.skipWrapScriptTextBasedOnText(text, excludes)) return false;
+  elem.textContent = this.wrapScriptTextJsProxy(text, excludes);
   if (this.wb_info.injectDocClose && elem.textContent.trim().length) {
     elem.textContent += ';document.close();';
   }
@@ -2849,13 +2856,15 @@ Wombat.prototype.rewriteHTMLAssign = function(thisObj, oSetter, newValue) {
         res = this.rewriteHtml(newValue);
       }
 
+      var excludes = [];
+
       // likely actual JS, not tags
       if (res === newValue) {
         if (
           !this.skipWrapScriptBasedOnType(thisObj.type) &&
-          !this.skipWrapScriptTextBasedOnText(newValue)
+          !this.skipWrapScriptTextBasedOnText(newValue, excludes)
         ) {
-          res = this.wrapScriptTextJsProxy(res);
+          res = this.wrapScriptTextJsProxy(res, excludes);
         }
       }
     } else {
@@ -2884,9 +2893,10 @@ Wombat.prototype.rewriteEvalArg = function(rawEvalOrWrapper, evalArg, extraArg) 
   if (this.$wbwindow.TrustedScript && (evalArg instanceof this.$wbwindow.TrustedScript)) {
     evalArg = evalArg.toString();
   }
+  var excludes = [];
   var toBeEvald =
-    this.isString(evalArg) && !this.skipWrapScriptTextBasedOnText(evalArg)
-      ? this.wrapScriptTextJsProxy(evalArg)
+    this.isString(evalArg) && !this.skipWrapScriptTextBasedOnText(evalArg, excludes)
+      ? this.wrapScriptTextJsProxy(evalArg, excludes)
       : this.otherEvalRewrite(evalArg);
   return rawEvalOrWrapper(toBeEvald, extraArg);
 };
