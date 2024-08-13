@@ -2277,19 +2277,21 @@ Wombat.prototype.rewriteElem = function(elem) {
             altElemName = 'IMG';
           }
 
-          var newElem = this.$wbwindow.document.createElement(altElemName);
-          for (var i = 0; i < elem.attributes.length; i++) {
-            var attr = elem.attributes[i];
-            var name = attr.name;
-            if (name === 'data') {
-              name = 'src';
+          if (altElemName) {
+            var newElem = this.$wbwindow.document.createElement(altElemName);
+            for (var i = 0; i < elem.attributes.length; i++) {
+              var attr = elem.attributes[i];
+              var name = attr.name;
+              if (name === 'data') {
+                name = 'src';
+              }
+              this.wb_setAttribute.call(newElem, name, attr.value);
             }
-            this.wb_setAttribute.call(newElem, name, attr.value);
-          }
 
-          elem.parentElement.replaceChild(newElem, elem);
-          changed = true;
-          break;
+            elem.parentElement.replaceChild(newElem, elem);
+            changed = true;
+            break;
+          }
         }
 
         changed = this.rewriteAttr(elem, 'data', true);
