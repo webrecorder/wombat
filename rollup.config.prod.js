@@ -1,8 +1,6 @@
-import * as path from 'path';
-import minify from 'rollup-plugin-babel-minify';
-
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-
+const path = require('path');
+const { nodeResolve } = require('@rollup/plugin-node-resolve');
+const terser = require ('@rollup/plugin-terser');
 
 const license = `/*
 Wombat.js client-side rewriting engine for web archive replay
@@ -51,10 +49,10 @@ const minificationOpts = {
   undefinedToVoid: false
 };
 
-export default [
+module.exports = [
   {
     input: 'src/wbWombat.js',
-    plugins: [nodeResolve({ browser: true }), minify(minificationOpts), addLicenceNoStrict],
+    plugins: [nodeResolve({ browser: true }), terser(), addLicenceNoStrict],
     output: {
       name: 'wombat',
       file: path.join(outputDir, 'wombat.js'),
@@ -63,7 +61,7 @@ export default [
   },
   {
     input: 'src/wbWombatProxyMode.js',
-    plugins: [minify(minificationOpts), addLicenceNoStrict],
+    plugins: [terser(), addLicenceNoStrict],
     output: {
       name: 'wombatProxyMode',
       file: path.join(outputDir, 'wombatProxyMode.js'),
@@ -72,7 +70,7 @@ export default [
   },
   {
     input: 'src/wombatWorkers.js',
-    plugins: [minify(minificationOpts), addLicenceNoStrict],
+    plugins: [terser(), addLicenceNoStrict],
     output: {
       name: 'wombatWorkers',
       file: path.join(outputDir, 'wombatWorkers.js'),

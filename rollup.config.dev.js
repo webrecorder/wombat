@@ -1,7 +1,5 @@
-import * as path from 'path';
-
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-
+const path = require('path');
+const { nodeResolve } = require('@rollup/plugin-node-resolve');
 
 const outputDir = process.env.OUTPUT_DIR || path.join(__dirname, 'dist');
 
@@ -92,4 +90,4 @@ if (process.env.ALL) {
   config = wombat;
 }
 
-export default config;
+module.exports = config;

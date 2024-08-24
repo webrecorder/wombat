@@ -1,5 +1,5 @@
-import * as path from 'path';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
+const path = require('path');
+const { nodeResolve } = require('@rollup/plugin-node-resolve');
 
 const baseTestOutput = path.join(__dirname, 'test', 'assets');
 const noStrict = {
@@ -8,7 +8,7 @@ const noStrict = {
   }
 };
 
-export default [
+module.exports = [
   {
     input: 'src/wbWombat.js',
     output: {
