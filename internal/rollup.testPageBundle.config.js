@@ -1,5 +1,5 @@
-import * as path from 'path';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
+const path = require('path');
+const { nodeResolve } = require('@rollup/plugin-node-resolve');
 
 const wombatDir = path.join(__dirname, '..');
 const baseTestOutput = path.join(wombatDir, 'test', 'assets');
@@ -10,7 +10,7 @@ const noStrict = {
   }
 };
 
-export default {
+module.exports = {
   input: path.join(__dirname, 'testPageBundle.js'),
   output: {
     name: 'testPageBundle',
