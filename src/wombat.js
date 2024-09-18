@@ -5817,6 +5817,8 @@ Wombat.prototype.initPostMessageOverride = function($wbwindow) {
       wombat.storage_listeners.add_or_get(listener, function() {
         return wrapSameOriginEventListener(listener, obj);
       });
+    } else if (type === 'online' || type === 'offline') {
+      // do nothing, don't allow these events
     } else {
       rwListener = listener;
     }
@@ -6066,7 +6068,7 @@ Wombat.prototype.initMiscNavigatorOverrides = function() {
   if (this.$wbwindow.navigator.sendBeacon) {
     this.$wbwindow.navigator.sendBeacon = function() { return true; };
   }
-
+  Object.defineProperty(navigator, 'onLine', {value: true});
   if (this.$wbwindow.navigator.mediaDevices) {
     this.$wbwindow.navigator.mediaDevices.setCaptureHandleConfig = function() {};
   }
