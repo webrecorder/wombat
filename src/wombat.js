@@ -6068,7 +6068,7 @@ Wombat.prototype.initMiscNavigatorOverrides = function() {
   if (this.$wbwindow.navigator.sendBeacon) {
     this.$wbwindow.navigator.sendBeacon = function() { return true; };
   }
-  Object.defineProperty(navigator, "onLine", {value: true});
+  Object.defineProperty(navigator, 'onLine', {value: true});
   if (this.$wbwindow.navigator.mediaDevices) {
     this.$wbwindow.navigator.mediaDevices.setCaptureHandleConfig = function() {};
   }
