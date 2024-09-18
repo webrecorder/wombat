@@ -2004,6 +2004,7 @@ Wombat.prototype.performAttributeRewrite = function(
   elem,
   name,
   value,
+  ownerDoc,
   absUrlOnly
 ) {
   switch (name) {
@@ -2023,14 +2024,14 @@ Wombat.prototype.performAttributeRewrite = function(
     return value;
   }
   var mod = this.rwModForElement(elem, name);
-  if (
+  if (elem &&
     this.wbUseAFWorker &&
     this.WBAutoFetchWorker &&
     this.isSavedDataSrcSrcset(elem)
   ) {
     this.WBAutoFetchWorker.preserveDataSrcset(elem);
   }
-  var result = this.rewriteUrl(value, false, mod, elem.ownerDocument);
+  var result = this.rewriteUrl(value, false, mod, ownerDoc);
   if (mod === 'esm_' && result && result.indexOf('esm_/') < 0) {
     // replace current modifier with esm_ if already rewritten
     result = result.replace(/(\/[\d]*)([\w]+_)(?=\/)/, '$1esm_');
@@ -2055,7 +2056,7 @@ Wombat.prototype.rewriteAttr = function(elem, name, absUrlOnly) {
 
   if (!value || this.startsWith(value, 'javascript:')) return changed;
 
-  var new_value = this.performAttributeRewrite(elem, name, value, absUrlOnly);
+  var new_value = this.performAttributeRewrite(elem, name, value, elem.ownerDocument, absUrlOnly);
 
   if (new_value !== value) {
     this.removeWBOSRC(elem);
@@ -2966,6 +2967,7 @@ Wombat.prototype.newAttrObjGetSet = function(attrProto, prop) {
           obj.ownerElement,
           obj.name,
           newValue,
+          obj.ownerDocument,
           false
         );
       }
