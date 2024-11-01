@@ -5134,6 +5134,13 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
    */
   function docWrite(fnThis, originalFn, string) {
     var win = wombat.$wbwindow;
+    var thisObj = wombat.proxyToObj(fnThis);
+
+    if (fnThis.readyState === 'loading') {
+      if (string && string.startsWith("<!--") && string.indexOf("-->") === -1) {
+        return originalFn.call(thisObj, string);
+      }
+    }
 
     if (isSWLoad() || (fnThis.readyState === 'loading' && wombat.wb_info.injectDocClose)) {
       wombat._writeBuff += string;
