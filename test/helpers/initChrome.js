@@ -30,6 +30,7 @@ const chromeArgs = [
   '--use-mock-keychain',
   '--mute-audio',
   '--autoplay-policy=no-user-gesture-required',
+  '--disable-site-isolation-trials',
   winPos,
 ];
 
