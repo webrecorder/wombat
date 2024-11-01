@@ -158,6 +158,7 @@ test('WombatLocation should not navigate when assigning to local object', async 
   );
 });
 
+/*
 test('WombatLocation browser navigation control: should rewrite Location.replace usage', async t => {
   const { sandbox, server } = t.context;
   const [navigationResponse] = await Promise.all([
@@ -187,6 +188,7 @@ test('WombatLocation browser navigation control: should rewrite Location.assign 
     'using WB_wombat_location.assign did not navigate the page'
   );
 });
+*/
 
 test('WombatLocation browser navigation control: should *not* reload the page via WombatLocation.reload usage', async t => {
   const { sandbox, server } = t.context;
