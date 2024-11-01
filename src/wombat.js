@@ -5137,7 +5137,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
     var thisObj = wombat.proxyToObj(fnThis);
 
     if (fnThis.readyState === 'loading') {
-      if (string && string.startsWith('<!--') && string.indexOf('-->') === -1) {
+      if (string && string.startsWith('<!--') !== -1 && string.indexOf('-->') === -1) {
         return originalFn.call(thisObj, string);
       }
     }
