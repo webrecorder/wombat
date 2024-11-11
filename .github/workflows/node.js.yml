@@ -27,6 +27,7 @@ jobs:
         node-version: 18.x
     - run: yarn install
     - run: yarn run build-full-test
+    - uses: browser-actions/setup-chrome@v1
     # set up a virtual display for chrome (since the tests don't currently run it in headless mode)
     # then run the tests
     - run: |
