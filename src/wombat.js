@@ -4549,7 +4549,9 @@ Wombat.prototype.initHTTPOverrides = function() {
     // responseURL override
   this.overridePropExtract(this.$wbwindow.XMLHttpRequest.prototype, 'responseURL');
 
-  if (!this.wb_info.isSW) {
+  var convertToGet = !!this.wb_info.convert_post_to_get;
+
+  if (!this.wb_info.isSW && !convertToGet) {
     if (this.$wbwindow.XMLHttpRequest.prototype.open) {
       var origXMLHttpOpen = this.$wbwindow.XMLHttpRequest.prototype.open;
       this.utilFns.XHRopen = origXMLHttpOpen;
@@ -4587,9 +4589,6 @@ Wombat.prototype.initHTTPOverrides = function() {
     this.$wbwindow.XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
       this.__WB_xhr_headers.set(name, value);
     };
-
-    var wombat = this;
-    var convertToGet = !!this.wb_info.convert_post_to_get;
 
     this.$wbwindow.XMLHttpRequest.prototype.send = async function(value) {
       if (convertToGet && (this.__WB_xhr_open_arguments[0] === 'POST' || this.__WB_xhr_open_arguments[0] === 'PUT')) {

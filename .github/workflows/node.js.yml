@@ -27,9 +27,14 @@ jobs:
         node-version: 18.x
     - run: yarn install
     - run: yarn run build-full-test
+    - id: setup-chrome
+      uses: browser-actions/setup-chrome@v1
     # set up a virtual display for chrome (since the tests don't currently run it in headless mode)
     # then run the tests
-    - run: |
+    - name: Run Tests
+      env:
+        CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+      run: |
         export DISPLAY=:99
         sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
         yarn test
