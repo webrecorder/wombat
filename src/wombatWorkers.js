@@ -35,7 +35,7 @@ WBWombat.prototype.noRewrite = function(url) {
  * @return {boolean}
  */
 WBWombat.prototype.isRelURL = function(url) {
-  return url.indexOf('/') === 0 || url.indexOf('http:') !== 0;
+  return url.indexOf('/') === 0 || (!url.startsWith('http:') && !url.startsWith('https:'));
 };
 
 /**
