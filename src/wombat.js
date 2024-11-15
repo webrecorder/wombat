@@ -6245,6 +6245,39 @@ Wombat.prototype.initIndexedDBOverride = function() {
 };
 
 Wombat.prototype.initCachesOverride = function() {
+  if (!this.$wbwindow.Cache) {
+    return;
+  }
+
+  var proto = this.$wbwindow.Cache.prototype;
+
+  proto.match = function() {
+    return Promise.resolve(undefined);
+  };
+
+  proto.matchAll = function() {
+    return Promise.resolve([]);
+  };
+
+  proto.add = function() {
+    return Promise.resolve(undefined);
+  };
+
+  proto.put = function() {
+    return Promise.resolve(undefined);
+  };
+
+  proto.delete = function() {
+    return Promise.resolve(false);
+  };
+
+  proto.keys = function() {
+    return Promise.resolve([]);
+  };
+};
+
+
+Wombat.prototype.initCacheStorageOverride = function() {
   if (!this.$wbwindow.CacheStorage) {
     return;
   }
@@ -6972,6 +7005,7 @@ Wombat.prototype.wombatInit = function() {
   this.initStorageOverride();
 
   // wrap caches to ensure only host sandboxed caches are available
+  this.initCacheStorageOverride();
   this.initCachesOverride();
 
   // wraps indexeddb access to ensure only host sandboxed dbs are available
