@@ -6193,7 +6193,7 @@ Wombat.prototype.initStorageOverride = function() {
 
   if (this.wb_info.storage) {
     try {
-      initStorage = JSON.parse(atob(this.wb_info.storage));
+      initStorage = JSON.parse(this.wb_info.storage);
     } catch (e) {
       console.warn('Error parsing storage, storages not loaded');
     }
