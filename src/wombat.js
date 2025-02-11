@@ -5027,6 +5027,14 @@ Wombat.prototype.initDomOverride = function() {
       'parentNode'
     );
     this.overridePropToProxy(this.$wbwindow.Event.prototype, 'target');
+
+    // getRootNode() override
+    var orig_getRootNode = Node.prototype.getRootNode;
+    var wombat = this;
+
+    Node.prototype.getRootNode = function() {
+      return wombat.objToProxy(orig_getRootNode.call(this));
+    }
   }
 
   if (this.$wbwindow.Element && this.$wbwindow.Element.prototype) {
