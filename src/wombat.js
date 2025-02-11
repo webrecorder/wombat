@@ -5599,7 +5599,11 @@ Wombat.prototype.initCheckThisFunc = function(win) {
         configutable: false,
         enumerable: false,
         value: function(thisObj) {
-          return (thisObj && thisObj._WB_wombat_obj_proxy ? thisObj._WB_wombat_obj_proxy : thisObj);
+          try {
+            return (thisObj && thisObj._WB_wombat_obj_proxy ? thisObj._WB_wombat_obj_proxy : thisObj);
+          } catch (e) {
+            return thisObj;
+          }
         },
       });
     }
