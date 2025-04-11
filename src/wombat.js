@@ -254,6 +254,9 @@ function Wombat($wbwindow, wbinfo) {
   this.IMPORT_JS_REGEX = /^(import\s*\(['"]+)([^'"]+)(["'])/i;
 
   /** @type {RegExp} */
+  this.IMPORT_JS_CALL = /[^$.]\bimport\s*\(/g;
+
+  /** @type {RegExp} */
   this.no_wombatRe = /WB_wombat_/g;
 
   /** @type {RegExp} */
@@ -851,8 +854,10 @@ Wombat.prototype.wrapScriptTextJsProxy = function(scriptText, excludes = []) {
 
   prefix += '{\n';
 
-  return prefix + scriptText.replace(this.DotPostMessageRe, '.__WB_pmw(self.window)$1') +
-    '\n\n}}';
+  scriptText = scriptText.replace(this.IMPORT_JS_CALL, (x) => x.replace('import', '____wb_rewrite_import__'));
+  scriptText = scriptText.replace(this.DotPostMessageRe, '.__WB_pmw(self.window)$1');
+
+  return prefix + scriptText + '\n\n}}';
 };
 
 /**
@@ -2658,11 +2663,12 @@ Wombat.prototype.rewriteCookie = function(cookie) {
  * @param {string} workerUrl
  * @return {string}
  */
-Wombat.prototype.rewriteWorker = function(workerUrl) {
+Wombat.prototype.rewriteWorker = function(workerUrl, opts) {
   if (!workerUrl) return workerUrl;
   workerUrl = workerUrl.toString();
   var isBlob = workerUrl.indexOf('blob:') === 0;
   var isJS = workerUrl.indexOf('javascript:') === 0;
+  var mod = (opts && opts.type === 'module') ? 'wkrm_' : 'wkr_';
   if (!isBlob && !isJS) {
     if (
       !this.startsWithOneOf(workerUrl, this.VALID_PREFIXES) &&
@@ -2671,9 +2677,9 @@ Wombat.prototype.rewriteWorker = function(workerUrl) {
     ) {
       // super relative url assets/js/xyz.js
       var rurl = this.resolveRelUrl(workerUrl, this.$wbwindow.document);
-      return this.rewriteUrl(rurl, false, 'wkr_', this.$wbwindow.document);
+      return this.rewriteUrl(rurl, false, mod, this.$wbwindow.document);
     }
-    return this.rewriteUrl(workerUrl, false, 'wkr_', this.$wbwindow.document);
+    return this.rewriteUrl(workerUrl, false, mod, this.$wbwindow.document);
   }
 
   var workerCode = isJS ? workerUrl.replace('javascript:', '') : null;
@@ -5034,7 +5040,7 @@ Wombat.prototype.initDomOverride = function() {
 
     Node.prototype.getRootNode = function() {
       return wombat.objToProxy(orig_getRootNode.call(this));
-    }
+    };
   }
 
   if (this.$wbwindow.Element && this.$wbwindow.Element.prototype) {
@@ -5394,7 +5400,7 @@ Wombat.prototype.initWorkerOverrides = function() {
     this.$wbwindow.Worker = (function(Worker_) {
       return function Worker(url, options) {
         wombat.domConstructorErrorChecker(this, 'Worker', arguments);
-        return new Worker_(wombat.rewriteWorker(url), options);
+        return new Worker_(wombat.rewriteWorker(url, options), options);
       };
     })(orig_worker);
 
@@ -5414,7 +5420,7 @@ Wombat.prototype.initWorkerOverrides = function() {
     this.$wbwindow.SharedWorker = (function(SharedWorker_) {
       return function SharedWorker(url, options) {
         wombat.domConstructorErrorChecker(this, 'SharedWorker', arguments);
-        return new SharedWorker_(wombat.rewriteWorker(url), options);
+        return new SharedWorker_(wombat.rewriteWorker(url, options), options);
       };
     })(oSharedWorker);
 
@@ -5622,9 +5628,12 @@ Wombat.prototype.initCheckThisFunc = function(win) {
 Wombat.prototype.initImportWrapperFunc = function(win) {
   var wombat = this;
   win.____wb_rewrite_import__ = function(base, url) {
-    // if base provided (set to import.meta.url), use that as base for imports
-    if (base) {
+    // if esm and base provided (set to import.meta.url), use that as base for imports
+    if (url && base) {
       url = new wombat.URL(url, base).href;
+    // non-esm single param call, url is base
+    } else if (base && url === undefined) {
+      url = base;
     }
     return import(/*webpackIgnore: true*/ wombat.rewriteUrl(url, false, 'esm_'));
   };
