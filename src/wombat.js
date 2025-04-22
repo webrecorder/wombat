@@ -2230,6 +2230,41 @@ Wombat.prototype.rewriteSVGElem = function(elem) {
 Wombat.prototype.rewriteElem = function(elem) {
   var changed = false;
   if (!elem) return changed;
+
+  function rewriteObjectEmbed() {
+    if (
+      this.wb_info.isSW &&
+      elem.parentElement &&
+      // check for nested embed in object, avoid extra rewrite
+      elem.parentElement.tagName !== 'IFRAME'
+      elem.parentElement.tagName !== 'IMG'
+    ) {
+      var altElemName;
+
+      if (elem.getAttribute('type') === 'application/pdf') {
+        altElemName = 'IFRAME';
+      } else if (elem.getAttribute('type') === 'image/svg+xml') {
+        altElemName = 'IMG';
+      }
+
+      if (altElemName) {
+        var newElem = this.$wbwindow.document.createElement(altElemName);
+        for (var i = 0; i < elem.attributes.length; i++) {
+          var attr = elem.attributes[i];
+          var name = attr.name;
+          if (name === 'data') {
+            name = 'src';
+          }
+          this.wb_setAttribute.call(newElem, name, attr.value);
+        }
+
+        elem.parentElement.replaceChild(newElem, elem);
+        return true;
+      }
+    }
+    return false;
+  }
+
   if (elem instanceof SVGElement) {
     changed = this.rewriteSVGElem(elem);
   } else {
@@ -2281,35 +2316,15 @@ Wombat.prototype.rewriteElem = function(elem) {
         }
         break;
       case 'OBJECT':
-        if (this.wb_info.isSW && elem.parentElement) {
-          var altElemName;
-
-          if (elem.getAttribute('type') === 'application/pdf') {
-            altElemName = 'IFRAME';
-          } else if (elem.getAttribute('type') === 'image/svg+xml') {
-            altElemName = 'IMG';
-          }
-
-          if (altElemName) {
-            var newElem = this.$wbwindow.document.createElement(altElemName);
-            for (var i = 0; i < elem.attributes.length; i++) {
-              var attr = elem.attributes[i];
-              var name = attr.name;
-              if (name === 'data') {
-                name = 'src';
-              }
-              this.wb_setAttribute.call(newElem, name, attr.value);
-            }
-
-            elem.parentElement.replaceChild(newElem, elem);
-            changed = true;
-            break;
-          }
-        }
-
+        changed = rewriteObjectEmbed(elem);
         changed = this.rewriteAttr(elem, 'data', true);
         changed = this.rewriteAttr(elem, 'style') || changed;
         break;
+      case 'EMBED':
+        changed = rewriteObjectEmbed(elem);
+        changed = this.rewriteAttr(elem, 'style') || changed;
+        break;
+
       case 'FORM':
         changed = this.rewriteAttr(elem, 'poster');
         changed = this.rewriteAttr(elem, 'action') || changed;
