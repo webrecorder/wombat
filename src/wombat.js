@@ -2236,7 +2236,7 @@ Wombat.prototype.rewriteElem = function(elem) {
       this.wb_info.isSW &&
       elem.parentElement &&
       // check for nested embed in object, avoid extra rewrite
-      elem.parentElement.tagName !== 'IFRAME'
+      elem.parentElement.tagName !== 'IFRAME' &&
       elem.parentElement.tagName !== 'IMG'
     ) {
       var altElemName;
