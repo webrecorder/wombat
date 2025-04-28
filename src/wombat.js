@@ -1791,7 +1791,7 @@ Wombat.prototype.rewriteUrl_ = function(originalURL, useRel, mod, doc) {
   } else if (urltype_ !== 'string') {
     return originalURL;
   } else {
-    url = originalURL;
+    url = originalURL.trim();
   }
 
   // empty string check
