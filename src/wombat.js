@@ -2231,7 +2231,7 @@ Wombat.prototype.rewriteElem = function(elem) {
   var changed = false;
   if (!elem) return changed;
 
-  function rewriteObjectEmbed() {
+  const rewriteObjectEmbed = () => {
     if (
       this.wb_info.isSW &&
       elem.parentElement &&
@@ -2263,7 +2263,7 @@ Wombat.prototype.rewriteElem = function(elem) {
       }
     }
     return false;
-  }
+  };
 
   if (elem instanceof SVGElement) {
     changed = this.rewriteSVGElem(elem);
