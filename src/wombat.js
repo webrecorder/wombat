@@ -2263,7 +2263,7 @@ Wombat.prototype.rewriteElem = function(elem) {
       }
     }
     return false;
-  }
+  };
 
   if (elem instanceof SVGElement) {
     changed = this.rewriteSVGElem(elem);
