@@ -5642,11 +5642,37 @@ Wombat.prototype.initCheckThisFunc = function(win) {
 
 Wombat.prototype.initImportWrapperFunc = function(win) {
   var wombat = this;
+
+  const isImportMapped = url => {
+    for (const map of document.querySelectorAll('script[type="importmap"]')) {
+      try {
+        const mapData = JSON.parse(map.textContent);
+        if (mapData.imports && mapData.imports[url]) {
+          return true;
+        }
+        if (mapData.scopes) {
+          for (const scope of Object.keys(mapData.scopes)) {
+            if (url.startsWith(scope)) {
+              return true;
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    return false;
+  };
+
   win.____wb_rewrite_import__ = function(base, url) {
     // if esm and base provided (set to import.meta.url), use that as base for imports
     if (url && base) {
-      url = new wombat.URL(url, base).href;
-    // non-esm single param call, url is base
+      // don't do extra rewriting if importmap exists and this url
+      // is already mapped
+      if (!isImportMapped(url)) {
+        url = new wombat.URL(url, base).href;
+      }
+      // non-esm single param call, url is base
     } else if (base && url === undefined) {
       url = base;
     }
