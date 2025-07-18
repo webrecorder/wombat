@@ -3031,11 +3031,8 @@ Wombat.prototype.overrideAttr = function(obj, attr, mod) {
       if (!this.__$removedWBOSRC$__) {
         wombat.removeWBOSRC(this);
       }
-      if (this.type === 'module') {
-        mod = 'esm_';
-      }
     }
-    var val = wombat.rewriteUrl(orig, false, mod);
+    var val = wombat.rewriteUrl(orig, false, this.type === 'module' ? 'esm_' : mod);
     if (orig_setter) {
       return orig_setter.call(this, val);
     } else if (wombat.wb_setAttribute) {
@@ -4357,10 +4354,11 @@ Wombat.prototype.initWSOverride = function() {
   this.$wbwindow.WebSocket = (function(WebSocket_) {
     function WebSocket(url, protocols) {
       this.openCallbacks = [];
+      var ws = this;
 
       this.addEventListener = function(type, callback) {
         if (type === 'open') {
-          WebSocket.openCallbacks.push(callback);
+          ws.openCallbacks.push(callback);
         }
       };
       this.removeEventListener = function() {};
@@ -4373,7 +4371,6 @@ Wombat.prototype.initWSOverride = function() {
       this.url = url;
       this.readyState = 1;
 
-      var ws = this;
       function simOpen() {
         var ev = new CustomEvent('open');
         if (ws.onopen) {
