@@ -28,7 +28,8 @@ window.TestOverwatch = class TestOverwatch {
       window.addEventListener(
         'message',
         event => {
-          if (event.data) {
+          const trustedOrigins = ['https://trusted-origin.com']; // Example trusted origin
+          if (event.data && trustedOrigins.includes(event.origin)) { // Check the origin
             const { data } = event;
             switch (data.wb_type) {
               case 'load':

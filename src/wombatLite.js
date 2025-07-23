@@ -236,6 +236,10 @@ WombatLite.prototype.initAutoFetchWorker = function() {
       'message',
       function(event) {
         if (event.data && event.data.wb_type === 'aaworker') {
+          // Check the origin of the message
+          if (event.origin !== wombatLite.wb_info.expected_origin) {
+            return;
+          }
           wombatLite.WBAutoFetchWorker.postMessage(event.data.msg);
         }
       },
