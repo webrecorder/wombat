@@ -56,10 +56,13 @@ function storageProxyHandler() {
         return proto;
       }
 
-      if (proto.hasOwnProperty(prop) || (proto.__proto__ && proto.__proto__.hasOwnProperty(prop))) {
+      if (
+        proto.hasOwnProperty(prop) ||
+        (proto.__proto__ && proto.__proto__.hasOwnProperty(prop))
+      ) {
         var res = target[prop];
 
-        if (typeof(res) === 'function') {
+        if (typeof res === 'function') {
           res = res.bind(target);
         }
 
@@ -79,7 +82,7 @@ function storageProxyHandler() {
       return true;
     }
   };
-};
+}
 
 export function createStorage(wombat, type, initData) {
   var storage = new Storage(wombat, type, initData);
@@ -135,7 +138,6 @@ Storage.prototype.removeItem = function removeItem(name) {
   this.fireEvent(name, old, null);
   return undefined;
 };
-
 
 /**
  * When invoked, will empty all keys out of the storage
@@ -198,15 +200,12 @@ Storage.prototype.valueOf = function valueOf() {
   return this[WOMBAT].$wbwindow[this[TYPE]];
 };
 
-
 /**
  * An override of toString to return '[object Storage]'
  **/
 Storage.prototype.toString = function() {
   return '[object Storage]';
 };
-
-
 
 // the length getter is on the prototype (__proto__ modern browsers)
 Object.defineProperty(Storage.prototype, 'length', {

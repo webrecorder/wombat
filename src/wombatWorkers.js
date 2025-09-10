@@ -35,7 +35,10 @@ WBWombat.prototype.noRewrite = function(url) {
  * @return {boolean}
  */
 WBWombat.prototype.isRelURL = function(url) {
-  return url.indexOf('/') === 0 || (!url.startsWith('http:') && !url.startsWith('https:'));
+  return (
+    url.indexOf('/') === 0 ||
+    (!url.startsWith('http:') && !url.startsWith('https:'))
+  );
 };
 
 /**
@@ -81,7 +84,10 @@ WBWombat.prototype.ensureURL = function(url, resolveAgainst) {
 
   // if url starts with current origin, but not properly rewritten, rewrite against current baseUr
   if (newURL.indexOf(self.location.origin) === 0) {
-    return this.maybeResolveURL(newURL.slice(self.location.origin.length), resolveAgainst);
+    return this.maybeResolveURL(
+      newURL.slice(self.location.origin.length),
+      resolveAgainst
+    );
   }
   return newURL;
 };

@@ -40,7 +40,7 @@ test('Storage - creation: should throw error, direct construction not allowed', 
 test('Storage - empty on init, internal values should not be exposed', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
-    return {...window.storage};
+    return { ...window.storage };
   });
 
   t.deepEqual(testResult, {});
@@ -158,8 +158,6 @@ test('Storage - clear: should clear all stored items', async t => {
     return Object.keys(storage);
   });
   t.deepEqual(testResult, []);
-
-
 });
 
 test('Storage - key: should return the correct key given the keys index', async t => {
@@ -223,7 +221,6 @@ test('Storage - toString: should return the correct value', async t => {
   t.true(testResult);
 });
 
-
 test('Storage - length: should return the correct value', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
@@ -261,9 +258,12 @@ test('Storage - assorted length: should return the correct length of various set
 test('Storage - getPrototypeOf() and __proto__ equivalence', async t => {
   const { sandbox, server } = t.context;
   const testResult = await sandbox.evaluate(() => {
-    return Object.getPrototypeOf(localStorage) === Object.getPrototypeOf(sessionStorage) &&
-           Object.getPrototypeOf(localStorage) === localStorage.__proto__ &&
-           Object.getPrototypeOf(localStorage) === Storage.prototype;
+    return (
+      Object.getPrototypeOf(localStorage) ===
+        Object.getPrototypeOf(sessionStorage) &&
+      Object.getPrototypeOf(localStorage) === localStorage.__proto__ &&
+      Object.getPrototypeOf(localStorage) === Storage.prototype
+    );
   });
   t.is(testResult, true);
 });

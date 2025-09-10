@@ -25,12 +25,12 @@ export function wrapEventListener(origListener, obj, wombat) {
   var origListenerFunc;
 
   // if a function, just use that
-  if (typeof(origListener) === 'function') {
+  if (typeof origListener === 'function') {
     origListenerFunc = origListener;
-  // if an EventHandler object, use its handleEvent() bound method
-  } else if (typeof(origListener) === 'object') {
+    // if an EventHandler object, use its handleEvent() bound method
+  } else if (typeof origListener === 'object') {
     origListenerFunc = origListener.handleEvent.bind(origListener);
-  // else do nothing!
+    // else do nothing!
   } else {
     origListenerFunc = function() {};
   }
@@ -47,7 +47,7 @@ export function wrapEventListener(origListener, obj, wombat) {
         console.warn(
           'Skipping message event to ' +
             event.data.to_origin +
-            ' doesn\'t start with origin ' +
+            " doesn't start with origin " +
             obj.WB_wombat_location.origin
         );
         return;
