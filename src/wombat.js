@@ -278,6 +278,9 @@ function Wombat($wbwindow, wbinfo) {
   this.IP_RX = /^(\d)+\.(\d)+\.(\d)+\.(\d)+$/;
 
   /** @type {RegExp} */
+  this.REPLACE_MOD = /(\/[\d]*)([\w]+_)(?=\/)/;
+
+  /** @type {RegExp} */
   this.FullHTMLRegex = /^\s*<(?:html|head|body|frameset|frame|!doctype html)/i;
 
   /** @type {RegExp} */
@@ -2039,7 +2042,7 @@ Wombat.prototype.performAttributeRewrite = function(
   var result = this.rewriteUrl(value, false, mod, ownerDoc);
   if (mod === 'esm_' && result && result.indexOf('esm_/') < 0) {
     // replace current modifier with esm_ if already rewritten
-    result = result.replace(/(\/[\d]*)([\w]+_)(?=\/)/, '$1esm_');
+    result = result.replace(this.REPLACE_MOD, '$1esm_');
   }
   return result;
 };
@@ -2683,8 +2686,12 @@ Wombat.prototype.rewriteWorker = function(workerUrl, opts) {
   workerUrl = workerUrl.toString();
   var isBlob = workerUrl.indexOf('blob:') === 0;
   var isJS = workerUrl.indexOf('javascript:') === 0;
-  var mod = (opts && opts.type === 'module') ? 'wkrm_' : 'wkr_';
+  var isModule = (opts && opts.type === 'module');
+  var mod = isModule ? 'wkrm_' : 'wkr_';
   if (!isBlob && !isJS) {
+    if (this.startsWithOneOf(workerUrl, this.wb_prefixes)) {
+      return workerUrl.replace(this.REPLACE_MOD, '$1' + mod);
+    }
     if (
       !this.startsWithOneOf(workerUrl, this.VALID_PREFIXES) &&
       !this.startsWith(workerUrl, '/') &&

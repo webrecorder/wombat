@@ -8,6 +8,8 @@ function WBWombat(info) {
   if (!(this instanceof WBWombat)) return new WBWombat(info);
   /** @type {Object} */
   this.info = info;
+  this.prefixMod = this.info.prefix + this.info.mod + "/";
+
   this.initImportScriptsRewrite();
   this.initHTTPOverrides();
   this.initClientApisOverride();
@@ -94,8 +96,8 @@ WBWombat.prototype.ensureURL = function(url, resolveAgainst) {
 WBWombat.prototype.rewriteURL = function(url) {
   var rwURL = this.ensureURL(url, this.info.originalURL);
   if (!rwURL) return url;
-  if (this.info.prefixMod) {
-    return this.info.prefixMod + rwURL;
+  if (this.prefixMod) {
+    return this.prefixMod + rwURL;
   }
   return rwURL;
 };
@@ -184,9 +186,7 @@ WBWombat.prototype.rewriteFetchApi = function(input) {
           rwInput = new Request(new_url, input);
         }
       } else if (input.href) {
-        // it is likely that input is either self.location or self.URL
-        // we cant do anything here so just let it go
-        rwInput = input.href;
+        rwInput = this.rewriteURL(input.href);
       }
       break;
   }
@@ -288,7 +288,7 @@ WBWombat.prototype.initHTTPOverrides = function() {
   if (self.Response && self.Response.prototype) {
     var originalRedirect = self.Response.prototype.redirect;
     self.Response.prototype.redirect = function redirect(url, status) {
-      var rwURL = wombat.rewriteUrl(url);
+      var rwURL = wombat.rewriteURL(url);
       return originalRedirect.call(this, rwURL, status);
     };
   }
@@ -299,7 +299,7 @@ WBWombat.prototype.initHTTPOverrides = function() {
       return function EventSource(url, configuration) {
         var rwURL = url;
         if (url != null) {
-          rwURL = wombat.rewriteUrl(url);
+          rwURL = wombat.rewriteURL(url);
         }
         return new EventSource_(rwURL, configuration);
       };
