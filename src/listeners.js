@@ -47,7 +47,7 @@ export function wrapEventListener(origListener, obj, wombat) {
         console.warn(
           'Skipping message event to ' +
             event.data.to_origin +
-            " doesn't start with origin " +
+            ' doesn\'t start with origin ' +
             obj.WB_wombat_location.origin
         );
         return;

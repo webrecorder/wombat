@@ -872,7 +872,7 @@ test('Node.appendChild: should rewrite a element with multiple children are supp
       ),
       iframe:
         window.WombatTestUtil.getElementPropertyAsIs(iframe, 'allow') ===
-        "autoplay 'self'; fullscreen 'self'; fullscreen; clipboard-write"
+        'autoplay \'self\'; fullscreen \'self\'; fullscreen; clipboard-write'
     };
   });
   t.deepEqual(result, { a1: true, a2: true, a3: true, iframe: true });

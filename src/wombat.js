@@ -1680,14 +1680,14 @@ Wombat.prototype.domConstructorErrorChecker = function(
   var errorMsg;
   if (thisObj instanceof this.WBWindow) {
     errorMsg =
-      "Failed to construct '" +
+      'Failed to construct \'' +
       what +
-      "': Please use the 'new' operator, this DOM object constructor cannot be called as a function.";
+      '\': Please use the \'new\' operator, this DOM object constructor cannot be called as a function.';
   } else if (args && args.length < needArgs) {
     errorMsg =
-      "Failed to construct '" +
+      'Failed to construct \'' +
       what +
-      "': " +
+      '\': ' +
       needArgs +
       ' argument required, but only 0 present.';
   }
@@ -2761,13 +2761,13 @@ Wombat.prototype.rewriteWorker = function(workerUrl, opts) {
       this.wb_info.ww_rw_script ||
       this.wb_info.static_prefix + 'wombatWorkers.js';
     var rw =
-      "(function() { self.importScripts('" +
+      '(function() { self.importScripts(\'' +
       ww_rw +
-      "'); new WBWombat({'prefix': '" +
+      '\'); new WBWombat({\'prefix\': \'' +
       this.wb_abs_prefix +
-      "', 'prefixMod': '" +
+      '\', \'prefixMod\': \'' +
       this.wb_abs_prefix +
-      "wkrf_/', 'originalURL': " +
+      'wkrf_/\', \'originalURL\': ' +
       JSON.stringify(originalURL) +
       '}); })();';
 
@@ -6773,7 +6773,7 @@ Wombat.prototype.initTopFrameNotify = function(wbinfo) {
 
     var icons = [];
     var hicons = wombat.$wbwindow.document.querySelectorAll(
-      "link[rel*='icon']"
+      'link[rel*=\'icon\']'
     );
 
     for (var i = 0; i < hicons.length; i++) {
