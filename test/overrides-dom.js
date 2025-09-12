@@ -40,38 +40,31 @@ test.after.always(async t => {
 
 test('links should not be broken by wombat', async t => {
   const { sandbox, server } = t.context;
-  const actual = await sandbox.evaluate(
-    () => {
-      const a = document.createElement('a');
-      a.href = '/foo'; // note: browsers "magic" this property into an absolute URL on set.
-      return a.href;
-    },
-  );
+  const actual = await sandbox.evaluate(() => {
+    const a = document.createElement('a');
+    a.href = '/foo'; // note: browsers "magic" this property into an absolute URL on set.
+    return a.href;
+  });
   t.is(actual, 'https://tests.wombat.io/foo');
 });
 
 test('scheme-relative URL assignments should work', async t => {
   const { sandbox, server } = t.context;
-  const actual = await sandbox.evaluate(
-    () => {
-      const a = document.createElement('a');
-      a.href = '//example.com/foo2'; // note: browsers "magic" this property into an absolute URL on set.
-      return a.href;
-    },
-  );
+  const actual = await sandbox.evaluate(() => {
+    const a = document.createElement('a');
+    a.href = '//example.com/foo2'; // note: browsers "magic" this property into an absolute URL on set.
+    return a.href;
+  });
   t.is(actual, 'https://example.com/foo2');
 });
 
-
 test('anchor links should not be broken by wombat', async t => {
   const { sandbox, server } = t.context;
-  const actual = await sandbox.evaluate(
-    () => {
-      const a = document.createElement('a');
-      a.href = '#anchor'; // note: browsers "magic" this property into an absolute URL on set.
-      return a.href;
-    },
-  );
+  const actual = await sandbox.evaluate(() => {
+    const a = document.createElement('a');
+    a.href = '#anchor'; // note: browsers "magic" this property into an absolute URL on set.
+    return a.href;
+  });
   t.is(actual, 'https://tests.wombat.io/#anchor');
 });
 
@@ -158,8 +151,10 @@ test('document.write: should perform rewriting when "write" is called with multi
 
 test('document.write: should perform rewriting when "write" is called with a full string of HTML starting with <!doctype html>', async t => {
   const { sandbox, server } = t.context;
-  const unRW = '<!doctype html><html><head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body></html>';
-  const expectedHTML = '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
+  const unRW =
+    '<!doctype html><html><head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body></html>';
+  const expectedHTML =
+    '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
   const result = await sandbox.evaluate(notRW => {
     document.write(notRW);
     document.close();
@@ -187,8 +182,10 @@ test('document.write: should perform rewriting when "write" is called with a ful
 
 test('document.write: should perform rewriting when "write" is called with a full string of HTML starting with <html>', async t => {
   const { sandbox, server } = t.context;
-  const unRW = '<html><head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"/></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body></html>';
-  const expectedRW = '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
+  const unRW =
+    '<html><head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"/></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body></html>';
+  const expectedRW =
+    '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
   const result = await sandbox.evaluate(notRW => {
     document.write(notRW);
     document.close();
@@ -207,8 +204,10 @@ test('document.write: should perform rewriting when "write" is called with a ful
 
 test('document.write: should perform rewriting when "write" is called with a full string of HTML starting with <head>', async t => {
   const { sandbox, server } = t.context;
-  const unRW = '<head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"/></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body>';
-  const expectedRW = '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
+  const unRW =
+    '<head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"/></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body>';
+  const expectedRW =
+    '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
   const result = await sandbox.evaluate(notRW => {
     document.write(notRW);
     document.close();
@@ -230,8 +229,10 @@ test('document.write: should perform rewriting when "write" is called with a ful
 
 test('document.write: should perform rewriting when "write" is called with a full string of HTML starting with <body>', async t => {
   const { sandbox, server } = t.context;
-  const unRW = '<body><script id="theScript" src="http://javaScript.com/script.js"></script></body>';
-  const expectedRW = '<html><head></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
+  const unRW =
+    '<body><script id="theScript" src="http://javaScript.com/script.js"></script></body>';
+  const expectedRW =
+    '<html><head></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
   const result = await sandbox.evaluate(notRW => {
     document.write(notRW);
     document.close();
@@ -253,8 +254,10 @@ test('document.write: should perform rewriting when "write" is called with a ful
 
 test('document.write: should perform rewriting when "write" is called with an arbitrary string of HTML', async t => {
   const { sandbox, server } = t.context;
-  const unRW = '<script id="theScript" src="http://javaScript.com/script.js"></script>';
-  const expectedRW = '<html><head><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></head></html>';
+  const unRW =
+    '<script id="theScript" src="http://javaScript.com/script.js"></script>';
+  const expectedRW =
+    '<html><head><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></head></html>';
   const result = await sandbox.evaluate(notRW => {
     document.write(notRW);
     document.close();
@@ -276,9 +279,12 @@ test('document.write: should perform rewriting when "write" is called with an ar
 
 test('document.write: should perform rewriting with multiple write calls, each including partial html snippet', async t => {
   const { sandbox, server } = t.context;
-  const expectedRW = '<html><head></head><body><div><div><a href="http://localhost:3030/live/20180803160549mp_/http://javaScript.com/script.js">Link 1</a></div>Link 2</div></body></html>';
+  const expectedRW =
+    '<html><head></head><body><div><div><a href="http://localhost:3030/live/20180803160549mp_/http://javaScript.com/script.js">Link 1</a></div>Link 2</div></body></html>';
   const result = await sandbox.evaluate(() => {
-    document.write('</div><div><div><a href="http://javaScript.com/script.js">Link 1</a>');
+    document.write(
+      '</div><div><div><a href="http://javaScript.com/script.js">Link 1</a>'
+    );
     document.write('</div');
     document.write('<a href="https://example.com/">Link 2</a></div></div>');
     document.close();
@@ -297,9 +303,6 @@ test('document.write: should perform rewriting with multiple write calls, each i
     'wombat is not rewriting elements when document.write is used with full strings of html with <body>'
   );
 });
-
-
-
 
 test('document.writeln: should not perform rewriting when "writeln" is called with no arguments', async t => {
   const { sandbox, testPage } = t.context;
@@ -370,8 +373,10 @@ test('document.writeln: should perform rewriting when "writeln" is called with m
 
 test('document.writeln: should perform rewriting when "writeln" is called with a full string of HTML starting with <!doctype html>', async t => {
   const { sandbox, server } = t.context;
-  const unRW = '<!doctype html><html><head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body></html>';
-  const expectedHTML = '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
+  const unRW =
+    '<!doctype html><html><head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body></html>';
+  const expectedHTML =
+    '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
   const result = await sandbox.evaluate(notRW => {
     document.writeln(notRW);
     document.close();
@@ -399,8 +404,10 @@ test('document.writeln: should perform rewriting when "writeln" is called with a
 
 test('document.writeln: should perform rewriting when "writeln" is called with a full string of HTML starting with <html>', async t => {
   const { sandbox, server } = t.context;
-  const unRW = '<html><head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"/></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body></html>';
-  const expectedRW = '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
+  const unRW =
+    '<html><head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"/></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body></html>';
+  const expectedRW =
+    '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
   const result = await sandbox.evaluate(notRW => {
     document.writeln(notRW);
     document.close();
@@ -419,8 +426,10 @@ test('document.writeln: should perform rewriting when "writeln" is called with a
 
 test('document.writeln: should perform rewriting when "writeln" is called with a full string of HTML starting with <head>', async t => {
   const { sandbox, server } = t.context;
-  const unRW = '<head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"/></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body>';
-  const expectedRW = '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
+  const unRW =
+    '<head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"/></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body>';
+  const expectedRW =
+    '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
   const result = await sandbox.evaluate(notRW => {
     document.writeln(notRW);
     document.close();
@@ -442,8 +451,10 @@ test('document.writeln: should perform rewriting when "writeln" is called with a
 
 test('document.writeln: should perform rewriting when "writeln" is called with a full string of HTML starting with <body>', async t => {
   const { sandbox, server } = t.context;
-  const unRW = '<body><script id="theScript" src="http://javaScript.com/script.js"></script></body>';
-  const expectedRW = '<html><head></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
+  const unRW =
+    '<body><script id="theScript" src="http://javaScript.com/script.js"></script></body>';
+  const expectedRW =
+    '<html><head></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
   const result = await sandbox.evaluate(notRW => {
     document.writeln(notRW);
     document.close();
@@ -465,8 +476,10 @@ test('document.writeln: should perform rewriting when "writeln" is called with a
 
 test('document.writeln: should perform rewriting when "write" is called with an arbitrary string of HTML', async t => {
   const { sandbox, server } = t.context;
-  const unRW = '<script id="theScript" src="http://javaScript.com/script.js"></script>';
-  const expectedRW = '<html><head><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></head></html>';
+  const unRW =
+    '<script id="theScript" src="http://javaScript.com/script.js"></script>';
+  const expectedRW =
+    '<html><head><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></head></html>';
   const result = await sandbox.evaluate(notRW => {
     document.writeln(notRW);
     document.close();
@@ -529,8 +542,10 @@ test('HTMLIframeElement.srcdoc: assignments should be rewritten', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(() => {
     const iframe = document.createElement('iframe');
-    const unRW = '<html><head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"/></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body></html>';
-    const expectedRW = '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
+    const unRW =
+      '<html><head><link id="theLink" rel="stylesheet" href="https://cssHeaven.com/angelic.css"/></head><body><script id="theScript" src="http://javaScript.com/script.js"></script></body></html>';
+    const expectedRW =
+      '<html><head><link id="theLink" rel="stylesheet" href="http://localhost:3030/live/20180803160549cs_/https://cssHeaven.com/angelic.css"></head><body><script id="theScript" src="http://localhost:3030/live/20180803160549js_/http://javaScript.com/script.js"></script></body></html>';
     iframe.srcdoc = unRW;
     return (
       window.WombatTestUtil.getElementPropertyAsIs(iframe, 'srcdoc') ===
@@ -855,8 +870,9 @@ test('Node.appendChild: should rewrite a element with multiple children are supp
       a3: window.WombatTestUtil.getElementPropertyAsIs(a3, 'href').endsWith(
         'mp_/http://example3.com'
       ),
-      iframe: window.WombatTestUtil.getElementPropertyAsIs(iframe, 'allow')
-        === 'autoplay \'self\'; fullscreen \'self\'; fullscreen; clipboard-write',
+      iframe:
+        window.WombatTestUtil.getElementPropertyAsIs(iframe, 'allow') ===
+        'autoplay \'self\'; fullscreen \'self\'; fullscreen; clipboard-write'
     };
   });
   t.deepEqual(result, { a1: true, a2: true, a3: true, iframe: true });
@@ -980,17 +996,16 @@ test('Audio: should rewrite the URL argument to the constructor', async t => {
 
 test('Image: should rewrite image .src correctly, ignoring path in query', async t => {
   const { sandbox, server } = t.context;
-  const result = await sandbox.evaluate(
-    () => {
-      const img = new Image(400, 400);
-      img.src = '../../image.png';
-      return window.WombatTestUtil.getElementPropertyAsIs(img, 'src');
-    }
+  const result = await sandbox.evaluate(() => {
+    const img = new Image(400, 400);
+    img.src = '../../image.png';
+    return window.WombatTestUtil.getElementPropertyAsIs(img, 'src');
+  });
+  t.deepEqual(
+    result,
+    'http://localhost:3030/live/20180803160549im_/https://tests.wombat.io/image.png'
   );
-  t.deepEqual(result, 'http://localhost:3030/live/20180803160549im_/https://tests.wombat.io/image.png');
 });
-
-
 
 test('FontFace: should rewrite the source argument to the constructor', async t => {
   const { sandbox, server } = t.context;

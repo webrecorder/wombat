@@ -145,7 +145,10 @@ test('WombatLocation should not navigate when assigning to local object', async 
     let location = window.WB_wombat_location;
 
     function navTest(location) {
-      location = ((self.__WB_check_loc && self.__WB_check_loc(location, arguments)) || {}).href = location.protocol + '//' + location.hostname + '/it';
+      location = (
+        (self.__WB_check_loc && self.__WB_check_loc(location, arguments)) ||
+        {}
+      ).href = location.protocol + '//' + location.hostname + '/it';
       return location;
     }
 

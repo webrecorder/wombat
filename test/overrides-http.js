@@ -93,7 +93,7 @@ test('fetch: should rewrite the input argument when it is a string (URL), also r
       throw new Error('no reply from server in 5 seconds');
     clearTimeout(to);
     const data = await response.json();
-    return {url: data.url, respURL: response.url};
+    return { url: data.url, respURL: response.url };
   });
   t.is(result.url, '/live/20180803160549mp_/https://tests.wombat.io/test');
   t.is(result.respURL, 'https://tests.wombat.io/test');
@@ -116,9 +116,7 @@ test('fetch: should rewrite the input argument when it is an Request object, als
       throw new Error('no reply from server in 5 seconds');
     clearTimeout(to);
     const data = await response.json();
-    return {url: data.url,
-            rwUrl: request.url,
-            respURL: response.url};
+    return { url: data.url, rwUrl: request.url, respURL: response.url };
   });
   t.is(result.rwUrl, 'https://tests.wombat.io/test');
   t.is(result.url, '/live/20180803160549mp_/https://tests.wombat.io/test');
@@ -129,31 +127,34 @@ test('fetch: Request.referrer is rewritten across multiple copies of Request', a
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(async () => {
     let to;
-    let A = new Request('/test', {'referrer': '/abc'});
+    let A = new Request('/test', { referrer: '/abc' });
     let B = new Request('/test', A);
-    let C = new Request(B, {'referrer': '/xyz'});
-    let D = new Request({'url': '/test', 'referrer': '/cde'}, C);
+    let C = new Request(B, { referrer: '/xyz' });
+    let D = new Request({ url: '/test', referrer: '/cde' }, C);
     D.__WB_no_unrewrite = true;
 
-    return {A: A.referrer,
-            B: B.referrer,
-            C: C.referrer,
-            D: D.referrer
-           };
+    return { A: A.referrer, B: B.referrer, C: C.referrer, D: D.referrer };
   });
   t.is(result.A, 'https://tests.wombat.io/abc');
   t.is(result.B, 'https://tests.wombat.io/abc');
   t.is(result.C, 'https://tests.wombat.io/xyz');
-  t.is(result.D, 'http://localhost:3030/live/20180803160549mp_/https://tests.wombat.io/xyz');
+  t.is(
+    result.D,
+    'http://localhost:3030/live/20180803160549mp_/https://tests.wombat.io/xyz'
+  );
 });
-
 
 test('fetch: should rewrite the input argument when it is a object, but return original', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(async () => {
     let to;
     let response = await Promise.race([
-      fetch({ href: '/test', toString: () => { return '/test'; }}),
+      fetch({
+        href: '/test',
+        toString: () => {
+          return '/test';
+        }
+      }),
       new Promise(resolve => {
         to = setTimeout(() => resolve('timed out'), 10000);
       })
@@ -162,7 +163,7 @@ test('fetch: should rewrite the input argument when it is a object, but return o
       throw new Error('no reply from server in 10 seconds');
     clearTimeout(to);
     const data = await response.json();
-    return {url: data.url, respURL: response.url};
+    return { url: data.url, respURL: response.url };
   });
   t.is(result.url, '/live/20180803160549mp_/https://tests.wombat.io/test');
   t.is(result.respURL, 'https://tests.wombat.io/test');
@@ -172,7 +173,7 @@ test('Request: should rewrite the input argument to the constructor when it is a
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(() => {
     const req = new Request('/test', { method: 'GET' });
-    return {url: req.url};
+    return { url: req.url };
   });
   t.is(result.url, 'https://tests.wombat.io/test');
 });
@@ -180,10 +181,12 @@ test('Request: should rewrite the input argument to the constructor when it is a
 test('Request: should rewrite the input argument to the constructor when it is an object with a url property', async t => {
   const { sandbox, server } = t.context;
   const result = await sandbox.evaluate(() => {
-    const req = new Request({ url: '/test' }, { method: 'GET', referrer: 'https://example.com/' });
-    return {url: req.url, referrer: req.referrer};
+    const req = new Request(
+      { url: '/test' },
+      { method: 'GET', referrer: 'https://example.com/' }
+    );
+    return { url: req.url, referrer: req.referrer };
   });
   t.is(result.url, 'https://tests.wombat.io/test');
   t.is(result.referrer, 'https://example.com/');
 });
-
