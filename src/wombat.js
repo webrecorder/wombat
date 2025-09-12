@@ -3592,7 +3592,7 @@ Wombat.prototype.overrideFunctionApply = function($wbwindow) {
     return;
   }
   var orig_apply = $wbwindow.Function.prototype.apply;
-  Object.defineProperty($wbwindow.Function.prototype, "__WB_orig_apply", {value: orig_apply, enumarable: false});
+  Object.defineProperty($wbwindow.Function.prototype, '__WB_orig_apply', {value: orig_apply, enumarable: false});
   var wombat = this;
   $wbwindow.Function.prototype.apply = function apply(obj, args) {
     // if native function, de-proxy
@@ -3618,7 +3618,7 @@ Wombat.prototype.overrideFunctionCall = function($wbwindow) {
     return;
   }
   var orig_call = $wbwindow.Function.prototype.call;
-  Object.defineProperty($wbwindow.Function.prototype, "__WB_orig_call", {value: orig_call, enumarable: false});
+  Object.defineProperty($wbwindow.Function.prototype, '__WB_orig_call', {value: orig_call, enumarable: false});
   var wombat = this;
   $wbwindow.Function.prototype.call = function call(obj, ...args) {
     // if native function, de-proxy
@@ -3642,7 +3642,7 @@ Wombat.prototype.overrideFunctionBind = function($wbwindow) {
     return;
   }
   var orig_bind = $wbwindow.Function.prototype.bind;
-  Object.defineProperty($wbwindow.Function.prototype, "__WB_orig_bind", {value: orig_bind, enumarable: false});
+  Object.defineProperty($wbwindow.Function.prototype, '__WB_orig_bind', {value: orig_bind, enumarable: false});
   var wombat = this;
   $wbwindow.Function.prototype.bind = function bind(obj) {
     var isNative = wombat.isNativeFunction(this);
