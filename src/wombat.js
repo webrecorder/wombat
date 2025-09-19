@@ -5265,10 +5265,10 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
 
     if (fnThis.readyState === 'loading') {
       // skip if seems to be part of an open comment
+      // if an open comment exists after end of comment (or -1)
       if (
         string &&
-        string.startsWith('<!--') &&
-        string.indexOf('-->') === -1
+        string.indexOf('<!--') > string.indexOf('-->')
       ) {
         return originalFn.call(thisObj, string);
       }
