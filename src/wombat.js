@@ -2419,7 +2419,7 @@ Wombat.prototype.rewriteElem = function(elem) {
     }
   }
 
-  if (elem.hasAttribute && elem.removeAttribute) {
+  if (elem.hasAttribute && elem.removeAttribute && !elem._no_rewrite) {
     if (elem.hasAttribute('crossorigin')) {
       elem.removeAttribute('crossorigin');
       changed = true;
