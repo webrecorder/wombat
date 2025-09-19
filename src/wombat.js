@@ -5264,9 +5264,10 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
     var thisObj = wombat.proxyToObj(fnThis);
 
     if (fnThis.readyState === 'loading') {
+      // skip if seems to be part of an open comment
       if (
         string &&
-        string.startsWith('<!--') !== -1 &&
+        string.startsWith('<!--') &&
         string.indexOf('-->') === -1
       ) {
         return originalFn.call(thisObj, string);
