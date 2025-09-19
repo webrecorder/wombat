@@ -4320,10 +4320,10 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
 
-warcio@^2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/warcio/-/warcio-2.4.0.tgz#13bae2837f1bbf5cf7585f75857e6311d30557bd"
-  integrity sha512-EfxXCgsnZ35CGf2j99QBMyB6EI98KEQ6YmeER+8Lnv/4KFJ3thT76PiX37HfZVbPJS21JihA0Eddjk9QBQRlPg==
+warcio@^2.4.7:
+  version "2.4.7"
+  resolved "https://registry.yarnpkg.com/warcio/-/warcio-2.4.7.tgz#7c3918463e550f62fe63df5f76a871424e74097a"
+  integrity sha512-WGRqvoUqSalAkx+uJ8xnrxiiSPZ7Ru/h7iKC2XmuMMSOUSnS917l4V+qpaN9thAsZkZ+8qJRtee3uyOjlq4Dgg==
   dependencies:
     "@types/pako" "^1.0.7"
     "@types/stream-buffers" "^3.0.7"
