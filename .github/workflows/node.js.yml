@@ -29,7 +29,8 @@ jobs:
     - run: yarn run build-full-test
     - id: setup-chrome
       uses: browser-actions/setup-chrome@v2
-      install-dependencies: true
+      with:
+        install-dependencies: true
     # set up a virtual display for chrome (since the tests don't currently run it in headless mode)
     # then run the tests
     - name: Run Tests
