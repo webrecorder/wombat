@@ -32,7 +32,7 @@ const chromeArgs = [
   '--autoplay-policy=no-user-gesture-required',
   '--disable-site-isolation-trials',
   '--headless',
-  '--no-sandbox'
+  '--no-sandbox',
   winPos,
 ];
 
