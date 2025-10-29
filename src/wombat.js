@@ -4744,11 +4744,11 @@ Wombat.prototype.initHTTPOverrides = function() {
         const getKey = () => {
           const url = new URL(orig_url, wombat.$wbwindow.WB_wombat_location.origin);
           for (const name of url.searchParams.keys()) {
-            if (name.startsWith("_")) {
+            if (name.startsWith('_')) {
               url.searchParams.delete(name);
             }
           }
-          return wombat.wb_info.timestamp + "/" + url.href;
+          return wombat.wb_info.timestamp + '/' + url.href;
         };
 
         const key = getKey();
@@ -4756,7 +4756,7 @@ Wombat.prototype.initHTTPOverrides = function() {
         const fetchToBlob = async () => {
           const url = this.__WB_xhr_open_arguments[1];
           const method = this.__WB_xhr_open_arguments[0];
-          const headers = {...this.__WB_xhr_headers, "X-Pywb-Requested-With": "XMLHttpRequest"};
+          const headers = {...this.__WB_xhr_headers, 'X-Pywb-Requested-With': 'XMLHttpRequest'};
           const resp = await fetch(url, {method, headers});
           const blob = await resp.blob();
 
@@ -4772,22 +4772,22 @@ Wombat.prototype.initHTTPOverrides = function() {
 
           wombat.syncXHRCachePending.delete(key);
           if (wombat.__sessionStorage) {
-            wombat.__sessionStorage.setItem("__wb_xhr_data:" + key, dataUri);
+            wombat.__sessionStorage.setItem('__wb_xhr_data:' + key, dataUri);
             if (!wombat.syncXHRCachePending.size) {
               wombat.$wbwindow.location.reload();
             }
           }
-        }
+        };
 
-        const dataUri = wombat.__sessionStorage && wombat.__sessionStorage.getItem("__wb_xhr_data:" + key);
+        const dataUri = wombat.__sessionStorage && wombat.__sessionStorage.getItem('__wb_xhr_data:' + key);
         if (dataUri) {
           this.__WB_xhr_open_arguments[1] = dataUri;
-          this.__WB_xhr_open_arguments[0] = "GET";
+          this.__WB_xhr_open_arguments[0] = 'GET';
         } else {
           wombat.syncXHRCachePending.add(key);
           fetchToBlob().catch((e) => console.log(e));
           //this.__WB_xhr_open_arguments[2] = true;
-          throw new DOMException("NetworkError", "Sync XHR not allowed");
+          throw new DOMException('NetworkError', 'Sync XHR not allowed');
         }
       }
 
