@@ -31,6 +31,7 @@ const chromeArgs = [
   '--mute-audio',
   '--autoplay-policy=no-user-gesture-required',
   '--disable-site-isolation-trials',
+  '--headless',
   winPos,
 ];
 
@@ -49,7 +50,6 @@ async function initChrome() {
     process: chrome.process,
     closeCallback: () => chrome.kill(),
   });
-  console.log("BROWSER", browser);
   await browser.waitForTarget(t => t.type() === 'page');
   return browser;
 }
