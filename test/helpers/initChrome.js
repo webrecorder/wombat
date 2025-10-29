@@ -31,7 +31,6 @@ const chromeArgs = [
   '--mute-audio',
   '--autoplay-policy=no-user-gesture-required',
   '--disable-site-isolation-trials',
-  '--headless',
   '--no-sandbox',
   winPos,
 ];
@@ -42,8 +41,7 @@ const chromeArgs = [
  */
 async function initChrome() {
   const chrome = await launch({
-    chromeFlags: chromeArgs,
-    logLevel: "verbose"
+    chromeFlags: chromeArgs
   });
   const client = await CRIExtra({ host: '127.0.0.1', port: chrome.port });
   const browser = await Browser.create(client, {
