@@ -31,6 +31,7 @@ const chromeArgs = [
   '--mute-audio',
   '--autoplay-policy=no-user-gesture-required',
   '--disable-site-isolation-trials',
+  '--no-sandbox',
   winPos,
 ];
 

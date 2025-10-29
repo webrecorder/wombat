@@ -15,7 +15,7 @@
     "@types/fs-extra": "^8.0.0",
     "ava": "^2.3.0",
     "chokidar": "^3.0.2",
-    "chrome-launcher": "^0.15.1",
+    "chrome-launcher": "^0.15.2",
     "chrome-remote-interface-extra": "^1.1.1",
     "eslint": "^6.2.2",
     "eslint-config-prettier": "^6.1.0",
