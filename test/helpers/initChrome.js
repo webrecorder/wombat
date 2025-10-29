@@ -41,7 +41,8 @@ const chromeArgs = [
  */
 async function initChrome() {
   const chrome = await launch({
-    chromeFlags: chromeArgs
+    chromeFlags: chromeArgs,
+    logLevel: "verbose"
   });
   const client = await CRIExtra({ host: '127.0.0.1', port: chrome.port });
   const browser = await Browser.create(client, {
