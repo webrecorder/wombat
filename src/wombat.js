@@ -3,6 +3,7 @@ import FuncMap from './funcMap.js';
 import { createStorage, Storage } from './customStorage.js';
 import WombatLocation from './wombatLocation.js';
 import AutoFetcher from './autoFetcher.js';
+import { SyncXHRCache } from './syncxhr.js';
 import { wrapEventListener, wrapSameOriginEventListener } from './listeners.js';
 import {
   addToStringTagToClass,
@@ -4741,54 +4742,9 @@ Wombat.prototype.initHTTPOverrides = function() {
           'wombat.js: Sync XHR not supported in SW-based replay in this browser, attempt to fetch async and store as data: URI for reuse'
         );
 
-        const getKey = () => {
-          const url = new URL(orig_url, wombat.$wbwindow.WB_wombat_location.origin);
-          for (const name of url.searchParams.keys()) {
-            if (name.startsWith('_')) {
-              url.searchParams.delete(name);
-            }
-          }
-          return wombat.wb_info.timestamp + '/' + url.href;
-        };
+        const sync_xhr = new SyncXHRCache(wombat, orig_url, this.__WB_xhr_open_arguments, this.__WB_xhr_headers);
 
-        const key = getKey();
-
-        const fetchToBlob = async () => {
-          const url = this.__WB_xhr_open_arguments[1];
-          const method = this.__WB_xhr_open_arguments[0];
-          const headers = {...this.__WB_xhr_headers, 'X-Pywb-Requested-With': 'XMLHttpRequest'};
-          const resp = await fetch(url, {method, headers});
-          const blob = await resp.blob();
-
-          // convert to data URI using FileReader.readAsDataURL()
-          const dataUri = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              resolve(reader.result);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-
-          wombat.syncXHRCachePending.delete(key);
-          if (wombat.__sessionStorage) {
-            wombat.__sessionStorage.setItem('__wb_xhr_data:' + key, dataUri);
-            if (!wombat.syncXHRCachePending.size) {
-              wombat.$wbwindow.location.reload();
-            }
-          }
-        };
-
-        const dataUri = wombat.__sessionStorage && wombat.__sessionStorage.getItem('__wb_xhr_data:' + key);
-        if (dataUri) {
-          this.__WB_xhr_open_arguments[1] = dataUri;
-          this.__WB_xhr_open_arguments[0] = 'GET';
-        } else {
-          wombat.syncXHRCachePending.add(key);
-          fetchToBlob().catch((e) => console.log(e));
-          //this.__WB_xhr_open_arguments[2] = true;
-          throw new DOMException('NetworkError', 'Sync XHR not allowed');
-        }
+        sync_xhr.getCached(this.__WB_xhr_open_arguments);
       }
 
       origOpen.apply(this, this.__WB_xhr_open_arguments);
