@@ -7,7 +7,11 @@ export class SyncXHRCache {
     this.store = wombat.__sessionStorage;
     this.key = this.getKey(orig_url, wombat);
     this.win = wombat.$wbwindow;
-    this.reload_url = wombat.wb_info.prefix + wombat.wb_info.request_ts + "mp_/" + wombat.wb_info.url;
+    this.reload_url =
+      wombat.wb_info.prefix +
+      wombat.wb_info.request_ts +
+      'mp_/' +
+      wombat.wb_info.url;
   }
 
   getKey(orig_url, wombat) {
@@ -43,15 +47,21 @@ export class SyncXHRCache {
   async fetchToBlob() {
     const url = this.url;
     const method = this.method;
-    const headers = {...this.headers, 'X-Pywb-Requested-With': 'XMLHttpRequest'};
-    const resp = await fetch(url, {method, headers});
+    const headers = {
+      ...this.headers,
+      'X-Pywb-Requested-With': 'XMLHttpRequest'
+    };
+    const resp = await fetch(url, { method, headers });
     const blob = await resp.blob();
 
     // use etag if available
-    let hash = resp.headers.get("x-archive-orig-etag");
+    let hash = resp.headers.get('x-archive-orig-etag');
     if (!hash) {
       try {
-        const buff = await crypto.subtle.digest('SHA-1', await blob.arrayBuffer());
+        const buff = await crypto.subtle.digest(
+          'SHA-1',
+          await blob.arrayBuffer()
+        );
         const hashArray = Array.from(new Uint8Array(buff));
         hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       } catch (e) {
@@ -75,7 +85,7 @@ export class SyncXHRCache {
       return;
     }
 
-/*
+    /*
     let hash = 0;
 
     for (let i = 0; i < blob.size; i += 1024 * 16) {
@@ -108,7 +118,7 @@ export class SyncXHRCache {
       args[0] = 'GET';
     } else {
       this.syncXHRCachePending.add(this.key);
-      this.fetchToBlob().catch((e) => console.log(e));
+      this.fetchToBlob().catch(e => console.log(e));
       throw new DOMException('NetworkError', 'Sync XHR not allowed');
     }
   }

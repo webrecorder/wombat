@@ -4742,7 +4742,12 @@ Wombat.prototype.initHTTPOverrides = function() {
           'wombat.js: Sync XHR not supported in SW-based replay in this browser, attempt to fetch async and store as data: URI for reuse'
         );
 
-        const sync_xhr = new SyncXHRCache(wombat, orig_url, this.__WB_xhr_open_arguments, this.__WB_xhr_headers);
+        const sync_xhr = new SyncXHRCache(
+          wombat,
+          orig_url,
+          this.__WB_xhr_open_arguments,
+          this.__WB_xhr_headers
+        );
 
         sync_xhr.getCached(this.__WB_xhr_open_arguments);
       }
@@ -5276,10 +5281,7 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
     if (fnThis.readyState === 'loading') {
       // skip if seems to be part of an open comment
       // if an open comment exists after end of comment (or -1)
-      if (
-        string &&
-        string.indexOf('<!--') > string.indexOf('-->')
-      ) {
+      if (string && string.indexOf('<!--') > string.indexOf('-->')) {
         return originalFn.call(thisObj, string);
       }
     }
