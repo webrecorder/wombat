@@ -4700,7 +4700,11 @@ Wombat.prototype.initHTTPOverrides = function() {
 
     var wombat = this;
 
-    this.syncXHRCachePending = new Set();
+    var needSyncXHRCache = this.wb_info.isSW && navigator.userAgent.indexOf('Firefox') === -1;
+
+    if (needSyncXHRCache) {
+      this.syncXHRCachePending = new Set();
+    }
 
     this.$wbwindow.XMLHttpRequest.prototype.send = async function(value) {
       if (
@@ -4733,10 +4737,9 @@ Wombat.prototype.initHTTPOverrides = function() {
       // sync mode: disable unless Firefox
       // sync xhr with service workers supported only in FF at the moment
       // https://wpt.fyi/results/service-workers/service-worker/fetch-request-xhr-sync.https.html
-      if (
+      if (needSyncXHRCache &&
         this.__WB_xhr_open_arguments.length > 2 &&
-        !this.__WB_xhr_open_arguments[2] &&
-        navigator.userAgent.indexOf('Firefox') === -1
+        !this.__WB_xhr_open_arguments[2]
       ) {
         console.warn(
           'wombat.js: Sync XHR not supported in SW-based replay in this browser, attempt to fetch async and store as data: URI for reuse'
@@ -4749,7 +4752,26 @@ Wombat.prototype.initHTTPOverrides = function() {
           this.__WB_xhr_headers
         );
 
-        sync_xhr.getCached(this.__WB_xhr_open_arguments);
+        if (!sync_xhr.addCacheOverride(this)) {
+          function xhrResponseOverride(obj, attr) {
+            var orig_getter = wombat.getOrigGetter(obj, attr);
+
+            const getter = () => {
+              sync_xhr.reloadIfNeeded();
+              return orig_getter.call(this);
+            };
+
+            const setter = (value) => {
+              return orig_setter.call(this, value);
+            };
+
+            wombat.defProp(obj, attr, setter, getter);
+          }
+
+          xhrResponseOverride(this, 'response');
+          xhrResponseOverride(this, 'responseText');
+          xhrResponseOverride(this, 'responseXML');
+        }
       }
 
       origOpen.apply(this, this.__WB_xhr_open_arguments);
