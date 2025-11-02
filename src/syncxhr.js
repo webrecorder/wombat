@@ -12,6 +12,8 @@ export class SyncXHRCache {
       wombat.wb_info.request_ts +
       'mp_/' +
       wombat.wb_info.url;
+    this.throwNeeded = false;
+    this.wombat = wombat;
   }
 
   getKey(orig_url, wombat) {
@@ -85,14 +87,6 @@ export class SyncXHRCache {
       return;
     }
 
-    /*
-    let hash = 0;
-
-    for (let i = 0; i < blob.size; i += 1024 * 16) {
-      const slice = blob.slice(i, i + 1024 * 16);
-      hash = hash32(new Uint8Array(await slice.arrayBuffer()), hash);
-    }
-*/
     try {
       this.addToStorage(hash, dataUri);
     } catch (e) {
@@ -106,19 +100,39 @@ export class SyncXHRCache {
       this.addToStorage(hash, dataUri);
     }
 
+    if (this.wombat.syncXHRReloadNeeded && !this.syncXHRCachePending.size) {
+      this.win.location.href = this.reload_url;
+    }
+  }
+
+  addCacheOverride(xhr) {
+    const dataUri = this.getFromStorage();
+    if (dataUri) {
+      xhr.__WB_xhr_open_arguments[1] = dataUri;
+      xhr.__WB_xhr_open_arguments[0] = 'GET';
+      return true;
+    }
+
+    this.syncXHRCachePending.add(this.key);
+    this.fetchPromise = this.fetchToBlob().catch(e => console.log(e));
+    this.throwNeeded = true;
+  }
+
+  async finishCacheAndReload() {
+    if (!this.fetchPromise) {
+      return;
+    }
+    this.wombat.syncXHRReloadNeeded = true;
+    await this.fetchPromise;
+
     if (!this.syncXHRCachePending.size) {
       this.win.location.href = this.reload_url;
     }
   }
 
-  getCached(args) {
-    const dataUri = this.getFromStorage();
-    if (dataUri) {
-      args[1] = dataUri;
-      args[0] = 'GET';
-    } else {
-      this.syncXHRCachePending.add(this.key);
-      this.fetchToBlob().catch(e => console.log(e));
+  reloadIfNeeded() {
+    if (this.throwNeeded) {
+      this.finishCacheAndReload().catch(e => console.log(e));
       throw new DOMException('NetworkError', 'Sync XHR not allowed');
     }
   }
