@@ -2390,7 +2390,7 @@ Wombat.prototype.rewriteElem = function(elem) {
           if (elem.hasAttribute('srcdoc')) {
             elem.removeAttribute('srcdoc');
           }
-          if (srcdoc && false) {
+          if (srcdoc) {
             this.blobUrlForIframe(elem, srcdoc);
           } else {
             var src = elem.getAttribute('src');
@@ -3441,7 +3441,7 @@ Wombat.prototype.overrideHtmlAssignSrcDoc = function(elem, prop) {
   var setter = function overrideSetter(orig) {
     this.__wb_srcdoc = orig;
 
-    if (wombat.wb_info.isSW && false) {
+    if (wombat.wb_info.isSW) {
       wombat.blobUrlForIframe(this, orig);
       return orig;
     } else {
