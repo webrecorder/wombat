@@ -1597,7 +1597,7 @@ Wombat.prototype.makeSetLocProp = function(prop, origSetter, origGetter) {
     if (prop === 'maybeHref') {
       // probably not a location assignment, so just return
       // will be passed through automatically
-      if (typeof(value) !== "string") {
+      if (typeof value !== 'string') {
         return value;
       }
       prop = 'href';
@@ -5708,7 +5708,7 @@ Wombat.prototype.initLocOverride = function(loc, oSetter, oGetter) {
     }
   }
 
-  prop = "maybeHref";
+  prop = 'maybeHref';
   this.defProp(
     loc,
     prop,
