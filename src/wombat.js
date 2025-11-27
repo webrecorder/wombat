@@ -1559,6 +1559,10 @@ Wombat.prototype.makeGetLocProp = function(prop, origGetter) {
   return function newGetLocProp() {
     if (this._no_rewrite) return origGetter.call(this, prop);
 
+    if (prop === 'maybeHref') {
+      prop = 'href';
+    }
+
     var curr_orig_href = origGetter.call(this, 'href');
 
     if (prop === 'href') {
@@ -1589,6 +1593,14 @@ Wombat.prototype.makeSetLocProp = function(prop, origSetter, origGetter) {
   return function newSetLocProp(value) {
     if (this._no_rewrite) {
       return origSetter.call(this, prop, value);
+    }
+    if (prop === 'maybeHref') {
+      // probably not a location assignment, so just return
+      // will be passed through automatically
+      if (typeof value !== 'string') {
+        return value;
+      }
+      prop = 'href';
     }
     if (this['_' + prop] === value) return;
 
@@ -5682,9 +5694,10 @@ Wombat.prototype.initWorkerOverrides = function() {
  * @param {function} oGetter
  */
 Wombat.prototype.initLocOverride = function(loc, oSetter, oGetter) {
+  var prop;
   if (Object.defineProperty) {
     for (var i = 0; i < this.URL_PROPS.length; i++) {
-      var prop = this.URL_PROPS[i];
+      prop = this.URL_PROPS[i];
       this.defProp(
         loc,
         prop,
@@ -5694,6 +5707,15 @@ Wombat.prototype.initLocOverride = function(loc, oSetter, oGetter) {
       );
     }
   }
+
+  prop = 'maybeHref';
+  this.defProp(
+    loc,
+    prop,
+    this.makeSetLocProp(prop, oSetter, oGetter),
+    this.makeGetLocProp(prop, oGetter),
+    false
+  );
 };
 
 /**
