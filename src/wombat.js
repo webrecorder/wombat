@@ -2265,7 +2265,7 @@ Wombat.prototype.rewriteElem = function(elem) {
   var changed = false;
   if (!elem) return changed;
 
-  const rewriteObjectEmbed = () => {
+  const rewriteObjectEmbed = isEmbed => {
     if (
       this.wb_info.isSW &&
       elem.parentElement &&
@@ -2275,10 +2275,19 @@ Wombat.prototype.rewriteElem = function(elem) {
     ) {
       var altElemName;
 
-      if (elem.getAttribute('type') === 'application/pdf') {
+      let addSandbox = false;
+      const type = elem.getAttribute('type') || '';
+
+      if (type === 'application/pdf') {
         altElemName = 'IFRAME';
-      } else if (elem.getAttribute('type') === 'image/svg+xml') {
+      } else if (
+        type === 'image/svg+xml' ||
+        (isEmbed && type.startsWith('image/'))
+      ) {
         altElemName = 'IMG';
+      } else if (isEmbed && !type.startsWith('application/')) {
+        altElemName = 'IFRAME';
+        addSandbox = true;
       }
 
       if (altElemName) {
@@ -2290,6 +2299,16 @@ Wombat.prototype.rewriteElem = function(elem) {
             name = 'src';
           }
           this.wb_setAttribute.call(newElem, name, attr.value);
+        }
+        if (altElemName === 'IFRAME') {
+          this.wb_setAttribute.call(newElem, 'style', 'border: none');
+          if (addSandbox) {
+            this.wb_setAttribute.call(
+              newElem,
+              'sandbox',
+              'allow-same-origin allow-scripts'
+            );
+          }
         }
 
         elem.parentElement.replaceChild(newElem, elem);
@@ -2350,12 +2369,12 @@ Wombat.prototype.rewriteElem = function(elem) {
         }
         break;
       case 'OBJECT':
-        changed = rewriteObjectEmbed(elem);
+        changed = rewriteObjectEmbed(false);
         changed = this.rewriteAttr(elem, 'data', true);
         changed = this.rewriteAttr(elem, 'style') || changed;
         break;
       case 'EMBED':
-        changed = rewriteObjectEmbed(elem);
+        changed = rewriteObjectEmbed(true);
         changed = this.rewriteAttr(elem, 'style') || changed;
         break;
 
@@ -2371,7 +2390,7 @@ Wombat.prototype.rewriteElem = function(elem) {
           if (elem.hasAttribute('srcdoc')) {
             elem.removeAttribute('srcdoc');
           }
-          if (srcdoc) {
+          if (srcdoc && false) {
             this.blobUrlForIframe(elem, srcdoc);
           } else {
             var src = elem.getAttribute('src');
@@ -3422,7 +3441,7 @@ Wombat.prototype.overrideHtmlAssignSrcDoc = function(elem, prop) {
   var setter = function overrideSetter(orig) {
     this.__wb_srcdoc = orig;
 
-    if (wombat.wb_info.isSW) {
+    if (wombat.wb_info.isSW && false) {
       wombat.blobUrlForIframe(this, orig);
       return orig;
     } else {
@@ -4700,7 +4719,8 @@ Wombat.prototype.initHTTPOverrides = function() {
 
     var wombat = this;
 
-    var needSyncXHRCache = this.wb_info.isSW && navigator.userAgent.indexOf('Firefox') === -1;
+    var needSyncXHRCache =
+      this.wb_info.isSW && navigator.userAgent.indexOf('Firefox') === -1;
 
     if (needSyncXHRCache) {
       this.syncXHRCachePending = new Set();
@@ -4737,7 +4757,8 @@ Wombat.prototype.initHTTPOverrides = function() {
       // sync mode: disable unless Firefox
       // sync xhr with service workers supported only in FF at the moment
       // https://wpt.fyi/results/service-workers/service-worker/fetch-request-xhr-sync.https.html
-      if (needSyncXHRCache &&
+      if (
+        needSyncXHRCache &&
         this.__WB_xhr_open_arguments.length > 2 &&
         !this.__WB_xhr_open_arguments[2]
       ) {
@@ -4761,7 +4782,7 @@ Wombat.prototype.initHTTPOverrides = function() {
               return orig_getter.call(this);
             };
 
-            const setter = (value) => {
+            const setter = value => {
               return orig_setter.call(this, value);
             };
 
