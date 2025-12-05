@@ -6200,9 +6200,7 @@ Wombat.prototype.initOpenOverride = function() {
   var wombat = this;
 
   var open_rewritten = function open(strUrl, strWindowName, strWindowFeatures) {
-    if (strWindowName) {
-      strWindowName = wombat.rewriteAttrTarget(strWindowName);
-    }
+    strWindowName = wombat.rewriteAttrTarget(strWindowName);
     var rwStrUrl = wombat.rewriteUrl(strUrl, false);
     var res = orig.call(
       wombat.proxyToObj(this),
@@ -6211,7 +6209,7 @@ Wombat.prototype.initOpenOverride = function() {
       strWindowFeatures
     );
     wombat.initNewWindowWombat(res, strUrl);
-    return res;
+    return wombat.objToProxy(res);
   };
 
   this.$wbwindow.open = open_rewritten;
@@ -6238,7 +6236,7 @@ Wombat.prototype.rewriteAttrTarget = function(target) {
     return target;
   }
 
-  if (target === '_blank' || target === '_parent' || target === '_top') {
+  if (!target || target === '_blank' || target === '_parent' || target === '_top') {
     return this.wb_info.target_frame;
   }
 
