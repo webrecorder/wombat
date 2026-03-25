@@ -167,6 +167,25 @@ test('internal globals: should not expose WombatLocation on window', async t => 
   );
 });
 
+test('internal globals: should resolve root-relative dynamic imports against the original module host', async t => {
+  const { sandbox } = t.context;
+  const imported = await sandbox.evaluate(async () => {
+    const replayBase =
+      'http://localhost:3030/live/20180803160549esm_/https://assets.tests.wombat.io/modules/entry.js';
+    const mod = await window.____wb_rewrite_import__(
+      replayBase,
+      '/modules/dynamic-import-target.js'
+    );
+    return mod.default;
+  });
+
+  t.is(
+    imported,
+    'asset host module',
+    'dynamic import should resolve against the original module host, not the page host'
+  );
+});
+
 test('exposed functions - extract_orig: should should extract the original url', async t => {
   const { sandbox, server } = t.context;
   t.true(

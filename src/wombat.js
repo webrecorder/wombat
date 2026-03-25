@@ -5864,6 +5864,10 @@ Wombat.prototype.initImportWrapperFunc = function(win) {
   };
 
   win.____wb_rewrite_import__ = function(base, url) {
+    if (base) {
+      base = wombat.extractOriginalURL(base);
+    }
+
     // if esm and base provided (set to import.meta.url), use that as base for imports
     if (url && base) {
       // don't do extra rewriting if importmap exists and this url
