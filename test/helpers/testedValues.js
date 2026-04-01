@@ -568,10 +568,6 @@ exports.TestFunctionChanges = [
     fns: ['appendData', 'insertData', 'replaceData']
   },
   {
-    objPath: 'window.XSLTProcessor.prototype',
-    fns: ['transformToFragment']
-  },
-  {
     objPath: 'document',
     fns: [
       'write',
