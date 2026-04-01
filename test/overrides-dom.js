@@ -24,10 +24,11 @@ test.beforeEach(async t => {
   t.context.sandbox = helper.sandbox();
   t.context.server = helper.server();
   t.context.testPage = helper.testPage();
+  t.context.fullRefresh = false;
 });
 
 test.afterEach.always(async t => {
-  if (t.title.includes('SharedWorker')) {
+  if (t.title.includes('SharedWorker') || t.context.fullRefresh) {
     await helper.fullRefresh();
   } else {
     await helper.ensureSandbox();
@@ -66,6 +67,28 @@ test('anchor links should not be broken by wombat', async t => {
     return a.href;
   });
   t.is(actual, 'https://tests.wombat.io/#anchor');
+});
+
+test('document.createElement: should not throw for frozen overrides', async t => {
+  const { sandbox } = t.context;
+  t.context.fullRefresh = true;
+  const tagName = await sandbox.evaluate(() => {
+    const proxiedDocument = document._WB_wombat_obj_proxy;
+    const originalCreateElement = proxiedDocument.createElement;
+
+    function createElement(tagName, options) {
+      return originalCreateElement.call(proxiedDocument, tagName, options);
+    }
+
+    Object.defineProperty(proxiedDocument, 'createElement', {
+      value: createElement,
+      configurable: false,
+      writable: false
+    });
+
+    return proxiedDocument.createElement('div').tagName;
+  });
+  t.is(tagName, 'DIV');
 });
 
 test('document.title: should send the "title" message to the top frame when document.title is changed', async t => {

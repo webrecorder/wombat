@@ -1433,6 +1433,17 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
       return obj.constructor;
   }
   var retVal = Reflect.get(obj, prop);
+  var propDesc = Object.getOwnPropertyDescriptor(obj, prop);
+
+  // Frozen own data properties must be returned as-is to satisfy Proxy invariants.
+  if (
+    propDesc !== undefined &&       // If it's an own property, and
+    'value' in propDesc &&          // is a data property, and
+    propDesc.writable === false &&  // is non-writable, and
+    propDesc.configurable === false // is non-configurable
+  ) {
+    return retVal;
+  }
 
   var type = typeof retVal;
 
