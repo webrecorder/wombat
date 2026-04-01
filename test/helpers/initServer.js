@@ -112,6 +112,15 @@ async function initServer() {
           .send({ headers: request.headers, url: request.raw.originalUrl });
       }
     )
+    .get(
+      '/live/20180803160549esm_/https://assets.tests.wombat.io/modules/dynamic-import-target.js',
+      (request, reply) => {
+        reply
+          .code(200)
+          .type('application/javascript; charset=UTF-8')
+          .send('export default "asset host module";');
+      }
+    )
     .decorate('reset', () => {
       const error = new Error('Static Server has been reset');
       for (const prr of requestSubscribers.values()) {

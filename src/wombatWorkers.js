@@ -255,6 +255,10 @@ WBWombat.prototype.initSelfOverrides = function() {
   });
 
   self.____wb_rewrite_import__ = function(base, url) {
+    if (base) {
+      base = wombat.extractOriginalURL(base);
+    }
+
     // if esm and base provided (set to import.meta.url), use that as base for imports
     if (url && base) {
       //if (!isImportMapped(url)) {
