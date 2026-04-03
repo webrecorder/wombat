@@ -28,7 +28,7 @@
     "fastify-favicon": "^2.0.0",
     "fastify-static": "^2.5.0",
     "fs-extra": "^8.1.0",
-    "lodash-es": "^4.17.21",
+    "lodash-es": "^4.17.23",
     "prettier": "^1.18.2",
     "rollup": "^4.22.4"
   },
