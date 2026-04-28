@@ -12,6 +12,7 @@ import {
 } from './wombatUtils.js';
 
 import { postToGetUrl } from 'warcio/utils';
+import { MyWebSocket } from './ws.js';
 
 /**
  * @param {Window} $wbwindow
@@ -1437,9 +1438,9 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
 
   // Frozen own data properties must be returned as-is to satisfy Proxy invariants.
   if (
-    propDesc !== undefined &&       // If it's an own property, and
-    'value' in propDesc &&          // is a data property, and
-    propDesc.writable === false &&  // is non-writable, and
+    propDesc !== undefined && // If it's an own property, and
+    'value' in propDesc && // is a data property, and
+    propDesc.writable === false && // is non-writable, and
     propDesc.configurable === false // is non-configurable
   ) {
     return retVal;
@@ -1704,14 +1705,14 @@ Wombat.prototype.domConstructorErrorChecker = function(
   var errorMsg;
   if (thisObj instanceof this.WBWindow) {
     errorMsg =
-      'Failed to construct \'' +
+      "Failed to construct '" +
       what +
-      '\': Please use the \'new\' operator, this DOM object constructor cannot be called as a function.';
+      "': Please use the 'new' operator, this DOM object constructor cannot be called as a function.";
   } else if (args && args.length < needArgs) {
     errorMsg =
-      'Failed to construct \'' +
+      "Failed to construct '" +
       what +
-      '\': ' +
+      "': " +
       needArgs +
       ' argument required, but only 0 present.';
   }
@@ -2804,13 +2805,13 @@ Wombat.prototype.rewriteWorker = function(workerUrl, opts) {
       this.wb_info.ww_rw_script ||
       this.wb_info.static_prefix + 'wombatWorkers.js';
     var rw =
-      '(function() { self.importScripts(\'' +
+      "(function() { self.importScripts('" +
       ww_rw +
-      '\'); new WBWombat({\'prefix\': \'' +
+      "'); new WBWombat({'prefix': '" +
       this.wb_abs_prefix +
-      '\', \'prefixMod\': \'' +
+      "', 'prefixMod': '" +
       this.wb_abs_prefix +
-      'wkrf_/\', \'originalURL\': ' +
+      "wkrf_/', 'originalURL': " +
       JSON.stringify(originalURL) +
       '}); })();';
 
@@ -4475,6 +4476,10 @@ Wombat.prototype.initWSOverride = function() {
     return;
   }
 
+  this.$wbwindow.WebSocket = MyWebSocket;
+  MyWebSocket.prefix = this.wb_info.prefix + this.wb_info.request_ts + 'id_/';
+
+  /*
   this.$wbwindow.WebSocket = (function(WebSocket_) {
     function WebSocket(url, protocols) {
       this.openCallbacks = [];
@@ -4506,17 +4511,20 @@ Wombat.prototype.initWSOverride = function() {
       setTimeout(simOpen, 500);
     }
 
-    WebSocket.CONNECTING = 0;
-    WebSocket.OPEN = 1;
-    WebSocket.CLOSING = 2;
-    WebSocket.CLOSED = 3;
+    WebSocket.prototype.CONNECTING = 0;
+    WebSocket.prototype.OPEN = 1;
+    WebSocket.prototype.CLOSING = 2;
+    WebSocket.prototype.CLOSED = 3;
 
     return WebSocket;
   })(this.$wbwindow.WebSocket);
+*/
 
+  /*
   Object.defineProperty(this.$wbwindow.WebSocket.prototype, 'constructor', {
     value: this.$wbwindow.WebSocket
   });
+*/
 
   addToStringTagToClass(this.$wbwindow.WebSocket, 'WebSocket');
 };
@@ -6251,7 +6259,12 @@ Wombat.prototype.rewriteAttrTarget = function(target) {
     return target;
   }
 
-  if (!target || target === '_blank' || target === '_parent' || target === '_top') {
+  if (
+    !target ||
+    target === '_blank' ||
+    target === '_parent' ||
+    target === '_top'
+  ) {
     return this.wb_info.target_frame;
   }
 
@@ -6867,7 +6880,7 @@ Wombat.prototype.initTopFrameNotify = function(wbinfo) {
 
     var icons = [];
     var hicons = wombat.$wbwindow.document.querySelectorAll(
-      'link[rel*=\'icon\']'
+      "link[rel*='icon']"
     );
 
     for (var i = 0; i < hicons.length; i++) {
