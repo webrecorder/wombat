@@ -8,7 +8,9 @@ function WBWombat(info) {
   if (!(this instanceof WBWombat)) return new WBWombat(info);
   /** @type {Object} */
   this.info = info;
-  this.prefixMod = this.info.prefix + this.info.mod + '/';
+  this.prefixMod = this.info.prefixMod
+    ? this.info.prefixMod
+    : this.info.prefix + (this.info.mod || 'wkrf_') + '/';
 
   this.initImportScriptsRewrite();
   this.initHTTPOverrides();

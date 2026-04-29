@@ -3812,6 +3812,9 @@ Wombat.prototype.overrideHrefAttr = function(obj, mod) {
 
   var setter = function href(orig) {
     var val;
+    if (typeof orig !== 'string') {
+      orig = String(orig);
+    }
     if (mod === 'cs_' && orig.indexOf('data:text/css') === 0) {
       val = wombat.rewriteInlineStyle(orig);
     } else if (this.tagName === 'LINK') {
