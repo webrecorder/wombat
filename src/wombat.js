@@ -253,7 +253,7 @@ function Wombat($wbwindow, wbinfo) {
   this.rmCheckThisInjectRe = /_____WB\$wombat\$check\$this\$function_____\(.*?\)/g;
 
   /** @type {RegExp} */
-  this.STYLE_REGEX = /(url\s*\(\s*[\\"']*)([^)'"]+)([\\"']*\s*\))/gi;
+  this.STYLE_REGEX = /(url\s*\(\s*[\\"']*)([^)'"]+)([\\"']*\s*\)?)/gi;
 
   /** @type {RegExp} */
   this.IMPORT_REGEX = /(@import\s*[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
@@ -4148,9 +4148,13 @@ Wombat.prototype.initAttrOverrides = function() {
 
   this.overrideStyleProxy(Object.values(cssAttrToProps));
 
-  // For FF
+  // For FF < 144
   if (this.$wbwindow.CSS2Properties) {
     style_proto = this.$wbwindow.CSS2Properties.prototype;
+  }
+  // For FF >= 144
+  if (this.$wbwindow.CSSStyleProperties) {
+    style_proto = this.$wbwindow.CSSStyleProperties.prototype;
   }
 
   this.overrideStyleAttr(style_proto, 'cssText');
