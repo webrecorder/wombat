@@ -143,6 +143,9 @@ WombatLite.prototype.initDateOverride = function(timestamp) {
   var orig_toString = this.$wbwindow.Date.prototype.toString;
   this.$wbwindow.Date.prototype.toString = function() {
     var string = orig_toString.call(this).split(' GMT')[0];
+    if (string === 'Invalid Date') {
+      return string;
+    }
     return string + ' GMT+0000 (Coordinated Universal Time)';
   };
 
