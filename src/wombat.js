@@ -2175,7 +2175,7 @@ Wombat.prototype.rewriteStyle = function(style) {
  */
 Wombat.prototype.rewriteSrcset = function(value, elem) {
   if (!value) return '';
-  if (typeof(value) !== "string") {
+  if (typeof(value) !== 'string') {
     value = value.toString();
   }
 
