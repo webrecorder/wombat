@@ -5001,6 +5001,8 @@ Wombat.prototype.initElementGetSetAttributeOverride = function() {
           (lowername === 'imagesrcset' && this.tagName === 'LINK')
         ) {
           rwValue = wombat.rewriteSrcset(value, this);
+        } else if (lowername === 'target' && this.tagName === 'A') {
+          rwValue = wombat.rewriteAttrTarget(value);
         } else {
           var shouldRW = wombat.shouldRewriteAttr(this.tagName, lowername);
           if (shouldRW) {
