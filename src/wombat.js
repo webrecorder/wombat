@@ -4828,6 +4828,7 @@ Wombat.prototype.initHTTPOverrides = function() {
           xhrResponseOverride(this, 'response');
           xhrResponseOverride(this, 'responseText');
           xhrResponseOverride(this, 'responseXML');
+          return;
         }
       }
 
