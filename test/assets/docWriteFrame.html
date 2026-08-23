@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>document.write() test frame</title>
+    <script>
+      window.wbinfo = Object.assign({}, parent.wbinfo, {
+        isSW: true,
+        injectDocClose: true
+      });
+    </script>
+    <script src="/wombat.js"></script>
+    <script>
+      window._WBWombatInit(window.wbinfo);
+    </script>
+  </head>
+  <body>
+    1
+    <script>
+      document.write('<script>document.write("2")<\/script>');
+      document.close();
+    </script>
+    3
+    <script>
+      document.write('4');
+      document.close();
+    </script>
+  </body>
+</html>

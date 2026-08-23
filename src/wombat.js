@@ -5413,7 +5413,10 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
     } else {
       res = orig_doc_open.call(thisObj);
       if (isSWLoad()) {
-        wombat._writeBuff = '';
+        // only clear writeBuff if open() cleared the document, eg. starting a new document
+        if (!thisObj.documentElement) {
+          wombat._writeBuff = '';
+        }
       } else {
         wombat.initNewWindowWombat(thisObj.defaultView);
       }
@@ -5428,19 +5431,37 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
   // https://html.spec.whatwg.org/multipage/dynamic-markup-insertion.html#dom-document-close
   var originalClose = $wbDocument.close;
   var newClose = function close() {
+    var thisObj = wombat.proxyToObj(this);
     if (wombat._writeBuff) {
-      // if loading, apply as may be sync waiting for changes
-      if (this.readyState === 'loading') {
-        orig_doc_write.call(
-          $wbDocument,
-          wombat.rewriteHtml(wombat._writeBuff, true)
-        );
-      }
-      if (isSWLoad()) {
-        wombat.blobUrlForIframe(
-          wombat.$wbwindow.frameElement,
-          wombat._writeBuff
-        );
+      // Clear the global state before calling the native orig_doc_write because
+      // injectDocClose means that document.write('<script>...</script>')
+      // will call this function again before the first call returns.
+      const writeBuff = wombat._writeBuff;
+      wombat._writeBuff = '';
+
+      let nativeWriteReplacedDocument = false;
+
+      // possible options here are:
+      //
+      // 1) initial page load: oldDocumentElement is non-null, calling write doesn't change element
+      // 2) new document: doc.open(), doc.write() and then doc.close() called:
+      //    oldDocumentElement is null, replaced with new document
+      // 3) new document: doc.write() and doc.close() called without doc.open()
+      //    oldDocumentElement is non-null old doc, replaced with new document
+
+      // First, always call native .write() and .close() as sync code may attempt to access
+      // then new document after .close()
+      const oldDocumentElement = thisObj.documentElement;
+      orig_doc_write.call(thisObj, wombat.rewriteHtml(writeBuff, true));
+      nativeWriteReplacedDocument =
+        thisObj.documentElement !== oldDocumentElement;
+
+      // Chromium and sometimes Firefox have an issue where it does not route requests from replaced
+      // iframe documents to the service worker, so as a workaround if
+      // document.write() or document.open() replaced the document we create a
+      // blob URL from the buffer contents and navigate the iframe to it.
+      if (isSWLoad() && nativeWriteReplacedDocument) {
+        wombat.blobUrlForIframe(wombat.$wbwindow.frameElement, writeBuff);
 
         const doc = this;
 
@@ -5459,10 +5480,8 @@ Wombat.prototype.initDocWriteOpenCloseOverride = function() {
           // ignore
         }
       }
-      wombat._writeBuff = '';
       return;
     }
-    var thisObj = wombat.proxyToObj(this);
     wombat.initNewWindowWombat(thisObj.defaultView);
     if (originalClose.__WB_orig_apply) {
       return originalClose.__WB_orig_apply(thisObj, arguments);

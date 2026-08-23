@@ -327,6 +327,27 @@ test('document.write: should perform rewriting with multiple write calls, each i
   );
 });
 
+test('document.write: should insert at the parser position in SW mode', async t => {
+  const result = await t.context.sandbox.evaluate(
+    () =>
+      new Promise((resolve, reject) => {
+        const iframe = document.createElement('iframe');
+        const timeout = setTimeout(() => {
+          iframe.remove();
+          reject(new Error('document.write iframe timed out'));
+        }, 3000);
+        iframe.onload = () => {
+          clearTimeout(timeout);
+          resolve(iframe.contentDocument.body.innerText.replace(/\s/g, ''));
+          iframe.remove();
+        };
+        iframe.src = 'http://localhost:3030/docWriteFrame.html';
+        document.body.appendChild(iframe);
+      })
+  );
+  t.is(result, '1234');
+});
+
 test('document.writeln: should not perform rewriting when "writeln" is called with no arguments', async t => {
   const { sandbox, testPage } = t.context;
   await sandbox.evaluate(() => {

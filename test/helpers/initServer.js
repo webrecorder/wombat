@@ -10,6 +10,7 @@ const assetsPath = path.join(__dirname, '..', 'assets');
 const httpsSandboxPath = path.join(assetsPath, 'sandbox.html');
 const sandboxDirectPath = path.join(assetsPath, 'sandboxDirect.html');
 const theyFoundItPath = path.join(assetsPath, 'it.html');
+const docWriteFramePath = path.join(assetsPath, 'docWriteFrame.html');
 
 const testPageURL = `http://localhost:${port}/testPage.html`;
 const testPageDirectURL = `http://localhost:${port}/testPageDirect.html`;
@@ -83,6 +84,15 @@ async function initServer() {
           .type('text/html')
           .status(200)
           .send(fs.createReadStream(theyFoundItPath));
+      }
+    )
+    .get(
+      '/live/20180803160549if_/https://tests.wombat.io/docWriteFrame.html',
+      (request, reply) => {
+        reply
+          .type('text/html')
+          .status(200)
+          .send(fs.createReadStream(docWriteFramePath));
       }
     )
     .get(
