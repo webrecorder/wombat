@@ -811,36 +811,59 @@ Wombat.prototype.rwModForElement = function(elem, attrName) {
 };
 
 /**
- * If the supplied element is a script tag and has the server-side rewrite added
- * property "__wb_orig_src" it is removed and the "__$removedWBOSRC$__" property
- * is added to element as an internal flag indicating no further checks are to be
- * made.
+ * Removes the server-side rewriter's record of an attribute's pre-rewrite
+ * value, the attribute being about to get a new one.
+ *
+ * A script's "src" also sets the "__$removedWBOSRC$__" flag, as before. Other
+ * attributes do not: that flag is per element, and an element can record one
+ * attribute and not another.
  *
  * See also {@link retrieveWBOSRC}
  * @param {Element} elem
+ * @param {string} [attrName]
  */
-Wombat.prototype.removeWBOSRC = function(elem) {
-  if (elem.tagName === 'SCRIPT' && !elem.__$removedWBOSRC$__) {
+Wombat.prototype.removeWBOSRC = function(elem, attrName) {
+  var isScriptSrc = attrName == null || attrName === 'src';
+  if (elem.tagName === 'SCRIPT' && isScriptSrc && !elem.__$removedWBOSRC$__) {
     if (elem.hasAttribute('__wb_orig_src')) {
       elem.removeAttribute('__wb_orig_src');
     }
     elem.__$removedWBOSRC$__ = true;
+    return;
+  }
+  if (!attrName) return;
+  var origName = this.wbOrigAttrName(attrName);
+  if (elem.hasAttribute(origName)) {
+    elem.removeAttribute(origName);
   }
 };
 
 /**
- * If the supplied element is a script tag and has the server-side rewrite added
- * property "__wb_orig_src" its value is returned otherwise undefined is returned.
- * If the element did not have the "__wb_orig_src" property the
- * "__$removedWBOSRC$__" property is added to element as an internal flag
- * indicating no further checks are to be made.
+ * The attribute holding attrName's pre-rewrite value. "src" resolves to the
+ * historical "__wb_orig_src", so existing archives are unaffected.
+ * @param {string} attrName
+ * @return {string}
+ */
+Wombat.prototype.wbOrigAttrName = function(attrName) {
+  return '__wb_orig_' + attrName;
+};
+
+/**
+ * The pre-rewrite value of an attribute, as recorded by the server-side
+ * rewriter, or undefined if it recorded none.
+ *
+ * Without it getAttribute falls back to extractOriginalURL, which can only
+ * reverse rewrites wombat itself performed, and so prepends the original
+ * scheme to a value that was rewritten at scrape time.
  *
  * See also {@link removeWBOSRC}
  * @param {Element} elem
+ * @param {string} [attrName] defaults to a script's "src"
  * @return {?string}
  */
-Wombat.prototype.retrieveWBOSRC = function(elem) {
-  if (elem.tagName === 'SCRIPT' && !elem.__$removedWBOSRC$__) {
+Wombat.prototype.retrieveWBOSRC = function(elem, attrName) {
+  var isScriptSrc = attrName == null || attrName === 'src';
+  if (elem.tagName === 'SCRIPT' && isScriptSrc && !elem.__$removedWBOSRC$__) {
     var maybeWBOSRC;
     if (this.wb_getAttribute) {
       maybeWBOSRC = this.wb_getAttribute.call(elem, '__wb_orig_src');
@@ -850,7 +873,12 @@ Wombat.prototype.retrieveWBOSRC = function(elem) {
     if (maybeWBOSRC == null) elem.__$removedWBOSRC$__ = true;
     return maybeWBOSRC;
   }
-  return undefined;
+  if (!attrName) return undefined;
+  var origName = this.wbOrigAttrName(attrName);
+  var stored = this.wb_getAttribute
+    ? this.wb_getAttribute.call(elem, origName)
+    : elem.getAttribute(origName);
+  return stored == null ? undefined : stored;
 };
 
 /**
@@ -2121,7 +2149,7 @@ Wombat.prototype.rewriteAttr = function(elem, name, absUrlOnly) {
   );
 
   if (new_value !== value) {
-    this.removeWBOSRC(elem);
+    this.removeWBOSRC(elem, name);
     this.wb_setAttribute.call(elem, name, new_value);
     changed = true;
   }
@@ -5010,7 +5038,7 @@ Wombat.prototype.initElementGetSetAttributeOverride = function() {
         } else {
           var shouldRW = wombat.shouldRewriteAttr(this.tagName, lowername);
           if (shouldRW) {
-            wombat.removeWBOSRC(this);
+            wombat.removeWBOSRC(this, lowername);
             if (!this._no_rewrite) {
               rwValue = wombat.rewriteUrl(
                 value,
@@ -5038,7 +5066,7 @@ Wombat.prototype.initElementGetSetAttributeOverride = function() {
         lowerName = name.toLowerCase();
       }
       if (wombat.shouldRewriteAttr(this.tagName, lowerName)) {
-        var maybeWBOSRC = wombat.retrieveWBOSRC(this);
+        var maybeWBOSRC = wombat.retrieveWBOSRC(this, lowerName);
         if (maybeWBOSRC) return maybeWBOSRC;
         return wombat.extractOriginalURL(result);
       } else if (
