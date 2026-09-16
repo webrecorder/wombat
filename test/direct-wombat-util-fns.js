@@ -214,3 +214,74 @@ test('endsWith: should return the matching suffix if the supplied string ends wi
     empty: true
   });
 });
+
+test('retrieveWBOSRC: should return a script src recorded by the server-side rewriter', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const script = document.createElement('script');
+    script.setAttribute('__wb_orig_src', '/_next/static/chunks/main.js');
+    return wombat.retrieveWBOSRC(script, 'src');
+  });
+  t.is(result, '/_next/static/chunks/main.js');
+});
+
+test('retrieveWBOSRC: should return a recorded original for any attribute, not only a script src', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const anchor = document.createElement('a');
+    anchor.setAttribute('__wb_orig_href', 'https://example.com/page?ref=x');
+    const img = document.createElement('img');
+    img.setAttribute('__wb_orig_src', 'https://example.com/pic.png');
+    return {
+      href: wombat.retrieveWBOSRC(anchor, 'href'),
+      imgSrc: wombat.retrieveWBOSRC(img, 'src')
+    };
+  });
+  t.deepEqual(result, {
+    href: 'https://example.com/page?ref=x',
+    imgSrc: 'https://example.com/pic.png'
+  });
+});
+
+test('retrieveWBOSRC: should return undefined when nothing was recorded for that attribute', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const anchor = document.createElement('a');
+    anchor.setAttribute('href', '/already/rewritten');
+    return wombat.retrieveWBOSRC(anchor, 'href') === undefined;
+  });
+  t.true(result);
+});
+
+test('retrieveWBOSRC: an original recorded for one attribute should not answer for another', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const video = document.createElement('video');
+    video.setAttribute('__wb_orig_src', 'https://example.com/movie.mp4');
+    return {
+      src: wombat.retrieveWBOSRC(video, 'src'),
+      poster: wombat.retrieveWBOSRC(video, 'poster') === undefined
+    };
+  });
+  t.deepEqual(result, {
+    src: 'https://example.com/movie.mp4',
+    poster: true
+  });
+});
+
+test('removeWBOSRC: should drop the recorded original for the attribute being replaced', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const anchor = document.createElement('a');
+    anchor.setAttribute('__wb_orig_href', 'https://example.com/page');
+    wombat.removeWBOSRC(anchor, 'href');
+    const script = document.createElement('script');
+    script.setAttribute('__wb_orig_src', '/_next/static/chunks/main.js');
+    wombat.removeWBOSRC(script, 'src');
+    return {
+      href: anchor.hasAttribute('__wb_orig_href'),
+      scriptSrc: script.hasAttribute('__wb_orig_src')
+    };
+  });
+  t.deepEqual(result, { href: false, scriptSrc: false });
+});
