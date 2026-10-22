@@ -823,6 +823,7 @@ Wombat.prototype.rwModForElement = function(elem, attrName) {
  * @param {string} [attrName]
  */
 Wombat.prototype.removeWBOSRC = function(elem, attrName = 'src') {
+  if (!elem || elem.nodeType !== 1) return;
   if (elem.tagName === 'SCRIPT' && attrName === 'src' && !elem.__$removedWBOSRC$__) {
     if (elem.hasAttribute('__wb_orig_src')) {
       elem.removeAttribute('__wb_orig_src');
@@ -861,6 +862,7 @@ Wombat.prototype.wbOrigAttrName = function(attrName) {
  * @return {?string}
  */
 Wombat.prototype.retrieveWBOSRC = function(elem, attrName = 'src') {
+  if (!elem || elem.nodeType !== 1) return undefined;
   if (elem.tagName === 'SCRIPT' && attrName === 'src' && !elem.__$removedWBOSRC$__) {
     var maybeWBOSRC;
     if (this.wb_getAttribute) {
@@ -877,6 +879,30 @@ Wombat.prototype.retrieveWBOSRC = function(elem, attrName = 'src') {
     ? this.wb_getAttribute.call(elem, origName)
     : elem.getAttribute(origName);
   return stored == null ? undefined : stored;
+};
+
+/**
+ * The recorded pre-rewrite value of an attribute, resolved the way the
+ * browser resolves the property that reflects it (img.src, a.href, ...),
+ * or undefined if none was recorded, the attribute has since been removed,
+ * or it does not parse.
+ *
+ * See also {@link retrieveWBOSRC}
+ * @param {Element} elem
+ * @param {string} attrName
+ * @return {string|undefined}
+ */
+Wombat.prototype.retrieveWBOSRCAsURL = function(elem, attrName) {
+  if (!elem || elem.nodeType !== 1 || !elem.hasAttribute(attrName)) {
+    return undefined;
+  }
+  var stored = this.retrieveWBOSRC(elem, attrName);
+  if (!stored) return undefined;
+  try {
+    return this.resolveRelUrl(stored, elem.ownerDocument);
+  } catch (e) {
+    return undefined;
+  }
 };
 
 /**
@@ -3110,6 +3136,7 @@ Wombat.prototype.newAttrObjGetSet = function(attrProto, prop) {
       var obj = wombat.proxyToObj(this);
       var res = newValue;
       if (wombat.isAttrObjRewrite(obj)) {
+        wombat.removeWBOSRC(obj.ownerElement, obj.name);
         res = wombat.performAttributeRewrite(
           obj.ownerElement,
           obj.name,
@@ -3124,6 +3151,8 @@ Wombat.prototype.newAttrObjGetSet = function(attrProto, prop) {
       var obj = wombat.proxyToObj(this);
       var res = oGetter.call(obj);
       if (wombat.isAttrObjRewrite(obj)) {
+        var recorded = wombat.retrieveWBOSRC(obj.ownerElement, obj.name);
+        if (recorded) return recorded;
         return wombat.extractOriginalURL(res);
       }
       return res;
@@ -3153,11 +3182,7 @@ Wombat.prototype.overrideAttr = function(obj, attr, mod) {
   var wombat = this;
 
   var setter = function newAttrPropSetter(orig) {
-    if (mod === 'js_') {
-      if (!this.__$removedWBOSRC$__) {
-        wombat.removeWBOSRC(this);
-      }
-    }
+    wombat.removeWBOSRC(this, attr);
     var val = wombat.rewriteUrl(
       orig,
       false,
@@ -3171,6 +3196,11 @@ Wombat.prototype.overrideAttr = function(obj, attr, mod) {
   };
 
   var getter = function newAttrPropGetter() {
+    // meta content is not a URL, so it is not resolved like one
+    if (attr !== 'content') {
+      var recorded = wombat.retrieveWBOSRCAsURL(this, attr);
+      if (recorded) return recorded;
+    }
     var res;
     if (orig_getter) {
       res = orig_getter.call(this);
@@ -3411,14 +3441,23 @@ Wombat.prototype.overrideAnchorAreaElem = function(whichObj) {
   if (!whichObj || !whichObj.prototype) return;
   var originalGetSets = {};
   var originalProto = whichObj.prototype;
+  var wombat = this;
 
   var anchorAreaSetter = function anchorAreaSetter(prop, value) {
+    // every URL prop writes through to href
+    wombat.removeWBOSRC(this, 'href');
     var func = originalGetSets['set_' + prop];
     if (func) return func.call(this, value);
     return '';
   };
 
   var anchorAreaGetter = function anchorAreaGetter(prop) {
+    if (prop === 'href' && !this._no_rewrite) {
+      // given as wombat would have rewritten it, so the location-prop
+      // getters and setters reverse it like any other href
+      var recorded = wombat.retrieveWBOSRCAsURL(this, 'href');
+      if (recorded) return wombat.rewriteUrl(recorded);
+    }
     var func = originalGetSets['get_' + prop];
     if (func) return func.call(this);
     return '';
@@ -3844,6 +3883,7 @@ Wombat.prototype.overrideHrefAttr = function(obj, mod) {
     if (typeof orig !== 'string') {
       orig = String(orig);
     }
+    wombat.removeWBOSRC(this, 'href');
     if (mod === 'cs_' && orig.indexOf('data:text/css') === 0) {
       val = wombat.rewriteInlineStyle(orig);
     } else if (this.tagName === 'LINK') {
@@ -3863,6 +3903,10 @@ Wombat.prototype.overrideHrefAttr = function(obj, mod) {
   };
 
   var getter = function href() {
+    if (!this._no_rewrite) {
+      var recorded = wombat.retrieveWBOSRCAsURL(this, 'href');
+      if (recorded) return recorded;
+    }
     var res;
     if (orig_getter) {
       res = orig_getter.call(this);

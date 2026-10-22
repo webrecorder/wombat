@@ -1173,3 +1173,103 @@ for (const [tag, attrMods] of Object.entries(TagToMod.elements)) {
     });
   }
 }
+
+/**
+ * Creates an element the way a server-side rewriter would have sent it: the
+ * attribute holds a value rewritten at capture time, and __wb_orig_<attr>
+ * records what it was before.
+ */
+function makeRecordedElement(tag, attr, rewritten, original) {
+  const nativeSetAttribute = window.WombatTestUtil.getOriginalWinDomViaPath(
+    'window.Element.prototype.setAttribute'
+  );
+  const elem = document.createElement(tag);
+  nativeSetAttribute.call(elem, attr, rewritten);
+  nativeSetAttribute.call(elem, '__wb_orig_' + attr, original);
+  return elem;
+}
+
+test('recorded original: element properties should return it, resolved like the browser would', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(makeRecorded => {
+    const make = new Function('return ' + makeRecorded)();
+    const img = make('img', 'src', 'pic.png', '/static/pic.png');
+    const script = make('script', 'src', 'main.js', '/_next/main.js');
+    const link = make('link', 'href', 'style.css', '/css/style.css');
+    const anchor = make('a', 'href', 'page.html', '/page?ref=x');
+    const meta = make('meta', 'content', '0; url=next.html', '0; url=/next');
+    return {
+      meta: meta.content,
+      img: img.src,
+      script: script.src,
+      link: link.href,
+      anchor: anchor.href,
+      anchorPathname: anchor.pathname,
+      anchorSearch: anchor.search,
+      attrNode: img.getAttributeNode('src').value
+    };
+  }, makeRecordedElement.toString());
+  t.deepEqual(result, {
+    meta: '0; url=next.html',
+    img: 'https://tests.wombat.io/static/pic.png',
+    script: 'https://tests.wombat.io/_next/main.js',
+    link: 'https://tests.wombat.io/css/style.css',
+    anchor: 'https://tests.wombat.io/page?ref=x',
+    anchorPathname: '/page',
+    anchorSearch: '?ref=x',
+    attrNode: '/static/pic.png'
+  });
+});
+
+test('recorded original: assigning or removing the attribute should forget it', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(makeRecorded => {
+    const make = new Function('return ' + makeRecorded)();
+    const img = make('img', 'src', 'pic.png', '/static/pic.png');
+    img.src = 'https://new.example.com/new.png';
+    const script = make('script', 'src', 'main.js', '/_next/main.js');
+    script.src = 'https://new.example.com/main.js';
+    const link = make('link', 'href', 'style.css', '/css/style.css');
+    link.href = 'https://new.example.com/style.css';
+    const anchor = make('a', 'href', 'page.html', '/page?ref=x');
+    anchor.href = 'https://new.example.com/page';
+    const viaPathname = make('a', 'href', 'page.html', '/page?ref=x');
+    viaPathname.pathname = '/other';
+    const removed = make('img', 'src', 'pic.png', '/static/pic.png');
+    removed.removeAttribute('src');
+    const removedAnchor = make('a', 'href', 'page.html', '/page?ref=x');
+    removedAnchor.removeAttribute('href');
+    const detached = document.createAttribute('src');
+    detached.value = 'https://new.example.com/d.png';
+    const viaAttrNode = make('img', 'src', 'pic.png', '/static/pic.png');
+    viaAttrNode.getAttributeNode('src').value = 'https://new.example.com/v.png';
+    return {
+      img: [img.getAttribute('src'), img.src],
+      script: [script.getAttribute('src'), script.src],
+      link: [link.getAttribute('href'), link.href],
+      anchor: [anchor.getAttribute('href'), anchor.href],
+      viaPathname: viaPathname.href,
+      viaAttrNode: viaAttrNode.getAttribute('src'),
+      removed: [removed.getAttribute('src'), removed.src],
+      removedAnchor: [removedAnchor.getAttribute('href'), removedAnchor.href],
+      detached: typeof detached.value
+    };
+  }, makeRecordedElement.toString());
+  t.deepEqual(result, {
+    img: ['https://new.example.com/new.png', 'https://new.example.com/new.png'],
+    script: [
+      'https://new.example.com/main.js',
+      'https://new.example.com/main.js'
+    ],
+    link: [
+      'https://new.example.com/style.css',
+      'https://new.example.com/style.css'
+    ],
+    anchor: ['https://new.example.com/page', 'https://new.example.com/page'],
+    viaPathname: 'https://tests.wombat.io/other',
+    viaAttrNode: 'https://new.example.com/v.png',
+    removed: [null, ''],
+    removedAnchor: [null, ''],
+    detached: 'string'
+  });
+});
