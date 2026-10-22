@@ -822,9 +822,8 @@ Wombat.prototype.rwModForElement = function(elem, attrName) {
  * @param {Element} elem
  * @param {string} [attrName]
  */
-Wombat.prototype.removeWBOSRC = function(elem, attrName) {
-  var isScriptSrc = attrName == null || attrName === 'src';
-  if (elem.tagName === 'SCRIPT' && isScriptSrc && !elem.__$removedWBOSRC$__) {
+Wombat.prototype.removeWBOSRC = function(elem, attrName = 'src') {
+  if (elem.tagName === 'SCRIPT' && attrName === 'src' && !elem.__$removedWBOSRC$__) {
     if (elem.hasAttribute('__wb_orig_src')) {
       elem.removeAttribute('__wb_orig_src');
     }
@@ -861,9 +860,8 @@ Wombat.prototype.wbOrigAttrName = function(attrName) {
  * @param {string} [attrName] defaults to a script's "src"
  * @return {?string}
  */
-Wombat.prototype.retrieveWBOSRC = function(elem, attrName) {
-  var isScriptSrc = attrName == null || attrName === 'src';
-  if (elem.tagName === 'SCRIPT' && isScriptSrc && !elem.__$removedWBOSRC$__) {
+Wombat.prototype.retrieveWBOSRC = function(elem, attrName = 'src') {
+  if (elem.tagName === 'SCRIPT' && attrName === 'src' && !elem.__$removedWBOSRC$__) {
     var maybeWBOSRC;
     if (this.wb_getAttribute) {
       maybeWBOSRC = this.wb_getAttribute.call(elem, '__wb_orig_src');
