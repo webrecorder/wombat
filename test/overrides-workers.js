@@ -77,6 +77,14 @@ test('Web Workers: should have a light override applied', async t => {
       window.theWorker = new Worker('testWorker.js');
     })
   ]);
+  // workercreated can fire before the worker's script has run
+  for (let tries = 0; tries < 100; tries++) {
+    const ready = await worker
+      .evaluate(() => typeof self.isAjaxRewritten === 'function')
+      .catch(() => false);
+    if (ready) break;
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
   const result = await worker
     .evaluate(() => ({
       fetch: self.isFetchOverridden(),
