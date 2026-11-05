@@ -4891,6 +4891,32 @@ Wombat.prototype.initHTTPOverrides = function() {
         }
         delete input.__WB_no_unrewrite;
       } else {
+        // convert a POST (or other non-GET) made via plain fetch(url, init)
+        // to a GET the same way the XHR override already does, by appending
+        // the request body as a query string via postToGetUrl(). A Request
+        // object passed to fetch() is instead converted by the Request
+        // override below, before it ever reaches this branch.
+        if (convertToGet) {
+          var fetchMethod = (init_opts && init_opts.method) || 'GET';
+
+          if (fetchMethod !== 'GET') {
+            var fetchPostReq = {
+              url: input.toString(),
+              method: fetchMethod,
+              headers: new Headers(init_opts && init_opts.headers),
+              postData: init_opts && init_opts.body
+            };
+
+            if (postToGetUrl(fetchPostReq)) {
+              input = fetchPostReq.url;
+              init_opts = Object.assign({}, init_opts, {
+                method: 'GET',
+                body: undefined
+              });
+            }
+          }
+        }
+
         input = wombat.rewriteUrl(input.toString());
         request = new Request(input, init_opts);
       }
@@ -4907,6 +4933,52 @@ Wombat.prototype.initHTTPOverrides = function() {
         var newInitOpts = init_opts || {};
         var newInput = input;
         var inputType = typeof input;
+
+        // convert a POST (or other non-GET) Request to a GET the same way
+        // the XHR and fetch() overrides do, before any URL rewriting, so
+        // the conversion (and the fuzzy/rewrite rules applied to its
+        // result) sees the original, pre-rewrite URL.
+        if (convertToGet) {
+          var ctorMethod =
+            newInitOpts.method ||
+            (input && typeof input === 'object' && input.method) ||
+            'GET';
+
+          if (ctorMethod !== 'GET') {
+            var ctorUrl =
+              inputType === 'string'
+                ? input
+                : input && input.url
+                ? input.url
+                : input && input.href
+                ? input.toString()
+                : null;
+
+            if (ctorUrl !== null) {
+              var ctorPostReq = {
+                url: ctorUrl,
+                method: ctorMethod,
+                headers: new Headers(
+                  newInitOpts.headers ||
+                    (input && typeof input === 'object' && input.headers)
+                ),
+                postData: newInitOpts.body
+              };
+
+              if (postToGetUrl(ctorPostReq)) {
+                input =
+                  inputType === 'string'
+                    ? ctorPostReq.url
+                    : new Request_(ctorPostReq.url, input);
+                newInitOpts = Object.assign({}, newInitOpts, {
+                  method: 'GET',
+                  body: undefined
+                });
+              }
+            }
+          }
+        }
+
         switch (inputType) {
           case 'string':
             newInput = wombat.rewriteUrl(input);
