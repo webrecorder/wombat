@@ -280,6 +280,15 @@ function Wombat($wbwindow, wbinfo) {
   this.cookie_expires_regex = /\bExpires=([^;'"]+)/gi;
 
   /** @type {RegExp} */
+  this.cookie_expires_attr_regex = /\bExpires=([^;'"]+)/i;
+
+  /** @type {RegExp} */
+  this.cookie_max_age_regex = /\bMax-Age=\s*([^;'"\s]+)/i;
+
+  /** @type {RegExp} */
+  this.cookie_expiry_attrs_regex = /;\s*(?:Expires|Max-Age)=[^;]*/gi;
+
+  /** @type {RegExp} */
   this.SetCookieRe = /,(?![|])/;
 
   /** @type {RegExp} */
@@ -2782,6 +2791,34 @@ Wombat.prototype.rewriteCookie = function(cookie) {
   }
 
   return rwCookie.replace(',|', ',');
+};
+
+/**
+ * Removes the Expires and Max-Age attributes of the supplied rewritten cookie,
+ * unless they delete it, turning it into a session cookie.
+ * Expires must already be shifted to the real time.
+ * @param {string} cookie
+ * @return {string}
+ */
+Wombat.prototype.removeCookieExpiry = function(cookie) {
+  var isDeletion = false;
+  // as in browsers, a valid Max-Age takes precedence over Expires
+  var maxAge = cookie.match(this.cookie_max_age_regex);
+  if (maxAge && /^-?\d+$/.test(maxAge[1])) {
+    isDeletion = parseInt(maxAge[1], 10) <= 0;
+  } else {
+    var expires = cookie.match(this.cookie_expires_attr_regex);
+    if (expires) {
+      // Date.now() is the archived time
+      var realNow = Date.now() + (Date.__WB_timediff || 0);
+      isDeletion = Date.parse(expires[1]) <= realNow;
+    }
+  }
+
+  if (isDeletion) {
+    return cookie;
+  }
+  return cookie.replace(this.cookie_expiry_attrs_regex, '');
 };
 
 /**
@@ -6363,6 +6400,11 @@ Wombat.prototype.initCookiesOverride = function() {
     var cookies = newValue.split(wombat.SetCookieRe);
     for (var i = 0; i < cookies.length; i++) {
       cookies[i] = wombat.rewriteCookie(cookies[i]);
+      // Expires and Max-Age refer to the archived time, so keep cookies only
+      // for the browser session, as pywb does for Set-Cookie headers
+      if (!wombat.wb_info.is_live) {
+        cookies[i] = wombat.removeCookieExpiry(cookies[i]);
+      }
     }
     return orig_set_cookie.call(wombat.proxyToObj(this), cookies.join(','));
   };

@@ -1173,3 +1173,56 @@ for (const [tag, attrMods] of Object.entries(TagToMod.elements)) {
     });
   }
 }
+
+async function getCookies(testPage) {
+  const cookies = await testPage.networkManager.getAllCookies();
+  const byName = {};
+  for (const cookie of cookies) {
+    const json = cookie.toJSON();
+    byName[json.name] = json;
+  }
+  return byName;
+}
+
+test('document.cookie: should set cookies with Expires or Max-Age as session cookies', async t => {
+  const { sandbox, testPage } = t.context;
+  await testPage.clearBrowserCookies();
+  await sandbox.evaluate(() => {
+    const nextYear = new Date(Date.now() + 365 * 86400 * 1000).toUTCString();
+    document.cookie = 'wbExpires=1; Expires=' + nextYear + '; Path=/';
+    document.cookie = 'wbMaxAge=1; Max-Age=31536000; Path=/';
+    document.cookie = 'wbBoth=1; Expires=' + nextYear + '; Max-Age=31536000';
+  });
+  const cookies = await getCookies(testPage);
+  for (const name of ['wbExpires', 'wbMaxAge', 'wbBoth']) {
+    t.truthy(cookies[name], `the cookie ${name} was not set`);
+    t.true(cookies[name].session, `the cookie ${name} is not a session cookie`);
+  }
+});
+
+test('document.cookie: should still delete cookies with Expires in the past', async t => {
+  const { sandbox, testPage } = t.context;
+  await testPage.clearBrowserCookies();
+  const values = await sandbox.evaluate(() => {
+    document.cookie = 'wbDelete=1; Path=/';
+    const before = document.cookie;
+    document.cookie =
+      'wbDelete=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/';
+    return { before, after: document.cookie };
+  });
+  t.true(values.before.includes('wbDelete=1'), 'the cookie was not set');
+  t.false(values.after.includes('wbDelete'), 'the cookie was not deleted');
+});
+
+test('document.cookie: should still delete cookies with Max-Age=0', async t => {
+  const { sandbox, testPage } = t.context;
+  await testPage.clearBrowserCookies();
+  const values = await sandbox.evaluate(() => {
+    document.cookie = 'wbDeleteMaxAge=1; Path=/';
+    const before = document.cookie;
+    document.cookie = 'wbDeleteMaxAge=; Max-Age=0; Path=/';
+    return { before, after: document.cookie };
+  });
+  t.true(values.before.includes('wbDeleteMaxAge=1'), 'the cookie was not set');
+  t.false(values.after.includes('wbDeleteMaxAge'), 'the cookie was not deleted');
+});
