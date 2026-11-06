@@ -1602,8 +1602,28 @@ Wombat.prototype.makeGetLocProp = function(prop, origGetter) {
 
     var curr_orig_href = origGetter.call(this, 'href');
 
+    // this.wombat is only set on a WombatLocation (not on an anchor/area
+    // element), and wb_info.url is the known-original URL recorded once,
+    // at init, for the page currently loaded in it. Prefer it, the same
+    // way retrieveWBOSRCAsURL is preferred for element properties, as long
+    // as the served href hasn't changed since (no client-side navigation
+    // happened): extractOriginalURL can only reverse rewrites wombat
+    // itself performed, so a server-side rewriter with its own convention
+    // (e.g. one that must flatten a query string into the path) would
+    // otherwise be reported back incorrectly.
+    var knownOriginal =
+      this.wombat &&
+      wombat.wb_info &&
+      wombat.wb_info.url &&
+      curr_orig_href === this._wb_initial_href;
+    if (knownOriginal) {
+      curr_orig_href = wombat.wb_info.url;
+    }
+
     if (prop === 'href') {
-      return wombat.extractOriginalURL(curr_orig_href);
+      return knownOriginal
+        ? curr_orig_href
+        : wombat.extractOriginalURL(curr_orig_href);
     }
 
     if (prop === 'ancestorOrigins') {
