@@ -42,6 +42,13 @@ export default function WombatLocation(orig_loc, wombat) {
 
   wombat.setLoc(this, orig_loc.href);
 
+  // Snapshot of the served href as it was when this WombatLocation was
+  // created. As long as the real, served href hasn't changed since (no
+  // client-side navigation happened), wb_info.url is still the correct,
+  // known-original URL for it, and is preferred by makeGetLocProp over
+  // re-deriving one via extractOriginalURL.
+  this._wb_initial_href = orig_loc.href;
+
   for (var prop in orig_loc) {
     if (!this.hasOwnProperty(prop) && typeof orig_loc[prop] !== 'function') {
       this[prop] = orig_loc[prop];

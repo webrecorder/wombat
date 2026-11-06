@@ -285,3 +285,72 @@ test('removeWBOSRC: should drop the recorded original for the attribute being re
   });
   t.deepEqual(result, { href: false, scriptSrc: false });
 });
+
+/**
+ * Builds a bare-bones object that goes through the same
+ * initLocOverride/setLoc sequence as WombatLocation's own constructor,
+ * backed by a plain object instead of a real Location, so the getters
+ * from makeGetLocProp can be exercised directly with a chosen served href.
+ */
+function makeTestLoc(wombat, servedHref) {
+  const backing = { href: servedHref };
+  const loc = {
+    wombat,
+    orig_getter(prop) {
+      return backing[prop];
+    },
+    orig_setter(prop, value) {
+      backing[prop] = value;
+    }
+  };
+  wombat.initLocOverride(loc, loc.orig_setter, loc.orig_getter);
+  wombat.setLoc(loc, servedHref);
+  loc._wb_initial_href = servedHref;
+  return { loc, backing };
+}
+
+test('makeGetLocProp: href/pathname/search should prefer wb_info.url when it disagrees with extractOriginalURL', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(makeTestLocSrc => {
+    const makeTestLoc = new Function('return ' + makeTestLocSrc)();
+    // A rewriter whose storage format has no native query-string concept
+    // (e.g. a ZIM file) has to flatten a URL's path+query into one path
+    // string, escaping '?'/'&' into literal '%3F'/'%26' so they survive as
+    // path characters. extractOriginalURL can't reverse that, but the real
+    // original URL is still available as wb_info.url.
+    const servedHref = 'https://tests.wombat.io/zimpage%3Fa=1%26b=2';
+    wombat.wb_info.url = 'https://tests.wombat.io/zimpage?a=1&b=2';
+    const { loc } = makeTestLoc(wombat, servedHref);
+    return {
+      href: loc.href,
+      pathname: loc.pathname,
+      search: loc.search
+    };
+  }, makeTestLoc.toString());
+  t.deepEqual(result, {
+    href: 'https://tests.wombat.io/zimpage?a=1&b=2',
+    pathname: '/zimpage',
+    search: '?a=1&b=2'
+  });
+});
+
+test('makeGetLocProp: should fall back to extractOriginalURL once the served href no longer matches the one wb_info.url was recorded for', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(makeTestLocSrc => {
+    const makeTestLoc = new Function('return ' + makeTestLocSrc)();
+    const servedHref = 'https://tests.wombat.io/zimpage%3Fa=1%26b=2';
+    wombat.wb_info.url = 'https://tests.wombat.io/zimpage?a=1&b=2';
+    const { loc, backing } = makeTestLoc(wombat, servedHref);
+
+    // client-side navigation: the served href no longer matches the one
+    // wb_info.url described, so it must not be used for this new href.
+    const otherHref = 'https://tests.wombat.io/otherpage%3Fc=3';
+    backing.href = otherHref;
+
+    return {
+      afterNav: loc.href,
+      expected: wombat.extractOriginalURL(otherHref)
+    };
+  }, makeTestLoc.toString());
+  t.is(result.afterNav, result.expected);
+});
