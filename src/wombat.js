@@ -7055,6 +7055,15 @@ Wombat.prototype.initFrameElementOverride = function($wbwindow) {
   if (
     this.proxyToObj($wbwindow.__WB_replay_top) == this.proxyToObj($wbwindow)
   ) {
+
+    // force dark/light mode if provided and iframe element before removing access to it
+    // in the top-most replay frame
+    // in order for "window.matchMedia('(prefers-color-scheme: dark|light)').matches" to return
+    // expected value in $wbwindow, the colorScheme must be set on parent <iframe> element
+    if ($wbwindow.frameElement && this.wb_info.colorScheme) {
+      $wbwindow.frameElement.style.colorScheme = this.wb_info.colorScheme;
+    }
+
     try {
       Object.defineProperty($wbwindow, 'frameElement', {
         value: null,
