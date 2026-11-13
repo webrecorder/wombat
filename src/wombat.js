@@ -280,13 +280,7 @@ function Wombat($wbwindow, wbinfo) {
   this.cookie_expires_regex = /\bExpires=([^;'"]+)/gi;
 
   /** @type {RegExp} */
-  this.cookie_expires_attr_regex = /\bExpires=([^;'"]+)/i;
-
-  /** @type {RegExp} */
-  this.cookie_max_age_regex = /\bMax-Age=\s*([^;'"\s]+)/i;
-
-  /** @type {RegExp} */
-  this.cookie_expiry_attrs_regex = /;\s*(?:Expires|Max-Age)=[^;]*/gi;
+  this.cookie_expiry_regex = /;\s*(Expires|Max-Age)=([^;]*)/gi;
 
   /** @type {RegExp} */
   this.SetCookieRe = /,(?![|])/;
@@ -2801,24 +2795,27 @@ Wombat.prototype.rewriteCookie = function(cookie) {
  * @return {string}
  */
 Wombat.prototype.removeCookieExpiry = function(cookie) {
+  var attrs = {};
+  var sessionCookie = cookie.replace(this.cookie_expiry_regex, function(
+    m,
+    name,
+    value
+  ) {
+    attrs[name.toLowerCase()] = value.trim();
+    return '';
+  });
+
   var isDeletion = false;
   // as in browsers, a valid Max-Age takes precedence over Expires
-  var maxAge = cookie.match(this.cookie_max_age_regex);
-  if (maxAge && /^-?\d+$/.test(maxAge[1])) {
-    isDeletion = parseInt(maxAge[1], 10) <= 0;
-  } else {
-    var expires = cookie.match(this.cookie_expires_attr_regex);
-    if (expires) {
-      // Date.now() is the archived time
-      var realNow = Date.now() + (Date.__WB_timediff || 0);
-      isDeletion = Date.parse(expires[1]) <= realNow;
-    }
+  if (/^-?\d+$/.test(attrs['max-age'])) {
+    isDeletion = parseInt(attrs['max-age'], 10) <= 0;
+  } else if (attrs.expires) {
+    // Date.now() is the archived time
+    var realNow = Date.now() + (Date.__WB_timediff || 0);
+    isDeletion = Date.parse(attrs.expires) <= realNow;
   }
 
-  if (isDeletion) {
-    return cookie;
-  }
-  return cookie.replace(this.cookie_expiry_attrs_regex, '');
+  return isDeletion ? cookie : sessionCookie;
 };
 
 /**
