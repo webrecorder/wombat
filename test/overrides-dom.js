@@ -1200,6 +1200,18 @@ test('document.cookie: should set cookies with Expires or Max-Age as session coo
   }
 });
 
+test('document.cookie: should NOT delete cookie with Expires= in future from page date, but actually in the past', async t => {
+  const { sandbox, testPage } = t.context;
+  await testPage.clearBrowserCookies();
+  const values = await sandbox.evaluate(() => {
+    document.cookie = 'wbNoDelete=1; Path=/';
+    document.cookie =
+      'wbNoDelete=1; Expires=Tue Jan 1 2019 00:00:00 GMT; Path=/';
+    return { cookie: document.cookie };
+  });
+  t.true(values.cookie.includes('wbNoDelete=1'), 'the cookie was not deleted');
+});
+
 test('document.cookie: should still delete cookies with Expires in the past', async t => {
   const { sandbox, testPage } = t.context;
   await testPage.clearBrowserCookies();

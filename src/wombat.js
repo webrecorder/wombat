@@ -6354,7 +6354,7 @@ Wombat.prototype.initCookiesOverride = function() {
       if (isNaN(date.getTime())) {
         return '';
       }
-      var finalDate = new Date(date.getTime() + Date.__WB_timediff);
+      var finalDate = new Date(date.getTime());
       // if expires in the past, pass through to delete,
       // otherwise remove to make it a session cookie
       if (finalDate < new Date()) {
