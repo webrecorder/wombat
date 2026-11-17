@@ -285,3 +285,61 @@ test('removeWBOSRC: should drop the recorded original for the attribute being re
   });
   t.deepEqual(result, { href: false, scriptSrc: false });
 });
+
+test('extractOriginalURL: should defer to wb_info.extract_original_url_function once the url is confirmed to start with our own prefix', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const prefixedUrl = wombat.wb_abs_prefix + 'custom-scheme-path';
+    wombat.wb_info.extract_original_url_function = url => {
+      if (url === 'custom-scheme-path') {
+        return 'https://custom.example/originally-at/custom-scheme-path';
+      }
+      return undefined;
+    };
+    const handled = wombat.extractOriginalURL(prefixedUrl);
+    delete wombat.wb_info.extract_original_url_function;
+    const withoutHook = wombat.extractOriginalURL(prefixedUrl);
+    return { handled, withoutHook };
+  });
+  t.is(
+    result.handled,
+    'https://custom.example/originally-at/custom-scheme-path'
+  );
+  // the default heuristic (exercised once the hook is removed again) has no
+  // way to recover that same original URL, confirming the hook, not some
+  // unrelated default behavior, produced the earlier result
+  t.not(
+    result.withoutHook,
+    'https://custom.example/originally-at/custom-scheme-path'
+  );
+});
+
+test('extractOriginalURL: should fall through to the default heuristic when the hook returns undefined', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    const prefixedUrl = wombat.wb_abs_prefix + 'http://tests.wombat.io/foo';
+    const withoutHook = wombat.extractOriginalURL(prefixedUrl);
+    wombat.wb_info.extract_original_url_function = () => undefined;
+    const withHookReturningUndefined = wombat.extractOriginalURL(prefixedUrl);
+    delete wombat.wb_info.extract_original_url_function;
+    return { withoutHook, withHookReturningUndefined };
+  });
+  t.is(result.withHookReturningUndefined, result.withoutHook);
+});
+
+test('extractOriginalURL: should not call wb_info.extract_original_url_function when the url does not start with our own prefix', async t => {
+  const { sandbox } = t.context;
+  const result = await sandbox.evaluate(() => {
+    let called = false;
+    wombat.wb_info.extract_original_url_function = () => {
+      called = true;
+      return 'should-never-be-used';
+    };
+    const unrelatedUrl = 'https://not-our-prefix.example/some/path';
+    const extracted = wombat.extractOriginalURL(unrelatedUrl);
+    delete wombat.wb_info.extract_original_url_function;
+    return { called, extracted };
+  });
+  t.false(result.called);
+  t.not(result.extracted, 'should-never-be-used');
+});
