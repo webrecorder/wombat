@@ -277,7 +277,7 @@ function Wombat($wbwindow, wbinfo) {
   this.cookie_domain_regex = /\bDomain=([^;'"\s]+)/i;
 
   /** @type {RegExp} */
-  this.cookie_expires_regex = /\bExpires=([^;'"]+)/gi;
+  this.cookie_expires_regex = /\b(Expires|Max-Age)=([^;'"]+)/gi;
 
   /** @type {RegExp} */
   this.SetCookieRe = /,(?![|])/;
@@ -6347,13 +6347,29 @@ Wombat.prototype.initCookiesOverride = function() {
     );
   }
 
-  var rwCookieReplacer = function(m, d1) {
-    var date = new Date(d1);
-    if (isNaN(date.getTime())) {
-      return 'Expires=Thu,| 01 Jan 1970 00:00:00 GMT';
+  var rwCookieReplacer = function(m, fieldName, value) {
+    if (fieldName.toLowerCase() === 'expires') {
+      var date = new Date(value);
+      // if invalid date, remove to make it a session cookie
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      var finalDate = new Date(date.getTime());
+      // if expires in the past, pass through to delete,
+      // otherwise remove to make it a session cookie
+      if (finalDate < new Date()) {
+        return 'Expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      }
+      return '';
+    } else if (fieldName.toLowerCase() === 'max-age') {
+      // if max-age <= 0, pass through to delete,
+      // otherwise remove age to make it a session cookie
+      if (parseInt(value) <= 0) {
+        return m;
+      }
+
+      return '';
     }
-    var finalDate = new Date(date.getTime() + Date.__WB_timediff);
-    return 'Expires=' + finalDate.toUTCString().replace(',', ',|');
   };
 
   var wombat = this;
