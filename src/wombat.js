@@ -823,7 +823,11 @@ Wombat.prototype.rwModForElement = function(elem, attrName) {
  * @param {string} [attrName]
  */
 Wombat.prototype.removeWBOSRC = function(elem, attrName = 'src') {
-  if (elem.tagName === 'SCRIPT' && attrName === 'src' && !elem.__$removedWBOSRC$__) {
+  if (
+    elem.tagName === 'SCRIPT' &&
+    attrName === 'src' &&
+    !elem.__$removedWBOSRC$__
+  ) {
     if (elem.hasAttribute('__wb_orig_src')) {
       elem.removeAttribute('__wb_orig_src');
     }
@@ -861,7 +865,11 @@ Wombat.prototype.wbOrigAttrName = function(attrName) {
  * @return {?string}
  */
 Wombat.prototype.retrieveWBOSRC = function(elem, attrName = 'src') {
-  if (elem.tagName === 'SCRIPT' && attrName === 'src' && !elem.__$removedWBOSRC$__) {
+  if (
+    elem.tagName === 'SCRIPT' &&
+    attrName === 'src' &&
+    !elem.__$removedWBOSRC$__
+  ) {
     var maybeWBOSRC;
     if (this.wb_getAttribute) {
       maybeWBOSRC = this.wb_getAttribute.call(elem, '__wb_orig_src');
@@ -1463,9 +1471,9 @@ Wombat.prototype.defaultProxyGet = function(obj, prop, ownProps, fnCache) {
 
   // Frozen own data properties must be returned as-is to satisfy Proxy invariants.
   if (
-    propDesc !== undefined &&       // If it's an own property, and
-    'value' in propDesc &&          // is a data property, and
-    propDesc.writable === false &&  // is non-writable, and
+    propDesc !== undefined && // If it's an own property, and
+    'value' in propDesc && // is a data property, and
+    propDesc.writable === false && // is non-writable, and
     propDesc.configurable === false // is non-configurable
   ) {
     return retVal;
@@ -1730,14 +1738,14 @@ Wombat.prototype.domConstructorErrorChecker = function(
   var errorMsg;
   if (thisObj instanceof this.WBWindow) {
     errorMsg =
-      'Failed to construct \'' +
+      "Failed to construct '" +
       what +
-      '\': Please use the \'new\' operator, this DOM object constructor cannot be called as a function.';
+      "': Please use the 'new' operator, this DOM object constructor cannot be called as a function.";
   } else if (args && args.length < needArgs) {
     errorMsg =
-      'Failed to construct \'' +
+      "Failed to construct '" +
       what +
-      '\': ' +
+      "': " +
       needArgs +
       ' argument required, but only 0 present.';
   }
@@ -2201,7 +2209,7 @@ Wombat.prototype.rewriteStyle = function(style) {
  */
 Wombat.prototype.rewriteSrcset = function(value, elem) {
   if (!value) return '';
-  if (typeof(value) !== 'string') {
+  if (typeof value !== 'string') {
     value = value.toString();
   }
 
@@ -2833,13 +2841,13 @@ Wombat.prototype.rewriteWorker = function(workerUrl, opts) {
       this.wb_info.ww_rw_script ||
       this.wb_info.static_prefix + 'wombatWorkers.js';
     var rw =
-      '(function() { self.importScripts(\'' +
+      "(function() { self.importScripts('" +
       ww_rw +
-      '\'); new WBWombat({\'prefix\': \'' +
+      "'); new WBWombat({'prefix': '" +
       this.wb_abs_prefix +
-      '\', \'prefixMod\': \'' +
+      "', 'prefixMod': '" +
       this.wb_abs_prefix +
-      'wkrf_/\', \'originalURL\': ' +
+      "wkrf_/', 'originalURL': " +
       JSON.stringify(originalURL) +
       '}); })();';
 
@@ -6312,7 +6320,12 @@ Wombat.prototype.rewriteAttrTarget = function(target) {
     return target;
   }
 
-  if (!target || target === '_blank' || target === '_parent' || target === '_top') {
+  if (
+    !target ||
+    target === '_blank' ||
+    target === '_parent' ||
+    target === '_top'
+  ) {
     return this.wb_info.target_frame;
   }
 
@@ -6928,7 +6941,7 @@ Wombat.prototype.initTopFrameNotify = function(wbinfo) {
 
     var icons = [];
     var hicons = wombat.$wbwindow.document.querySelectorAll(
-      'link[rel*=\'icon\']'
+      "link[rel*='icon']"
     );
 
     for (var i = 0; i < hicons.length; i++) {
@@ -7055,7 +7068,6 @@ Wombat.prototype.initFrameElementOverride = function($wbwindow) {
   if (
     this.proxyToObj($wbwindow.__WB_replay_top) == this.proxyToObj($wbwindow)
   ) {
-
     // force dark/light mode if provided and iframe element before removing access to it
     // in the top-most replay frame
     // in order for "window.matchMedia('(prefers-color-scheme: dark|light)').matches" to return
