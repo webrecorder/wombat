@@ -233,6 +233,9 @@ function Wombat($wbwindow, wbinfo) {
     this.wb_capture_date_part = '/' + this.wb_info.wombat_ts + '/';
   }
 
+  /** @type {string} */
+  this.isChromiumExtension = false;
+
   /** @type {Array<string>} */
   this.BAD_PREFIXES = [
     'http:' + this.wb_replay_prefix,
@@ -2854,7 +2857,20 @@ Wombat.prototype.rewriteWorker = function(workerUrl, opts) {
     workerCode = rw + workerCode;
   }
   var blob = new Blob([workerCode], { type: 'application/javascript' });
-  return this.URL.createObjectURL(blob);
+
+  const url = this.URL.createObjectURL(blob);
+
+  // a blob can not call importScripts in chromium extension,
+  // instead serve the blob from the service worker
+  if (this.isChromiumExtension && this.wb_info.isSW) {
+    const blobIdUrl =
+      url.slice(url.lastIndexOf('/') + 1) + '/' + this.wb_info.url;
+    return (
+      this.wb_info.prefix + this.wb_info.request_ts + 'id_/blob:' + blobIdUrl
+    );
+  }
+
+  return url;
 };
 
 /**
@@ -6661,6 +6677,9 @@ Wombat.prototype.initCacheStorageOverride = function() {
 
   // disable access to extension apis
   if (this.$wbwindow.chrome) {
+    this.isChromiumExtension = !!(
+      this.$wbwindow.chrome.runtime && this.$wbwindow.chrome.runtime.getURL
+    );
     this.$wbwindow.chrome = {};
   }
 
