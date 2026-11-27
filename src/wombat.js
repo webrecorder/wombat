@@ -62,6 +62,8 @@ function Wombat($wbwindow, wbinfo) {
   this.WB_CHECK_THIS_FUNC = '_____WB$wombat$check$this$function_____';
   this.WB_ASSIGN_FUNC = '_____WB$wombat$assign$function_____';
 
+  this.WB_MODULE_DECL_RX = /import.*\/__wb_module_decl.js/;
+
   this.SKIP_OWN_FUNC_PROPS = [
     'name',
     'length',
@@ -738,6 +740,10 @@ Wombat.prototype.skipWrapScriptTextBasedOnText = function(text, excludes) {
     text.indexOf(this.WB_ASSIGN_FUNC) >= 0 ||
     text.indexOf('<') === 0
   ) {
+    return true;
+  }
+
+  if (text.match(this.WB_MODULE_DECL_RX)) {
     return true;
   }
 
@@ -3737,6 +3743,27 @@ Wombat.prototype.overrideFuncArgProxyToObj = function(
 };
 
 /**
+ * Override Reflect.apply
+ */
+Wombat.prototype.overrideReflectApply = function($wbwindow) {
+  if ($wbwindow.Reflect.__WB_orig_apply) {
+    return;
+  }
+  var orig_apply = $wbwindow.Reflect.apply;
+  Object.defineProperty($wbwindow.Reflect, '__WB_orig_apply', {
+    value: orig_apply,
+    enumarable: false
+  });
+  var wombat = this;
+  $wbwindow.Reflect.apply = function apply(func, target, args) {
+    target = wombat.proxyToObj(target);
+    args = wombat.deproxyArrayHandlingArgumentsObj(args);
+
+    return $wbwindow.Reflect.__WB_orig_apply(func, target, args);
+  };
+};
+
+/**
  * Overrides Function.prototype.apply in order to ensure that none of the
  * arguments of `native` functions are one of the JS Proxy objects used by wombat.
  * @param {Window} $wbwindow
@@ -4920,6 +4947,12 @@ Wombat.prototype.initHTTPOverrides = function() {
       }
 
       return orig_fetch.call(wombat.proxyToObj(this), request);
+    };
+  }
+
+  if (this.$wbwindow.fetchLater) {
+    this.$wbwindow.fetchLater = function(input, init_opts) {
+      return { activated: false };
     };
   }
 
@@ -7245,6 +7278,8 @@ Wombat.prototype.wombatInit = function() {
   // History
   this.initHistoryOverrides();
 
+  this.overrideReflectApply(this.$wbwindow);
+
   this.overrideFunctionApply(this.$wbwindow);
   this.overrideFunctionCall(this.$wbwindow);
   this.overrideFunctionBind(this.$wbwindow);
@@ -7339,6 +7374,7 @@ Wombat.prototype.wombatInit = function() {
   this.overrideFuncArgProxyToObj(this.$wbwindow.Node, 'contains');
   this.overrideFuncArgProxyToObj(this.$wbwindow.Document, 'createTreeWalker');
   this.overrideFuncArgProxyToObj(this.$wbwindow.Document, 'evaluate', 1);
+  this.overrideFuncArgProxyToObj(this.$wbwindow.Document, 'importNode');
   this.overrideFuncArgProxyToObj(
     this.$wbwindow.XSLTProcessor,
     'transformToFragment',
