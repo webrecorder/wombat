@@ -3755,7 +3755,7 @@ Wombat.prototype.overrideReflectApply = function($wbwindow) {
     enumarable: false
   });
   var wombat = this;
-  $wbwindow.Reflect.apply = function apply(func, target, args) {
+  $wbwindow.Reflect.apply = function(func, target, args) {
     target = wombat.proxyToObj(target);
     args = wombat.deproxyArrayHandlingArgumentsObj(args);
 
