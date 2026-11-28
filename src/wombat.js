@@ -1061,14 +1061,35 @@ Wombat.prototype.extractOriginalURL = function(rewrittenUrl) {
   }
 
   var start;
+  var matchedPrefix = false;
 
   if (this.startsWith(url, this.wb_abs_prefix)) {
     start = this.wb_abs_prefix.length;
+    matchedPrefix = true;
   } else if (this.wb_rel_prefix && this.startsWith(url, this.wb_rel_prefix)) {
     start = this.wb_rel_prefix.length;
+    matchedPrefix = true;
   } else {
     // if no coll, start from beginning, otherwise could be part of coll..
     start = this.wb_rel_prefix ? 1 : 0;
+  }
+
+  // Defer to a custom reversal of `wb_info.rewrite_function`'s own output, the
+  // same way rewriteUrl() already defers to rewrite_function() itself. Only
+  // called once `url` is confirmed to start with our own abs/rel prefix (the
+  // other branch above has no useful prefix to strip, since it's a fallback
+  // for an unrelated string): everything handled earlier in this function
+  // (ignored prefixes, static_prefix, proxy mode) still takes priority, and
+  // the hook returning `undefined` falls through to the default heuristic
+  // below unchanged, so a deployment can leave some inputs to it (e.g. a
+  // third-party pywb-style replay prefix encountered on the same page).
+  if (matchedPrefix && this.wb_info.extract_original_url_function) {
+    var customUrl = this.wb_info.extract_original_url_function(
+      url.substr(start)
+    );
+    if (customUrl !== undefined) {
+      return customUrl;
+    }
   }
 
   var index = url.indexOf('/http', start);
